@@ -1250,5 +1250,6 @@
     <string name="read_paging">翻页与进度</string>
     <string name="read_gesture">点击与手势</string>
     <string name="read_content">内容与显示</string>
+    <string name="updating">更新中</string>
 
 </resources>

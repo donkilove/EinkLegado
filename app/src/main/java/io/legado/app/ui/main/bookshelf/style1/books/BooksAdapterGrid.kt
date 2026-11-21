@@ -14,6 +14,7 @@ import io.legado.app.utils.gone
 import io.legado.app.utils.invisible
 import io.legado.app.utils.visible
 import splitties.views.onLongClick
+import androidx.core.view.isVisible
 
 class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
     BaseBooksAdapter<ViewBinding>(context) {
@@ -90,9 +91,9 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
             is ItemBookshelfGridBinding -> binding.run {
                 if (!item.isLocal && callBack.isUpdate(item.bookUrl)) {
                     bvUnread.invisible()
-                    rlLoading.visible()
+                    rlLoading.isVisible = true
                 } else {
-                    rlLoading.inVisible()
+                    rlLoading.isVisible = false
                     if (AppConfig.showUnread) {
                         bvUnread.setBadgeCount(item.getUnreadChapterNum())
                         bvUnread.setHighlight(item.lastCheckCount > 0)
@@ -104,9 +105,9 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
             is ItemBookshelfGrid2Binding -> binding.run {
                 if (!item.isLocal && callBack.isUpdate(item.bookUrl)) {
                     bvUnread.invisible()
-                    rlLoading.visible()
+                    rlLoading.isVisible = true
                 } else {
-                    rlLoading.inVisible()
+                    rlLoading.isVisible = false
                     if (AppConfig.showUnread) {
                         bvUnread.setBadgeCount(item.getUnreadChapterNum())
                         bvUnread.setHighlight(item.lastCheckCount > 0)

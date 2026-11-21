@@ -1357,5 +1357,6 @@
     <string name="read_paging">Paging &amp; Progress</string>
     <string name="read_gesture">Tap &amp; Gesture</string>
     <string name="read_content">Content &amp; Display</string>
+    <string name="updating">Updating</string>
 
 </resources>

@@ -13,6 +13,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.invisible
 import io.legado.app.utils.toTimeAgo
 import splitties.views.onLongClick
+import androidx.core.view.isVisible
 
 class BooksAdapterList(
     context: Context,
@@ -66,9 +67,9 @@ class BooksAdapterList(
     private fun upRefresh(binding: ItemBookshelfListBinding, item: Book) {
         if (!item.isLocal && callBack.isUpdate(item.bookUrl)) {
             binding.bvUnread.invisible()
-            binding.rlLoading.visible()
+            binding.rlLoading.isVisible = true
         } else {
-            binding.rlLoading.gone()
+            binding.rlLoading.isVisible = false
             if (AppConfig.showUnread) {
                 binding.bvUnread.setHighlight(item.lastCheckCount > 0)
                 binding.bvUnread.setBadgeCount(item.getUnreadChapterNum())

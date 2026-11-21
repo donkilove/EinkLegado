@@ -8,13 +8,13 @@ import androidx.viewpager.widget.ViewPager
 import kotlin.math.abs
 
 /**
- * 无动画 ViewPager（墨水屏专用）。
+ * 禁用滑动的 ViewPager（墨水屏专用）。
  *
- * 电子纸上左右滑动的跟手动画会持续整屏刷新并留下残影，这里：
- * 1. 切换一律瞬时完成（忽略 smoothScroll）；
- * 2. 手势滑动被禁用；
- * 3. **水平滑动会被吞掉**，避免事件漏到子视图上误触（例如书架列表把横滑当成点击打开书）。
- * 垂直滑动不拦截，列表滚动照常。
+ * 电子纸上左右滑动的跟手位移会持续整屏刷新并留下残影，且嵌套时容易误切到相邻大页，
+ * 因此不再支持手势滑动：页面切换只由 Tab / 底部导航触发，且瞬时完成（不做平滑滚动）。
+ *
+ * 水平手势会被主动吞掉，避免漏到子视图上被误判为点击（实测会导致书架误打开书籍）；
+ * 垂直手势不拦截，列表上下滚动照常。
  */
 class NoAnimViewPager @JvmOverloads constructor(
     context: Context,
