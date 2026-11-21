@@ -102,12 +102,6 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
                     }
                 }
             }
-            findPreference<NameListPreference>(PreferKey.themeMode)?.let {
-                it.setOnPreferenceChangeListener { _, _ ->
-                    view?.post { ThemeConfig.applyDayNight(requireContext()) }
-                    true
-                }
-            }
         }
 
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

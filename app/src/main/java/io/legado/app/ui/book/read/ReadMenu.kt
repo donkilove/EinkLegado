@@ -178,6 +178,8 @@ class ReadMenu @JvmOverloads constructor(
         } else {
             fabNightTheme.setImageResource(R.drawable.ic_brightness)
         }
+        // 墨水屏专属：主题固定为 EInk，昼夜切换无效，隐藏该按钮
+        fabNightTheme.isGone = AppConfig.isEInkMode
         initAnimation()
         tvCustomBtn.setColorFilter(context.accentColor)
         if (immersiveMenu) {

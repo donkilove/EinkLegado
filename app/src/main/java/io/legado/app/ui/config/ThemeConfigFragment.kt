@@ -127,6 +127,8 @@ class ThemeConfigFragment : PreferenceFragment(),
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menuInflater.inflate(R.menu.theme_config, menu)
+        // 墨水屏专属：主题固定为 EInk，昼夜切换无效
+        menu.findItem(R.id.menu_theme_mode)?.isVisible = false
         menu.applyTint(requireContext())
     }
 
