@@ -96,7 +96,7 @@
         android:layout_height="0dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:background="@color/transparent30"
+        android:background="@drawable/bg_eink_border_round"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/bottom_menu"
