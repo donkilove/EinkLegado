@@ -104,20 +104,44 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
         return super.onCompatCreateOptionsMenu(menu)
     }
 
-    // 每页条数按实际项高校准，各列表项高度不同，固定条数会让页内仍需滚动
     private var pageSizeCalibrated = false
+    private var calibrateAttempts = 0
 
+    /**
+     * 逐项累加实际高度，算出可视区能完整放下的条数后重排一次。
+     * 首次触发时列表可能尚未渲染完成，按 50ms 重试至多 20 次。
+     */
     private fun calibratePageSize() {
         if (pageSizeCalibrated) return
         binding.recyclerView.post {
             if (pageSizeCalibrated) return@post
             val rv = binding.recyclerView
-            val itemHeight = rv.getChildAt(0)?.height ?: return@post
-            if (itemHeight <= 0 || rv.height <= 0) return@post
+            val visible = rv.height
+            if (visible <= 0 || rv.childCount == 0) {
+                if (calibrateAttempts++ < 20) {
+                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
+                }
+                return@post
+            }
+            // 累加到头就填满了可视区
+            var accumulated = 0
+            var fitCount = 0
+            for (i in 0 until rv.childCount) {
+                val itemHeight = rv.getChildAt(i).height
+                if (itemHeight <= 0) continue
+                if (accumulated + itemHeight > visible) break
+                accumulated += itemHeight
+                fitCount++
+            }
+            if (fitCount <= 0) {
+                if (calibrateAttempts++ < 20) {
+                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
+                }
+                return@post
+            }
             pageSizeCalibrated = true
-            val perPage = (rv.height / itemHeight).coerceAtLeast(io.legado.app.utils.Paginator.MIN_PAGE_SIZE)
-            if (perPage != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(perPage), adapter.diffItemCallBack)
+            if (fitCount != paginator.pageSize) {
+                adapter.setItems(paginator.setPageSize(fitCount), adapter.diffItemCallBack)
                 upPageBar()
             }
         }

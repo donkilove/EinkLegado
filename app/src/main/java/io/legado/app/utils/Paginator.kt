@@ -12,8 +12,8 @@ package io.legado.app.utils
 class Paginator<T>(pageSize: Int = DEFAULT_PAGE_SIZE) {
 
     companion object {
-        /** 校准前的保守默认值，宁可少显示也不要溢出 */
-        const val DEFAULT_PAGE_SIZE = 5
+        /** 校准前的初始值：故意多于一屏能放下的条数，否则测不到「填满」的边界 */
+        const val DEFAULT_PAGE_SIZE = 8
 
         /** 单页最少条数，避免项特别高时每页只剩一两条 */
         const val MIN_PAGE_SIZE = 3
