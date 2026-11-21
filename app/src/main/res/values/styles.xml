@@ -26,6 +26,8 @@
         <item name="selectableItemBackground">@drawable/bg_eink_selectable_item</item>
         <item name="selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- 墨水屏：弹窗菜单（长按菜单、溢出菜单等）默认带淡入/缩放动画，这里一并关闭 -->
+        <item name="android:popupAnimationStyle">@null</item>
     </style>
 
     <!-- Welcome主题 -->

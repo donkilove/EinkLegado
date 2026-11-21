@@ -240,8 +240,6 @@ class BookSourceAdapter(
         }
         ivDebugText.visibility =
             if (!isEmpty) View.VISIBLE else View.GONE
-        ivProgressBar.visibility =
-            if (isFinalMessage || isEmpty || !Debug.isChecking) View.GONE else View.VISIBLE
     }
 
     private fun upSourceHost(binding: ItemBookSourceBinding, position: Int) = binding.run {
