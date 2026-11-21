@@ -46,6 +46,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import io.legado.app.help.AppWebDav
+import io.legado.app.utils.toastOnUi
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.withContext
 
 /**
  * 书架界面
@@ -173,6 +177,15 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
             binding.refreshLayout.isRefreshing = false
             showRefreshingHint()
             activityViewModel.upToc(booksAdapter.getItems(), onlyUpdateRead)
+            // 同步 v2：下拉刷新同时对读书籍的云端进度
+            viewLifecycleOwner.lifecycleScope.launch {
+                val updated = withContext(IO) {
+                    AppWebDav.downloadAllBookProgress()
+                }
+                if (updated > 0) {
+                    toastOnUi(getString(R.string.sync_progress_done, updated))
+                }
+            }
         }
         if (bookshelfLayout >= 2) {
             binding.rvBookshelf.layoutManager = GridLayoutManager(context, bookshelfLayout)

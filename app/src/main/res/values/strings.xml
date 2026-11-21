@@ -1371,5 +1371,6 @@
     </string-array>
     <string name="web_dav_set_s">WebDav server and sync options</string>
     <string name="backup_restore_s">Backup and restore app data</string>
+    <string name="sync_progress_done">Synced progress of %d books</string>
 
 </resources>

@@ -377,6 +377,26 @@ debug 对比：
 
 编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 3m37s。
 
+--------------------------------------------------
+[18] 同步 v2 阶段 A：聚合进度文件 + 全量对齐 · 真机验证
+--------------------------------------------------
+设计：所有书进度集中到 bookProgress.json，一次请求完成全量对齐；
+      启动 / 切到书架 / 书架下拉刷新三个时机触发；章节切换与退出阅读时上传。
+
+首次启动（迁移）实测：
+  logcat 可见先列举 bookProgress/ 下的旧文件并逐个下载（58 本），
+  随后 PUT bookProgress.json（HTTP 201），日志「进度迁移完成，共 58 本」。
+
+二次启动（聚合生效）实测：
+  bookProgress 相关请求共 3 次：bookProgress.json 两次、bookProgress/ 目录一次
+  （对比迁移前的「每本一次请求」即 58 次以上），无迁移日志、无错误日志。
+
+书架显示：正在阅读 / 已经读完 / 全部 三个 Tab 正常，书籍进度（第161章、第三十九章）完整。
+
+编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 4m59s。
+待续：阶段 B（阅读设置、书签、书架分组、书源同步）尚未实施。
+
+
 
 
 

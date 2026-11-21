@@ -926,6 +926,12 @@ object ReadBook : CoroutineScope by MainScope() {
                     }
                 }
                 book.update()
+                // 墨水屏同步 v2：章节切换时立即上传，避免读到一半退出导致进度丢失
+                if (chapterChanged) {
+                    launch(IO) {
+                        AppWebDav.uploadBookProgress(book, false)
+                    }
+                }
             }.onFailure {
                 AppLog.put("保存书籍阅读进度信息出错\n$it", it)
             }

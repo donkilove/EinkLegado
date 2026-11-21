@@ -7,6 +7,7 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookProgress
+import io.legado.app.data.entities.BookProgressBundle
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.storage.Backup
@@ -31,6 +32,8 @@ import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import splitties.init.appCtx
 import java.io.File
 
@@ -40,6 +43,16 @@ import java.io.File
 object AppWebDav {
     private const val defaultWebDavUrl = "https://dav.jianguoyun.com/dav/"
     private val bookProgressUrl get() = "${rootWebDavUrl}bookProgress/"
+
+    /**
+     * 聚合进度文件：所有书的进度集中一处，一次请求即可完成全量对齐。
+     * 旧格式（每本书一个 json）保留在 bookProgress/ 目录下，仅在迁移时读取。
+     */
+    private val progressBundleUrl get() = "${rootWebDavUrl}bookProgress.json"
+
+    /** 内存中的聚合进度，避免重复下载 */
+    private var progressBundle: BookProgressBundle? = null
+    private val progressMutex = Mutex()
     private val exportsWebDavUrl get() = "${rootWebDavUrl}books/"
     private val bgWebDavUrl get() = "${rootWebDavUrl}background/"
 
@@ -239,19 +252,22 @@ object AppWebDav {
         }
     }
 
+    /**
+     * 把一本书的进度写入聚合文件并上传
+     */
     suspend fun uploadBookProgress(
         book: Book,
         toast: Boolean = false,
         onSuccess: (() -> Unit)? = null
     ) {
-        val authorization = authorization ?: return
         if (!AppConfig.syncBookProgress) return
         if (!NetworkUtils.isAvailable()) return
         try {
-            val bookProgress = BookProgress(book)
-            val json = GSON.toJson(bookProgress)
-            val url = getProgressUrl(book.name, book.author)
-            WebDav(url, authorization).upload(json.toByteArray(), "application/json")
+            progressMutex.withLock {
+                val bundle = ensureProgressBundle() ?: BookProgressBundle()
+                bundle.put(BookProgress(book))
+                pushProgressBundle(bundle)
+            }
             book.syncTime = System.currentTimeMillis()
             onSuccess?.invoke()
         } catch (e: Exception) {
@@ -261,13 +277,14 @@ object AppWebDav {
     }
 
     suspend fun uploadBookProgress(bookProgress: BookProgress, onSuccess: (() -> Unit)? = null) {
+        if (!AppConfig.syncBookProgress) return
+        if (!NetworkUtils.isAvailable()) return
         try {
-            val authorization = authorization ?: return
-            if (!AppConfig.syncBookProgress) return
-            if (!NetworkUtils.isAvailable()) return
-            val json = GSON.toJson(bookProgress)
-            val url = getProgressUrl(bookProgress.name, bookProgress.author)
-            WebDav(url, authorization).upload(json.toByteArray(), "application/json")
+            progressMutex.withLock {
+                val bundle = ensureProgressBundle() ?: BookProgressBundle()
+                bundle.put(bookProgress)
+                pushProgressBundle(bundle)
+            }
             onSuccess?.invoke()
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
@@ -275,62 +292,98 @@ object AppWebDav {
         }
     }
 
-    private fun getProgressUrl(name: String, author: String): String {
-        return bookProgressUrl + getProgressFileName(name, author)
-    }
-
-    private fun getProgressFileName(name: String, author: String): String {
-        return UrlUtil.replaceReservedChar("${name}_${author}".normalizeFileName()) + ".json"
+    /**
+     * 取一本书的云端进度（来自聚合文件）
+     */
+    suspend fun getBookProgress(book: Book): BookProgress? {
+        val bundle = ensureProgressBundle() ?: return null
+        return bundle.get(book.name, book.author)
     }
 
     /**
-     * 获取书籍进度
+     * 全量同步：下载聚合文件并与本地逐本比较，取更靠后的进度写回本地记录。
+     * @return 实际更新的书籍数量，0 表示无变化或同步失败
      */
-    suspend fun getBookProgress(book: Book): BookProgress? {
-        val url = getProgressUrl(book.name, book.author)
-        kotlin.runCatching {
-            val authorization = authorization ?: return null
-            WebDav(url, authorization).download().let { byteArray ->
-                val json = String(byteArray)
-                if (json.isJson()) {
-                    return GSON.fromJsonObject<BookProgress>(json).getOrNull()
+    suspend fun downloadAllBookProgress(): Int {
+        if (!AppConfig.syncBookProgress) return 0
+        if (!NetworkUtils.isAvailable()) return 0
+        authorization ?: return 0
+        return try {
+            migrateOldProgressIfNeeded()
+            val bundle = fetchProgressBundle(force = true) ?: return 0
+            var updated = 0
+            appDb.bookDao.all.forEach { book ->
+                if (bundle.applyTo(book)) {
+                    book.syncTime = System.currentTimeMillis()
+                    appDb.bookDao.update(book)
+                    updated++
                 }
+            }
+            updated
+        } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
+            AppLog.put("同步阅读进度失败\n${e.localizedMessage}", e)
+            0
+        }
+    }
+
+    private suspend fun ensureProgressBundle(): BookProgressBundle? {
+        progressBundle?.let { return it }
+        return fetchProgressBundle(force = true)
+    }
+
+    /**
+     * 下载聚合进度文件
+     * @param force 为 true 时忽略内存缓存
+     */
+    private suspend fun fetchProgressBundle(force: Boolean): BookProgressBundle? {
+        val authorization = authorization ?: return null
+        if (!force) progressBundle?.let { return it }
+        return kotlin.runCatching {
+            val bytes = WebDav(progressBundleUrl, authorization).download()
+            val json = String(bytes)
+            if (!json.isJson()) return@runCatching null
+            GSON.fromJsonObject<BookProgressBundle>(json).getOrNull()?.also {
+                progressBundle = it
             }
         }.onFailure {
             currentCoroutineContext().ensureActive()
-            AppLog.put("获取书籍进度失败\n${it.localizedMessage}", it)
-        }
-        return null
+            AppLog.put("拉取聚合进度失败\n${it.localizedMessage}", it)
+        }.getOrNull()
     }
 
-    suspend fun downloadAllBookProgress() {
+    private suspend fun pushProgressBundle(bundle: BookProgressBundle) {
         val authorization = authorization ?: return
-        if (!NetworkUtils.isAvailable()) return
-        val bookProgressFiles = WebDav(bookProgressUrl, authorization).listFiles()
-        val map = hashMapOf<String, WebDavFile>()
-        bookProgressFiles.forEach {
-            map[it.displayName] = it
-        }
-        appDb.bookDao.all.forEach { book ->
-            val progressFileName = getProgressFileName(book.name, book.author)
-            val webDavFile = map[progressFileName] ?: return@forEach
-            if (webDavFile.lastModify <= book.syncTime) {
-                //本地同步时间大于上传时间不用同步
-                return@forEach
-            }
-            getBookProgress(book)?.let { bookProgress ->
-                if (bookProgress.durChapterIndex > book.durChapterIndex
-                    || (bookProgress.durChapterIndex == book.durChapterIndex
-                            && bookProgress.durChapterPos > book.durChapterPos)
-                ) {
-                    book.durChapterIndex = bookProgress.durChapterIndex
-                    book.durChapterPos = bookProgress.durChapterPos
-                    book.durChapterTitle = bookProgress.durChapterTitle
-                    book.durChapterTime = bookProgress.durChapterTime
-                    book.syncTime = System.currentTimeMillis()
-                    appDb.bookDao.update(book)
+        val json = GSON.toJson(bundle)
+        WebDav(progressBundleUrl, authorization).upload(json.toByteArray(), "application/json")
+        progressBundle = bundle
+    }
+
+    /**
+     * 首次升级迁移：把「每本书一个 json」的旧格式合并进聚合文件。
+     * 迁移后旧文件保留不删，后续只读写聚合文件。
+     */
+    private suspend fun migrateOldProgressIfNeeded() {
+        val authorization = authorization ?: return
+        if (fetchProgressBundle(force = true) != null) return
+        val files = kotlin.runCatching {
+            WebDav(bookProgressUrl, authorization).listFiles()
+        }.getOrNull() ?: return
+        val jsonFiles = files.filter { it.displayName.endsWith(".json", true) }
+        if (jsonFiles.isEmpty()) return
+        val bundle = BookProgressBundle()
+        jsonFiles.forEach { file ->
+            kotlin.runCatching {
+                val bytes = WebDav("$bookProgressUrl${file.displayName}", authorization).download()
+                val json = String(bytes)
+                if (json.isJson()) {
+                    GSON.fromJsonObject<BookProgress>(json).getOrNull()?.let { bundle.merge(it) }
                 }
             }
+        }
+        if (bundle.books.isNotEmpty()) {
+            pushProgressBundle(bundle)
+            AppLog.put("进度迁移完成，共 ${bundle.books.size} 本")
         }
     }
 

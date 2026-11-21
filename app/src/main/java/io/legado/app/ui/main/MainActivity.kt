@@ -201,6 +201,21 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         }
     }
 
+    /**
+     * 同步 v2：静默对齐所有书的阅读进度，有变化时提示一句
+     */
+    private fun syncBookProgressSilently() {
+        if (!AppConfig.syncBookProgress) return
+        lifecycleScope.launch {
+            val updated = withContext(IO) {
+                AppWebDav.downloadAllBookProgress()
+            }
+            if (updated > 0) {
+                toastOnUi(getString(R.string.sync_progress_done, updated))
+            }
+        }
+    }
+
     private fun initView() = binding.run {
         viewPagerMain.setEdgeEffectColor(primaryColor)
         viewPagerMain.offscreenPageLimit = 3
@@ -448,6 +463,10 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             // 墨水屏专属：进入「我的」时回到根页，避免滞留在二级设置页
             if (realPositions[position] == idMy) {
                 (fragmentMap[idMy] as? MyFragment)?.resetToRoot()
+            }
+            // 同步 v2：切到书架时对齐一次云端进度
+            if (realPositions[position] == idBookshelf) {
+                syncBookProgressSilently()
             }
         }
 

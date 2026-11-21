@@ -1264,5 +1264,6 @@
     </string-array>
     <string name="web_dav_set_s">WebDav 服务器与同步设置</string>
     <string name="backup_restore_s">备份与恢复应用数据</string>
+    <string name="sync_progress_done">已同步 %d 本书的阅读进度</string>
 
 </resources>

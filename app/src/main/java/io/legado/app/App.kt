@@ -62,6 +62,7 @@ import splitties.systemservices.notificationManager
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
+import io.legado.app.utils.toastOnUi
 
 class App : Application() {
 
@@ -121,7 +122,10 @@ class App : Application() {
             SourceHelp.adjustSortNumber()
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
-                AppWebDav.downloadAllBookProgress()
+                val updated = AppWebDav.downloadAllBookProgress()
+                if (updated > 0) {
+                    appCtx.toastOnUi(appCtx.getString(R.string.sync_progress_done, updated))
+                }
             }
         }
     }
