@@ -105,7 +105,8 @@ class SmoothCheckBox @JvmOverloads constructor(
      * @param animate change with animation
      */
     fun setChecked(checked: Boolean, animate: Boolean) {
-        if (animate) {
+        // 墨水屏：勾选动画表现为逐帧重绘的勾线生长，在电纸上会留下残影，直接切换状态
+        if (animate && !io.legado.app.help.config.AppConfig.isEInkMode) {
             mTickDrawing = false
             mChecked = checked
             mDrewDistance = 0f
