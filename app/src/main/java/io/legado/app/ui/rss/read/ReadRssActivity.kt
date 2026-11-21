@@ -115,7 +115,6 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
     private lateinit var currentWebView: WebView
 
     private var starMenuItem: MenuItem? = null
-    private var ttsMenuItem: MenuItem? = null
     private var isFullscreen = false
     private var wasScreenOff = false
     private var customWebViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -157,7 +156,6 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
         currentWebView = pooledWebView.realWebView
         binding.webViewContainer.addView(currentWebView)
         viewModel.upStarMenuData.observe(this) { upStarMenu() }
-        viewModel.upTtsMenuData.observe(this) { upTtsMenu(it) }
         viewModel.upTitleData.observe(this) { binding.titleBar.title = it }
         initView()
         initWebView()
@@ -444,35 +442,6 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
             starMenuItem?.setTitle(R.string.out_favorites)
         }
         starMenuItem?.icon?.setTintMutate(primaryTextColor)
-    }
-
-    private fun upTtsMenu(isPlaying: Boolean) {
-        lifecycleScope.launch {
-            if (isPlaying) {
-                ttsMenuItem?.setIcon(R.drawable.ic_stop_black_24dp)
-                ttsMenuItem?.setTitle(R.string.aloud_stop)
-            } else {
-                ttsMenuItem?.setIcon(R.drawable.ic_volume_up)
-                ttsMenuItem?.setTitle(R.string.read_aloud)
-            }
-            ttsMenuItem?.icon?.setTintMutate(primaryTextColor)
-        }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun readAloud() {
-        if (viewModel.tts?.isSpeaking == true) {
-            viewModel.tts?.stop()
-            upTtsMenu(false)
-        } else {
-            currentWebView.settings.javaScriptEnabled = true
-            currentWebView.evaluateJavascript("document.documentElement.outerHTML") {
-                val html = StringEscapeUtils.unescapeJson(it).replace("^\"|\"$".toRegex(), "")
-                viewModel.readAloud(
-                    Jsoup.parse(html).textArray().joinToString("\n")
-                )
-            }
-        }
     }
 
     override fun onPause() {

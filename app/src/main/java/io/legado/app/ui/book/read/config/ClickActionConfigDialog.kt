@@ -29,15 +29,12 @@ class ClickActionConfigDialog : BaseDialogFragment(R.layout.dialog_click_action_
             Pair(2, getString(R.string.prev_page)),
             Pair(3, getString(R.string.next_chapter)),
             Pair(4, getString(R.string.previous_chapter)),
-            Pair(5, getString(R.string.read_aloud_prev_paragraph)),
-            Pair(6, getString(R.string.read_aloud_next_paragraph)),
             Pair(7, getString(R.string.bookmark_add)),
             Pair(8, getString(R.string.edit_content)),
             Pair(9, getString(R.string.replace_state_change)),
             Pair(10, getString(R.string.chapter_list)),
             Pair(11, getString(R.string.search_content)),
-            Pair(12, getString(R.string.sync_book_progress_t)),
-            Pair(13, getString(R.string.read_aloud_pause_resume))
+            Pair(12, getString(R.string.sync_book_progress_t))
         )
     }
 
