@@ -1,0 +1,81 @@
+== eink-only 验证原始输出 ==
+环境：Windows，项目 D:\EinkLegado，GRADLE_USER_HOME=D:\gradle-home（规避 KSP 跨盘符缺陷）
+日期：2026-11-21
+
+--------------------------------------------------
+[1] 基线构建（改造前）
+--------------------------------------------------
+命令：gradlew assembleAppDebug --console=plain
+结果：BUILD SUCCESSFUL in 12m 17s
+产物：legado_app_3.26.112108.apk = 37.00 MB (debug)
+备注：首次在 C 盘缓存下失败，错误为 KSP 的 "this and base files have different roots"
+      （Glide KSP 处理器在项目与 Gradle 缓存跨盘符时崩溃）。把缓存迁到 D 盘后通过。
+
+--------------------------------------------------
+[2] 文档门禁正跑
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：
+  声明解析：类 4 个，例外 6 条，编号来源 2 个
+  I1 归类完备
+  I2 索引与实体双向一致
+  I3 编号唯一
+  文档门禁通过：检查 .md 44 个，文件 1954 个
+
+--------------------------------------------------
+[3] 文档门禁负向自测
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/selftest-docgate.ps1
+输出：
+  夹具目录：<TEMP>\docgate-selftest-*
+  [PASS] 基线全绿
+  [PASS] 未归类文档（exit=1）
+  [PASS] 索引未登记文件（exit=1）
+  [PASS] 索引指向缺失文件（exit=1）
+  [PASS] 编号重复（exit=1）
+  负向自测全部通过：四种破坏都能被检出。
+
+--------------------------------------------------
+[4] 阶段 1（去视觉特效）构建
+--------------------------------------------------
+命令：gradlew assembleAppDebug --console=plain
+结果：BUILD SUCCESSFUL in 1m 34s
+产物：legado_app_3.26.112109.apk = 36.97 MB (debug)
+
+--------------------------------------------------
+[5] 阶段 2（删音视频/弹幕/Firebase）构建
+--------------------------------------------------
+第 1 次：FAILED —— 资源链接失败
+  /layout-land/activity_audio_play.xml:85 error: attribute lrcCurrentTextColor not found
+  原因：横屏布局漏删。删除后重试。
+第 2 次：FAILED —— 编译错误
+  PreferKey.kt:149 Unresolved reference 'const'（删除常量时把下一行粘到同一行）
+  ReadView.kt:23/28/29 Unresolved reference 'CoverPageDelegate' / 'SlidePageDelegate' / 'SimulationPageDelegate'
+  修复后重试。
+第 3 次：BUILD SUCCESSFUL in 9m 24s
+产物：legado_app_3.26.112109.apk = 31.51 MB (debug)，较基线 37.00 MB 下降 14.8%
+
+--------------------------------------------------
+[6] release 构建（minify + shrinkResources）
+--------------------------------------------------
+命令：gradlew assembleAppRelease --console=plain
+结果：BUILD SUCCESSFUL in 15m 9s
+121 actionable tasks: 121 executed
+关键任务：minifyAppReleaseWithR8、convertShrunkResourcesToBinaryAppRelease、
+          optimizeAppReleaseResources、lintVitalAppRelease 均通过
+产物：legado_app_3.26.112109.apk = 16.29 MB (release，未签名)
+
+--------------------------------------------------
+[7] 被删符号残留核查
+--------------------------------------------------
+检索范围：*.kt, *.java, *.xml, *.gradle, *.pro, *.toml（排除 build/.git/node_modules）
+检索符号：VideoPlayerActivity、AudioPlayActivity、AudioPlayService、VideoPlayService、
+          gsyVideo、ExoPlayerHelper、LyricViewX、danmakuFlameMaster、firebase、
+          CoverPageDelegate、SlidePageDelegate、SimulationPageDelegate
+结果：全部零命中（首轮发现的 3 条注释文案已同步清理）
+
+--------------------------------------------------
+[8] 体积基线说明
+--------------------------------------------------
+改造前仅采集了 debug 基线（37.00 MB），未构建过 release 基线，
+因此 AC-5 的「release 下降 ≥15%」缺少严格对照，以 debug 降幅（-14.8%）与新 release 绝对值记录。

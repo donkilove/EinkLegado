@@ -1,0 +1,102 @@
+# EInk 专属化改造
+
+> 状态：in-progress · 日期：2026-11-21
+
+## 目标
+
+把本项目从「通用阅读器 + 墨水屏模式」改造为「墨水屏专属阅读器」，删除在墨水屏上无实际价值或纯属视觉负担的功能与特效。
+
+- G1：删除视频、弹幕、音频播放器、Firebase 统计四个模块及其专属依赖。
+- G2：墨水屏下不再出现水波纹、淡入淡出、布局过渡、半透明遮罩等对电子纸无意义的视觉效果。
+- G3：翻页动画收敛为「无动画」「滚动」两种；阅读背景只保留纯色。
+- G4：阅读主链路（书架／搜索／书源／阅读／本地导入／漫画／备份恢复／朗读／Web 端编辑）不受影响。
+- G5：书源 JS 兼容性不退化——被删功能的公开函数保留签名与空实现。
+
+## 范围与非目标
+
+### 范围内
+
+阶段 1（视觉与交互，不删功能）：
+
+- `app/src/main/res/values*/styles.xml`、`themes.xml`：EInk 主题下重定义 `selectableItemBackground` 系列属性，全局关闭水波纹。
+- `app/src/main/java/io/legado/app/utils/ConstraintModify.kt`：EInk 下跳过 `beginDelayedTransition`。
+- `app/src/main/java/io/legado/app/model/BookCover.kt`：去掉 `crossFade(1500)`。
+- `app/src/main/java/io/legado/app/ui/widget/recycler/scroller/FastScroller.kt`、`ui/widget/checkbox/SmoothCheckBox.kt`、`ui/widget/anima/RotateLoading.kt`、`ui/widget/anima/explosion_field/`：EInk 下关闭动画。
+- `app/src/main/java/io/legado/app/ui/book/read/ReadMenu.kt`：半透明背景改不透明。
+- 翻页动画：删除 `ui/book/read/page/delegate/CoverPageDelegate.kt`、`SlidePageDelegate.kt`、`SimulationPageDelegate.kt`，同步 `constant/PageAnim.kt`、`ReadView.upPageAnim`、翻页设置项。
+- 阅读背景：删除 `ReadBookConfig` 中 `bgType` 的图片/文件分支与选图 UI。
+
+阶段 2（删除档 A 模块）：
+
+- 视频：`ui/video/`、`service/VideoPlayService.kt`、`help/gsyVideo/`、`help/exoplayer/ExoVideoManager.kt`、`ExoPlayerManager.kt`、`Exo2MediaPlayer.kt` 及全部入口。
+- 弹幕：随视频一并删除，移除 danmaku 依赖。
+- 音频播放器：`ui/book/audio/`、`service/AudioPlayService.kt` 及全部入口，移除 LyricViewX 依赖。
+- Firebase：`com.google.gms.google-services` 插件、`firebase-bom`、`firebase-analytics`、`firebase-perf`、`app/google-services.json`。
+- 书源兼容：`help/JsExtensions.kt` 的 `openVideoPlayer` 重载保留签名，内部记录日志后返回。
+- 设置项：删除 `videoSetting`、`mediaButtonOnExit`、`readAloudByMediaButton`（保留朗读本身）中仅服务于已删模块的条目。
+
+### 非目标
+
+- 不修改 Room schema（`app/schemas/` 不变，RSS／字典数据实体保留）。
+- 不修改包名（`io.legado.app`）与签名配置。
+- 不重构 UI 外壳、不改导航结构（留给后续「路线 3」）。
+- 不删除 RSS／发现页／自动更新／字典段评（属阶段 3，本轮不做）。
+- 不优化书源规则引擎。
+
+## 验收标准
+
+- AC-1：`assembleAppDebug` 成功，无新增编译错误。
+- AC-2：`assembleAppRelease`（含 minify + shrinkResources）成功。
+- AC-3：源码中不再存在被删类型／依赖的残留引用（`VideoPlayService`、`AudioPlayService`、`gsyVideo`、`danmaku`、`LyricViewX`、`firebase` 的符号级引用为零）。
+- AC-4：`java.openVideoPlayer` 仍可调用，行为为记录日志后返回，不抛异常。
+- AC-5：EInk 主题下 `selectableItemBackground` 解析为无 ripple 的静态 drawable（资源可被 aapt 解析、构建通过）。
+- AC-6：翻页动画仅剩 `noAnim` 与 `scrollPageAnim` 两种取值可达。
+- AC-7：文档门禁 `tools/check-docs.ps1` 通过，且四种破坏场景均可被检出。
+
+## 验收标准 ↔ 测试用例映射
+
+| 验收标准 | 测试用例 | 位置 |
+|---|---|---|
+| AC-1 | `gradlew assembleAppDebug` 退出码 0 | `docs/evidence/eink-only-check.txt` |
+| AC-2 | `gradlew assembleAppRelease` 退出码 0 | `docs/evidence/eink-only-check.txt` |
+| AC-3 | 残留符号检索脚本输出为空 + 构建期 Kotlin 编译零 unresolved 引用 | `docs/evidence/eink-only-check.txt` |
+| AC-4 | 代码审查 + 编译通过（`openVideoPlayer` 签名存在且空实现） | 人工审查记录 |
+| AC-5 | aapt 处理资源成功（包含在 AC-1 构建内） | `docs/evidence/eink-only-check.txt` |
+| AC-6 | `PageAnim.kt` 常量与 `ReadView.upPageAnim` 分支审查 | 人工审查记录 |
+| AC-7 | 门禁正跑 + 四种负向自测 | `docs/evidence/eink-only-check.txt` |
+
+说明：本仓库无可自动运行的 UI 测试设施，AC-4／AC-6 以代码审查加编译验证替代，真机行为未经验证，列入残余风险。
+
+## 数据流与接口变化
+
+- 删除系统服务：`VideoPlayService`、`AudioPlayService`，同步删除 `AndroidManifest.xml` 中的声明与通知渠道。
+- 保留并继续使用：`HttpReadAloudService`、`TTSReadAloudService`、`BaseReadAloudService`（朗读），故 **media3 与 okhttp-datasource 依赖保留**。
+- 对外 JS 接口：`openVideoPlayer(String, String)`、`openVideoPlayer(String, String, boolean)` 签名不变，实现改为空操作 + 日志。
+- Room 数据库：无变化。
+- 依赖变化：移除 `gsyVideoPlayer-java`、`gsyVideoPlayer-exo2`、`danmakuFlameMaster`、`lyricViewx`、`firebase-bom`、`firebase-analytics`、`firebase-perf` 与 `google-services` 插件。
+
+## 边界情况与失败处理
+
+- 书源调用 `java.openVideoPlayer`：记录日志后直接返回，书源流程不中断。
+- 用户在旧版本中配置过视频/音频相关设置项：对应键保留在 SharedPreferences 中但不再读取，无崩溃风险。
+- 已下载的音频/视频缓存目录：不再读取，不影响启动；不主动删除用户数据。
+- 混淆：删除依赖后需确认 `proguard-rules.pro` 中相关 keep 规则同步移除，避免 R8 报 -dontwarn 缺失类警告。
+
+## 测试方案
+
+- 构建门禁：`assembleAppDebug` 与 `assembleAppRelease` 必须通过（AC-1、AC-2）。
+- 静态核查：PowerShell 脚本检索被删符号残留（AC-3）。
+- 文档门禁：`tools/check-docs.ps1` 正跑 + 四种负向破坏自测（AC-7）。
+- 无新增可测逻辑，不引入单元测试；沿用仓库既有 `app/src/test` 设施作为基线，不新增测试文件。
+
+## 假设与风险
+
+- 假设：墨水屏设备不需要视频/弹幕/本地音频播放；朗读功能保留（用户明确要求）。
+- 风险 1：`media3` 与视频删除存在耦合（`AnalyzeUrl.kt` import `MediaItem`），删视频后需清理该处引用，否则编译失败。缓解：编译门禁。
+- 风险 2：删除 `gsyVideo` 目录后 `SourceHelp.openVideoPlayer` 及菜单回调仍引用，需一并改为空实现。缓解：编译器未解析引用错误。
+- 风险 3：`app/google-services.json` 删除后若插件未移除会构建失败。缓解：插件与依赖同一提交内移除。
+- 回滚方案：本轮改动按阶段独立提交，任一阶段可用 `git revert <commit>` 整体回退；数据库未变，回退不影响用户数据。
+
+## 变更记录
+
+- 2026-11-21：初版规格，用户确认「一次做到阶段 2」，并同意建立 `docs/specs`、`docs/evidence` 与文档门禁。

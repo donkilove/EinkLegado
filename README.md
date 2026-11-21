@@ -118,3 +118,35 @@ https://www.yuque.com/legado/wiki/community
 <a href="#readme">
     <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
 </a>
+
+# Docs-文档约定 [![](https://img.shields.io/badge/-Docs-F5F5F5.svg)](#Docs-文档约定-)
+
+本仓库只允许四类文档，其余 `.md` 只能作为上游既有文档或随产品发布的工件存在。新文档先归类，四类都装不下就不新增，改写进既有文档。
+
+| 类型 | 落点 | 索引 | 说明 |
+|---|---|---|---|
+| TODO | `TODO.md` | — | 只装未闭环事项，完成即时移出 |
+| SPEC | `docs/specs/` | [docs/specs/README.md](docs/specs/README.md) | 进行中的规格 |
+| 证据 | `docs/evidence/` | [docs/evidence/README.md](docs/evidence/README.md) | 一切验证输出（构建日志、核查输出、截图、基线） |
+| 已完成 SPEC | `docs/specs/done/` | [docs/specs/done/README.md](docs/specs/done/README.md) | 规格与决策记录归档 |
+
+**例外**
+
+以下为上游既有文档与随产品发布、被工具消费的工件，不属于上述四类：
+
+- `README.md`
+- `CHANGELOG.md`
+- `api.md`
+- `app/src/main/assets/**/*.md`
+- `app/src/main/java/**/*.md`
+- `modules/**/*.md`
+
+**编号**
+
+新增条目编号取「已用最大号 + 1」，扫描来源：`TODO.md`、`docs/specs/done/README.md`。
+
+**门禁**
+
+- 校验入口：`tools/check-docs.ps1`，校验三条不变式：归类完备、索引与实体双向一致、编号唯一。
+- 克隆后第一步启用提交钩子：`powershell -File tools/install-hooks.ps1`（幂等，可 `-Check` 只报告、可 `-Uninstall`）。
+- 逃生门：`git commit --no-verify` 可显式跳过，但会留痕于 `git log`。

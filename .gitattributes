@@ -1,0 +1,2 @@
+# 提交钩子由 sh 执行，必须保持 LF，否则会报 "bad interpreter"
+.githooks/* text eol=lf
