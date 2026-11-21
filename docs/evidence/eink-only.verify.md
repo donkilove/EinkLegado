@@ -11,7 +11,7 @@
 | AC-2 `assembleAppRelease` 成功 | 本机构建（含 R8 + 资源收缩） | 通过（15m9s） | [6] 段 |
 | AC-3 被删符号零残留 | 11 个符号全仓检索 | 通过 | [7] 段 |
 | AC-4 `java.openVideoPlayer` 空实现 | 代码审查 | 通过：`SourceHelp.openVideoPlayer` 保留签名，仅 `toastOnUi` 提示 | — |
-| AC-5 release 体积降幅 ≥15% | 体积对比 | **部分验证**：debug 37.00→31.51 MB（-14.8%）；release 16.29 MB 为新基线，改造前未采集 release 基线 | [8] 段 |
+| AC-5 release 体积降幅 ≥15% | 在未改动的 `main`（detached HEAD 8b87c5aba）构建 release 作基线 | **未达成**：19.08 MB → 16.29 MB，降幅 14.6%（差 0.4 个百分点） | [8] 段 |
 | AC-6 翻页动画只剩两种 | 代码审查 | 通过：`PageAnim` 仅 `scrollPageAnim`/`noAnim` 可达，设置项已收敛为两项 | — |
 | AC-7 文档门禁通过且可检出破坏 | 正跑 + 四种负向自测 | 通过 | [2][3] 段 |
 
@@ -32,7 +32,7 @@
 
 ## 未达成 / 主动放弃
 
-- AC-5 仅为部分验证：改造前只采集了 debug 基线，未构建 release 基线，无法给出 release 的严格降幅。如需严格对照，需在未改动的 `main` 上另跑一次 `assembleAppRelease` 作基线。
+- **AC-5 未达成**：release 体积 19.08 MB → 16.29 MB，降幅 14.6%，低于目标 15%。原因是删掉的三组依赖（gsyvideoplayer / danmaku / LyricViewX / Firebase）在 R8 收缩后实际占用的字节少于预估，而 APK 的大头是 native 库（cronet、libarchive、renderscript toolkit）与 assets/web 前端（1.4 MB），这些本轮未动。补足方式：阶段 3 裁掉 Web 端或进一步剔除 cronet，可显著超过 15%。
 - 阶段 3（RSS、发现页、自动更新、字典/段评、主题收敛）不在本轮范围，未实施。
 
 ## 残余风险与后续
