@@ -480,6 +480,30 @@ debug 对比：
 构建备注：过程中遇到 KSP 缓存报错（Storage corrupted / already registered），
          清理 build 目录并对 daemon 重启后恢复，非代码问题。
 
+--------------------------------------------------
+[19c] 排版设置跨设备同步 · 真机验证
+--------------------------------------------------
+步骤与结果（阅读器 6C1DA0B4 → 手机 WWZHIBUKSKCM5LGA）：
+
+1. 用户在阅读器把字号改为 26
+   阅读器本地 files/readConfig.json：textSize = 26
+2. 阅读器启动触发同步
+   readConfig.json 上传 HTTP 204、shareReadConfig.json 上传 HTTP 201
+3. 查云端 readConfig.json：textSize = 26
+4. 手机启动前本地：textSize = 24（旧值）
+5. 手机启动触发同步
+   手机本地 files/readConfig.json：textSize = 26   ← 已跟随阅读器更新
+
+结论：排版设置（字号）能跨设备同步，手机端成功拉取阅读器的配置。
+
+至此同步 v2 的双设备验证全部完成：
+  阅读进度（章节 + 章节内位置）✅
+  离线补传 ✅
+  书签 ✅
+  书架分组（新增与删除双向传播）✅
+  排版设置 ✅
+
+
 
 
 
