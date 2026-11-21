@@ -22,6 +22,9 @@ abstract class PreferenceFragment : PreferenceFragmentCompat() {
         super.onViewCreated(view, savedInstanceState)
         listView.clipToPadding = false
         listView.applyNavigationBarPadding()
+        // 墨水屏：去掉 Preference 列表的默认增删动画。点击开关或页面状态变化时，
+        // ItemAnimator 会让整行淡入淡出并反复刷新，是设置页看到"点一下闪一下"的来源。
+        listView.itemAnimator = null
     }
 
     @SuppressLint("RestrictedApi")
