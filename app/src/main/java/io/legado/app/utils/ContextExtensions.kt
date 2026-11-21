@@ -45,8 +45,6 @@ import io.legado.app.help.book.isImage
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.isVideo
 import io.legado.app.help.config.AppConfig
-import io.legado.app.ui.book.audio.AudioPlayActivity
-import io.legado.app.ui.video.VideoPlayerActivity
 import io.legado.app.ui.book.manga.ReadMangaActivity
 import io.legado.app.ui.book.read.ReadBookActivity
 import splitties.systemservices.clipboardManager
@@ -67,11 +65,15 @@ fun Context.startActivityForBook(
     book: Book,
     configIntent: Intent.() -> Unit = {},
 ) {
-    val cls = when {
-        book.isVideo -> VideoPlayerActivity::class.java
-        book.isAudio -> AudioPlayActivity::class.java
-        !book.isLocal && book.isImage && AppConfig.showMangaUi -> ReadMangaActivity::class.java
-        else -> ReadBookActivity::class.java
+    // 墨水屏专属版本已移除音频与视频播放器
+    if (book.isVideo || book.isAudio) {
+        toastOnUi("墨水屏版本不支持音视频书籍")
+        return
+    }
+    val cls = if (!book.isLocal && book.isImage && AppConfig.showMangaUi) {
+        ReadMangaActivity::class.java
+    } else {
+        ReadBookActivity::class.java
     }
     val intent = Intent(this, cls)
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

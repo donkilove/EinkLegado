@@ -102,7 +102,7 @@ abstract class BaseReadAloudService : BaseService(),
     }
     private val wifiLock by lazy {
         @Suppress("DEPRECATION")
-        wifiManager?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "legado:AudioPlayService")
+        wifiManager?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "legado:ReadAloudService")
             ?.apply {
                 setReferenceCounted(false)
             }

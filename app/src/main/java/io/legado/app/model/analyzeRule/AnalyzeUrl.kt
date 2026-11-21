@@ -3,7 +3,6 @@ package io.legado.app.model.analyzeRule
 import android.annotation.SuppressLint
 import android.util.Base64
 import androidx.annotation.Keep
-import androidx.media3.common.MediaItem
 import cn.hutool.core.codec.PercentCodec
 import cn.hutool.core.net.RFC3986
 import cn.hutool.core.util.HexUtil
@@ -20,7 +19,6 @@ import io.legado.app.help.CacheManager
 import io.legado.app.help.ConcurrentRateLimiter
 import io.legado.app.help.JsExtensions
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.exoplayer.ExoPlayerHelper
 import io.legado.app.help.glide.GlideHeaders
 import io.legado.app.help.http.BackstageWebView
 import io.legado.app.help.http.CookieManager
@@ -770,11 +768,6 @@ class AnalyzeUrl(
         private val queryEncoder =
             RFC3986.UNRESERVED.orNew(PercentCodec.of("!$%&()*+,/:;=?@[\\]^`{|}"))
         val customIp by lazy { ConcurrentHashMap<String, String>() }
-        fun AnalyzeUrl.getMediaItem(): MediaItem {
-            setCookie()
-            return ExoPlayerHelper.createMediaItem(url, headerMap)
-        }
-
     }
 
     @Keep

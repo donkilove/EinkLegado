@@ -169,15 +169,6 @@
         <activity
             android:name=".ui.book.info.edit.BookInfoEditActivity"
             android:launchMode="singleTask" />
-        <!-- 音频播放界面 -->
-        <activity
-            android:name="io.legado.app.ui.book.audio.AudioPlayActivity"
-            android:launchMode="singleTask" />
-        <!-- 视频播放器界面 -->
-        <activity
-            android:name="io.legado.app.ui.video.VideoPlayerActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:launchMode="singleTask" />
         <!-- 授权界面 -->
         <activity
             android:name="io.legado.app.lib.permission.PermissionActivity"
@@ -504,12 +495,6 @@
             android:foregroundServiceType="mediaPlayback" />
         <service
             android:name=".service.HttpReadAloudService"
-            android:foregroundServiceType="mediaPlayback" />
-        <service
-            android:name=".service.AudioPlayService"
-            android:foregroundServiceType="mediaPlayback" />
-        <service
-            android:name=".service.VideoPlayService"
             android:foregroundServiceType="mediaPlayback" />
         <service
             android:name=".service.DownloadService"

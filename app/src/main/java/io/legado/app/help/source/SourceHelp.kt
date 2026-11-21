@@ -17,12 +17,9 @@ import io.legado.app.model.AudioPlay
 import io.legado.app.model.ReadBook
 import io.legado.app.model.ReadManga
 import io.legado.app.model.VideoPlay
-import io.legado.app.service.VideoPlayService
-import io.legado.app.ui.video.VideoPlayerActivity
 import io.legado.app.utils.EncoderUtils
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.splitNotBlank
-import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
 import splitties.init.appCtx
 
@@ -185,23 +182,13 @@ object SourceHelp {
         }
     }
 
+    /**
+     * 墨水屏专属版本已移除视频播放器。
+     * 为保证既有书源 JS（java.openVideoPlayer）不报错，这里保留签名并只做提示。
+     */
+    @Suppress("UNUSED_PARAMETER")
     fun openVideoPlayer(source: BaseSource?, url: String, title: String, isFloat: Boolean) {
-        if (isFloat) {
-            val intent = Intent(appCtx, VideoPlayService::class.java).apply {
-                putExtra("videoUrl", url)
-                putExtra("videoTitle", title)
-                putExtra("sourceKey", source?.getKey())
-                putExtra("sourceType", source?.getSourceType())
-            }
-            ContextCompat.startForegroundService(appCtx, intent)
-        } else {
-            appCtx.startActivity<VideoPlayerActivity> {
-                putExtra("videoUrl", url)
-                putExtra("videoTitle", title)
-                putExtra("sourceKey", source?.getKey())
-                putExtra("sourceType", source?.getSourceType())
-            }
-        }
+        appCtx.toastOnUi("墨水屏版本不支持视频播放")
     }
 
 }
