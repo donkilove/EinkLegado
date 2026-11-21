@@ -49,6 +49,8 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
     override val viewModel by viewModels<DictRuleViewModel>()
     override val binding by viewBinding(ActivityDictRuleBinding::inflate)
     private val importRecordKey = "dictRuleUrls"
+    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.DictRule>()
+
     private val adapter by lazy { DictRuleAdapter(this, this) }
     private val qrCodeResult = registerForActivityResult(QrCodeResult()) {
         it ?: return@registerForActivityResult
@@ -102,10 +104,22 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
         return super.onCompatCreateOptionsMenu(menu)
     }
 
+    private fun upPageBar() {
+        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
+    }
+
     private fun initRecyclerView() {
         binding.recyclerView.setEdgeEffectColor(primaryColor)
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
+        binding.pageBar.onPageChange = { delta ->
+            val target = paginator.page + delta
+            if (target in 0 until paginator.pageCount) {
+                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallBack)
+                binding.recyclerView.scrollToPosition(0)
+                upPageBar()
+            }
+        }
         binding.recyclerView.addItemDecoration(VerticalDivider(this))
         val itemTouchCallback = ItemTouchCallback(adapter)
         itemTouchCallback.isCanDrag = true
@@ -132,7 +146,9 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
             appDb.dictRuleDao.flowAll().catch {
                 AppLog.put("字典规则获取数据失败\n${it.localizedMessage}", it)
             }.flowOn(IO).collect {
-                adapter.setItems(it, adapter.diffItemCallBack)
+                paginator.setAll(it)
+                adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
+                upPageBar()
             }
         }
     }

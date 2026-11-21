@@ -63,6 +63,7 @@ import io.legado.app.utils.share
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.startActivity
+import io.legado.app.utils.Paginator
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.transaction
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -89,6 +90,8 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
     override val viewModel by viewModels<BookSourceViewModel>()
     private val importRecordKey = "bookSourceRecordKey"
     private val adapter by lazy { BookSourceAdapter(this, this, binding.recyclerView) }
+    // 墨水屏专属：每页 8 项，用翻页代替长距离滚动
+    private val paginator = Paginator<BookSourcePart>()
     private val itemTouchCallback by lazy { ItemTouchCallback(adapter) }
     private val searchView: SearchView by lazy {
         binding.titleBar.findViewById(R.id.search_view)
@@ -293,6 +296,23 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
         dragSelectTouchHelper.activeSlideSelect()
         // Note: need judge selection first, so add ItemTouchHelper after it.
         ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
+        binding.pageBar.onPageChange = { delta ->
+            val target = paginator.page + delta
+            if (target in 0 until paginator.pageCount) {
+                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallback, !Debug.isChecking)
+                binding.recyclerView.scrollToPosition(0)
+                upPageBar()
+            }
+        }
+    }
+
+    private fun upPageBar() {
+        binding.pageBar.update(
+            paginator.page,
+            paginator.pageCount,
+            paginator.total,
+            "个书源"
+        )
     }
 
     private fun initSearchView() {
@@ -396,7 +416,9 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
             ).catch {
                 AppLog.put("书源界面更新书源出错", it)
             }.flowOn(IO).conflate().collect { data ->
-                adapter.setItems(data, adapter.diffItemCallback, !Debug.isChecking)
+                paginator.setAll(data)
+                adapter.setItems(paginator.slice(), adapter.diffItemCallback, !Debug.isChecking)
+                upPageBar()
                 itemTouchCallback.isCanDrag =
                     sort == BookSourceSort.Default && !groupSourcesByDomain
                 delay(500)

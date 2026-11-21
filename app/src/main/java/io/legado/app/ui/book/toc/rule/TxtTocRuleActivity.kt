@@ -49,6 +49,8 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
 
     override val viewModel by viewModels<TxtTocRuleViewModel>()
     override val binding by viewBinding(ActivityTxtTocRuleBinding::inflate)
+    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.TxtTocRule>()
+
     private val adapter: TxtTocRuleAdapter by lazy {
         TxtTocRuleAdapter(this, this)
     }
@@ -104,6 +106,14 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
         recyclerView.setEdgeEffectColor(primaryColor)
         recyclerView.addItemDecoration(VerticalDivider(this@TxtTocRuleActivity))
         recyclerView.adapter = adapter
+        binding.pageBar.onPageChange = { delta ->
+            val target = paginator.page + delta
+            if (target in 0 until paginator.pageCount) {
+                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallBack)
+                binding.recyclerView.scrollToPosition(0)
+                upPageBar()
+            }
+        }
         // When this page is opened, it is in selection mode
         val dragSelectTouchHelper =
             DragSelectTouchHelper(adapter.dragSelectCallback).setSlideArea(16, 50)
@@ -122,12 +132,18 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
         binding.selectActionBar.setCallBack(this)
     }
 
+    private fun upPageBar() {
+        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
+    }
+
     private fun initData() {
         lifecycleScope.launch {
             appDb.txtTocRuleDao.observeAll().catch {
                 AppLog.put("TXT目录规则界面获取数据失败\n${it.localizedMessage}", it)
             }.flowOn(IO).conflate().collect { tocRules ->
-                adapter.setItems(tocRules, adapter.diffItemCallBack)
+                paginator.setAll(tocRules)
+                adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
+                upPageBar()
             }
         }
     }

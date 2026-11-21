@@ -64,6 +64,8 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     override val binding by viewBinding(ActivityReplaceRuleBinding::inflate)
     override val viewModel by viewModels<ReplaceRuleViewModel>()
     private val importRecordKey = "replaceRuleRecordKey"
+    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.ReplaceRule>()
+
     private val adapter by lazy { ReplaceRuleAdapter(this, this) }
     private val searchView: SearchView by lazy {
         binding.titleBar.findViewById(R.id.search_view)
@@ -138,10 +140,22 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         return super.onPrepareOptionsMenu(menu)
     }
 
+    private fun upPageBar() {
+        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
+    }
+
     private fun initRecyclerView() {
         binding.recyclerView.setEdgeEffectColor(primaryColor)
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
+        binding.pageBar.onPageChange = { delta ->
+            val target = paginator.page + delta
+            if (target in 0 until paginator.pageCount) {
+                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallBack)
+                binding.recyclerView.scrollToPosition(0)
+                upPageBar()
+            }
+        }
         binding.recyclerView.addItemDecoration(VerticalDivider(this))
         val itemTouchCallback = ItemTouchCallback(adapter)
         itemTouchCallback.isCanDrag = true
@@ -222,7 +236,9 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 if (dataInit) {
                     setResult(RESULT_OK)
                 }
-                adapter.setItems(it, adapter.diffItemCallBack)
+                paginator.setAll(it)
+                adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
+                upPageBar()
                 dataInit = true
                 delay(100)
             }
