@@ -44,7 +44,9 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     private var durChapterIndex = 0
 
     // 墨水屏专属：目录分页，每页条数按可视区自适应
-    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.BookChapter>()
+    // 初始值故意取大：目录项较矮，若初始条数少于屏幕能放下的数量，校准无从得知还能再多放几条
+    private val paginator =
+        io.legado.app.utils.Paginator<io.legado.app.data.entities.BookChapter>(20)
     private var pageSizeCalibrated = false
     private var calibrateAttempts = 0
 
@@ -106,9 +108,10 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
             }
             pageSizeCalibrated = true
             if (fitCount != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(fitCount))
-                upPageBar()
+                paginator.setPageSize(fitCount)
             }
+            // 校准会重置页码，收敛后再定位到当前阅读章节，否则打开目录落在第一页
+            jumpToCurrentChapter()
         }
     }
     private fun initRecyclerView() {
@@ -195,8 +198,9 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
     override fun onListChanged() {
         lifecycleScope.launch {
-            jumpToCurrentChapter()
-            adapter.upDisplayTitles(mLayoutManager.findFirstVisibleItemPosition())
+            // 只刷新当前页的章节标题。定位当前章由 calibratePageSize 完成后负责，
+            // 否则每次翻页 setItems 触发本回调，都会被强制拉回当前章所在页。
+            adapter.upDisplayTitles(0)
         }
     }
 
