@@ -72,6 +72,18 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
     /**
      * 回到「我的」根页：切换 tab 或从其他页面回来时调用，避免滞留在二级页
      */
+    /**
+     * 返回键优先交给本页处理：处于二级页面时退回上级并返回 true。
+     * 不依赖 OnBackPressedDispatcher 的回调顺序（实测该回调常常抢不过 Activity 上的回调）。
+     */
+    fun handleBack(): Boolean {
+        if (childFragmentManager.backStackEntryCount > 0) {
+            childFragmentManager.popBackStack()
+            return true
+        }
+        return false
+    }
+
     fun resetToRoot() {
         if (childFragmentManager.backStackEntryCount > 0) {
             childFragmentManager.popBackStack(
@@ -84,7 +96,10 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
-            if (isVisible && childFragmentManager.backStackEntryCount > 0) {
+            // 只要还有返回栈就退回上级。原先这里还要求 isVisible 为 true，
+            // 但该回调只在处于子屏时启用，且从独立 Activity 返回的瞬间窗口可能尚未可见，
+            // 判断为 false 后会把事件转发给 Activity，触发「回到书架」。
+            if (childFragmentManager.backStackEntryCount > 0) {
                 childFragmentManager.popBackStack()
             } else {
                 isEnabled = false

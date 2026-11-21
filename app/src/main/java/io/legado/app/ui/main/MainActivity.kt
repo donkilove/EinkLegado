@@ -91,6 +91,14 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     private var bookshelfReselected: Long = 0
     private var exploreReselected: Long = 0
     private var pagePosition = 0
+
+    companion object {
+        /**
+         * recreate() 前所在的标签页。
+         * 存放在伴生对象里，因为 Activity 实例会被销毁重建，成员变量无法跨越。
+         */
+        private var pendingPageForRecreate = -1
+    }
     private val fragmentMap = hashMapOf<Int, Fragment>()
     private var bottomMenuCount = 4
     private val EXIT_INTERVAL = 2000L
@@ -104,8 +112,25 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         upBottomMenu()
         initView()
         upHomePage()
+        // 因同步等原因重建界面时，回到重建前的标签页而不是书架。
+        // 用 post 延后到 ViewPager 完成布局后再设置，否则会被后续的状态恢复覆盖。
+        if (pendingPageForRecreate >= 0) {
+            val target = pendingPageForRecreate
+            pendingPageForRecreate = -1
+            binding.viewPagerMain.post {
+                binding.viewPagerMain.setCurrentItem(target, false)
+                pagePosition = target
+            }
+        }
         onBackPressedDispatcher.addCallback(this) {
-            if (pagePosition != 0) {
+            val onMyPage = pagePosition != 0 && realPositions.getOrNull(pagePosition) == idMy
+            if (onMyPage) {
+                // 「我的」页面：还停在二级页就先退回上级；已在根页则走下面的退出逻辑，绝不切到书架
+                val myPage = fragmentMap[idMy] as? MyFragment
+                if (myPage?.handleBack() == true) {
+                    return@addCallback
+                }
+            } else if (pagePosition != 0) {
                 binding.viewPagerMain.currentItem = 0
                 return@addCallback
             }
@@ -379,6 +404,10 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         (fragmentMap[getFragmentId(0)] as? BaseBookshelfFragment)?.run {
             upSort()
         }
+        // 记住当前标签页。recreate 会销毁重建 Activity，ViewPager 默认回到第 0 页（书架），
+        // 导致用户在「我的」页面触发一次同步重建后，后续从任何设置页返回都落在书架。
+        // 用 pagePosition 而不是 binding.currentItem：重建常在界面不可见时发生，读 View 不可靠。
+        pendingPageForRecreate = pagePosition
         super.recreate()
     }
 
