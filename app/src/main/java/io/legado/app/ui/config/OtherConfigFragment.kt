@@ -6,10 +6,13 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.postDelayed
 import androidx.fragment.app.activityViewModels
 import androidx.preference.ListPreference
 import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceScreen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import io.legado.app.R
 import io.legado.app.constant.EventBus
@@ -64,7 +67,8 @@ class OtherConfigFragment : PreferenceFragment(),
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         putPrefBoolean(PreferKey.processText, isProcessTextEnabled())
-        addPreferencesFromResource(R.xml.pref_config_other)
+        // rootKey 为空显示「其它设置」根页，否则显示对应二级页
+        setPreferencesFromResource(R.xml.pref_config_other, rootKey)
         upPreferenceSummary(PreferKey.userAgent, AppConfig.userAgent)
         upPreferenceSummary(PreferKey.preDownloadNum, AppConfig.preDownloadNum.toString())
         upPreferenceSummary(PreferKey.threadCount, AppConfig.threadCount.toString())
@@ -93,7 +97,44 @@ class OtherConfigFragment : PreferenceFragment(),
         preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(this)
     }
 
+    override fun onResume() {
+        super.onResume()
+        upTitleBar()
+    }
+
+    /**
+     * 墨水屏专属：打开二级设置页，标题栏跟随分类名并给出返回入口
+     */
+    private fun openSubScreen(screen: PreferenceScreen) {
+        val fragment = OtherConfigFragment().apply {
+            arguments = Bundle().apply {
+                putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, screen.key)
+                putString(ARG_SUB_TITLE, screen.title?.toString())
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.configFrameLayout, fragment, ConfigTag.OTHER_CONFIG)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun upTitleBar() {
+        val act = activity as? ConfigActivity ?: return
+        val subTitle = arguments?.getString(ARG_SUB_TITLE)
+        act.upTitleBar(
+            title = subTitle ?: getString(R.string.other_setting),
+            showBack = subTitle != null
+        ) {
+            parentFragmentManager.popBackStack()
+        }
+    }
+
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        // 墨水屏专属：二级页导航，自己接管（AndroidX 默认实现在本宿主下替换错容器）
+        if (preference is PreferenceScreen && preference.preferenceCount > 0) {
+            openSubScreen(preference)
+            return true
+        }
         when (preference.key) {
             PreferKey.userAgent -> showUserAgentDialog()
             PreferKey.customHosts -> showCustomHostsDialog()
@@ -366,6 +407,10 @@ class OtherConfigFragment : PreferenceFragment(),
             }
             cancelButton()
         }
+    }
+
+    companion object {
+        private const val ARG_SUB_TITLE = "subScreenTitle"
     }
 
 }

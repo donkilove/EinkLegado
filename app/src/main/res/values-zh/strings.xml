@@ -1236,4 +1236,19 @@
     <string name="auto_check_new_backup_t">自动检查新备份</string>
     <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
     <string name="sys_image_picker">系统图片选择器</string>
+    <!-- 设置页二级入口 -->
+    <string name="my_content">内容管理</string>
+    <string name="other_language_ui">语言与界面</string>
+    <string name="other_read_update">阅读与更新</string>
+    <string name="other_network">网络</string>
+    <string name="other_storage">存储与缓存</string>
+    <string name="other_security">书源与安全</string>
+    <string name="other_sound_key">声音与按键</string>
+    <string name="other_debug">调试</string>
+    <string name="read_screen">屏幕与状态栏</string>
+    <string name="read_typography">排版</string>
+    <string name="read_paging">翻页与进度</string>
+    <string name="read_gesture">点击与手势</string>
+    <string name="read_content">内容与显示</string>
+
 </resources>

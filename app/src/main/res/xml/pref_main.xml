@@ -1,50 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  墨水屏专属：入口按用途收进二级页，避免在电子纸上长距离滚动。
+  各子项 key 保持不变，MyPreferenceFragment 的点击处理无需改动。
+-->
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:divider="@color/transparent"
     app:allowDividerBelow="false">
 
-    <io.legado.app.lib.prefs.Preference
+    <androidx.preference.PreferenceScreen
         android:icon="@drawable/ic_cfg_source"
-        android:key="bookSourceManage"
-        android:summary="@string/book_source_manage_desc"
-        android:title="@string/book_source_manage"
-        app:iconSpaceReserved="false" />
+        android:key="myContentScreen"
+        android:title="@string/my_content"
+        app:iconSpaceReserved="false">
 
-    <io.legado.app.lib.prefs.Preference
-        android:icon="@drawable/ic_cfg_source"
-        android:key="txtTocRuleManage"
-        android:summary="@string/config_txt_toc_rule"
-        android:title="@string/txt_toc_rule"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:icon="@drawable/ic_cfg_source"
+            android:key="bookSourceManage"
+            android:summary="@string/book_source_manage_desc"
+            android:title="@string/book_source_manage"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:icon="@drawable/ic_cfg_replace"
-        android:key="replaceManage"
-        android:summary="@string/replace_purify_desc"
-        android:title="@string/replace_purify"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:icon="@drawable/ic_cfg_source"
+            android:key="txtTocRuleManage"
+            android:summary="@string/config_txt_toc_rule"
+            android:title="@string/txt_toc_rule"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:icon="@drawable/ic_translate"
-        android:key="dictRuleManage"
-        android:summary="@string/config_dict_rule"
-        android:title="@string/dict_rule"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:icon="@drawable/ic_cfg_replace"
+            android:key="replaceManage"
+            android:summary="@string/replace_purify_desc"
+            android:title="@string/replace_purify"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.SwitchPreference
-        android:defaultValue="false"
-        android:icon="@drawable/ic_cfg_web"
-        android:key="webService"
-        android:summary="@string/web_service_desc"
-        android:title="@string/web_service"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:icon="@drawable/ic_translate"
+            android:key="dictRuleManage"
+            android:summary="@string/config_dict_rule"
+            android:title="@string/dict_rule"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.PreferenceCategory
+        <io.legado.app.lib.prefs.SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_cfg_web"
+            android:key="webService"
+            android:summary="@string/web_service_desc"
+            android:title="@string/web_service"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceScreen>
+
+    <androidx.preference.PreferenceScreen
+        android:icon="@drawable/ic_cfg_theme"
+        android:key="mySettingScreen"
         android:title="@string/setting"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
         app:iconSpaceReserved="false">
 
         <io.legado.app.lib.prefs.Preference
@@ -69,15 +81,13 @@
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />
 
-    </io.legado.app.lib.prefs.PreferenceCategory>
+    </androidx.preference.PreferenceScreen>
 
-    <io.legado.app.lib.prefs.PreferenceCategory
-        android:key="aboutCategory"
+    <androidx.preference.PreferenceScreen
+        android:icon="@drawable/ic_cfg_about"
+        android:key="myOtherScreen"
         android:title="@string/other"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false"
-        app:layout="@layout/view_preference_category">
+        app:iconSpaceReserved="false">
 
         <io.legado.app.lib.prefs.Preference
             android:icon="@drawable/ic_bookmark"
@@ -112,6 +122,6 @@
             android:title="@string/exit"
             app:iconSpaceReserved="false" />
 
-    </io.legado.app.lib.prefs.PreferenceCategory>
+    </androidx.preference.PreferenceScreen>
 
 </androidx.preference.PreferenceScreen>

@@ -1343,4 +1343,19 @@
     <string name="click_image_way">点击图片方式</string>
     <string name="auto_update_summary">每天自动检查软件是否更新</string>
     <string name="shibboleth">口令</string>
+    <!-- 设置页二级入口 -->
+    <string name="my_content">Content</string>
+    <string name="other_language_ui">Language &amp; Interface</string>
+    <string name="other_read_update">Reading &amp; Update</string>
+    <string name="other_network">Network</string>
+    <string name="other_storage">Storage &amp; Cache</string>
+    <string name="other_security">Source &amp; Security</string>
+    <string name="other_sound_key">Sound &amp; Keys</string>
+    <string name="other_debug">Debug</string>
+    <string name="read_screen">Screen &amp; Status Bar</string>
+    <string name="read_typography">Typography</string>
+    <string name="read_paging">Paging &amp; Progress</string>
+    <string name="read_gesture">Tap &amp; Gesture</string>
+    <string name="read_content">Content &amp; Display</string>
+
 </resources>

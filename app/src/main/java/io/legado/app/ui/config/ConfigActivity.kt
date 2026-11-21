@@ -1,7 +1,9 @@
 package io.legado.app.ui.config
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
@@ -24,11 +26,36 @@ class ConfigActivity : VMBaseActivity<ActivityConfigBinding, ConfigViewModel>() 
             ConfigTag.WELCOME_CONFIG -> replaceFragment<WelcomeConfigFragment>(configTag)
             else -> finish()
         }
+        // 墨水屏专属：进入二级设置页后，返回键应先退回上级列表，而不是直接关闭本页
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     override fun setTitle(resId: Int) {
         super.setTitle(resId)
         binding.titleBar.setTitle(resId)
+    }
+
+    /**
+     * 墨水屏专属：二级页需要把标题栏换成分类名并显示返回箭头
+     */
+    fun upTitleBar(title: CharSequence?, showBack: Boolean, onBack: () -> Unit) {
+        binding.titleBar.title = title
+        binding.titleBar.toolbar.navigationIcon = if (showBack) {
+            ContextCompat.getDrawable(this, R.drawable.ic_arrow_back)
+        } else {
+            null
+        }
+        binding.titleBar.setNavigationOnClickListener {
+            if (showBack) onBack()
+        }
     }
 
     inline fun <reified T : Fragment> replaceFragment(configTag: String) {

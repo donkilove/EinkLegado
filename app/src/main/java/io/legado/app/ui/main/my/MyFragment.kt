@@ -5,7 +5,11 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
 import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceScreen
 import io.legado.app.R
 import io.legado.app.base.BaseFragment
 import io.legado.app.constant.EventBus
@@ -40,7 +44,8 @@ import io.legado.app.utils.showHelp
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
-class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInterface {
+class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInterface,
+    PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
 
     constructor(position: Int) : this() {
         val bundle = Bundle()
@@ -59,6 +64,69 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         if (preferenceFragment == null) preferenceFragment = MyPreferenceFragment()
         childFragmentManager.beginTransaction()
             .replace(R.id.pre_fragment, preferenceFragment, fragmentTag).commit()
+        childFragmentManager.addOnBackStackChangedListener { upTitleBarForSubScreen() }
+        upTitleBarForSubScreen()
+        // 墨水屏专属：子屏里让返回键先退回「我的」根页，而不是直接切到书架
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
+    }
+
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            if (isVisible && childFragmentManager.backStackEntryCount > 0) {
+                childFragmentManager.popBackStack()
+            } else {
+                isEnabled = false
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        }
+    }
+
+    private var subScreenTitle: CharSequence? = null
+
+    /**
+     * 子屏时标题栏换成分类名并显示返回箭头，回到根页时还原
+     */
+    private fun upTitleBarForSubScreen() {
+        val onSubScreen = childFragmentManager.backStackEntryCount > 0
+        binding.titleBar.title = if (onSubScreen) {
+            subScreenTitle ?: getString(R.string.my)
+        } else {
+            getString(R.string.my)
+        }
+        binding.titleBar.toolbar.navigationIcon = if (onSubScreen) {
+            ContextCompat.getDrawable(requireContext(), R.drawable.ic_arrow_back)
+        } else {
+            null
+        }
+        binding.titleBar.setNavigationOnClickListener {
+            if (childFragmentManager.backStackEntryCount > 0) {
+                childFragmentManager.popBackStack()
+            }
+        }
+        backCallback.isEnabled = onSubScreen
+    }
+
+    /**
+     * 墨水屏专属：二级页导航。
+     * 不依赖 AndroidX 默认的 showPreferenceScreen（本页是 Fragment 套 Fragment，默认实现会替换错容器），
+     * 改为按 rootKey 重建 PreferenceFragment 并压入返回栈。
+     */
+    override fun onPreferenceStartScreen(
+        caller: PreferenceFragmentCompat,
+        pref: PreferenceScreen
+    ): Boolean {
+        subScreenTitle = pref.title
+        val fragment = MyPreferenceFragment().apply {
+            arguments = Bundle().apply {
+                putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
+            }
+        }
+        childFragmentManager.beginTransaction()
+            .replace(R.id.pre_fragment, fragment, "prefFragment")
+            .addToBackStack(null)
+            .commit()
+        return true
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu) {
@@ -79,7 +147,8 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             putPrefBoolean(PreferKey.webService, WebService.isRun)
-            addPreferencesFromResource(R.xml.pref_main)
+            // rootKey 为空显示「我的」根页，否则显示对应二级页
+            setPreferencesFromResource(R.xml.pref_main, rootKey)
             findPreference<SwitchPreference>("webService")?.onLongClick {
                 if (!WebService.isRun) {
                     return@onLongClick false
