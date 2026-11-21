@@ -135,7 +135,8 @@ class App : Application() {
             SourceHelp.adjustSortNumber()
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
-                val updated = AppWebDav.downloadAllBookProgress()
+                val updated = AppWebDav.downloadAllBookProgress(withUserData = true)
+                AppWebDav.syncReadConfig()
                 if (updated > 0) {
                     appCtx.toastOnUi(appCtx.getString(R.string.sync_progress_done, updated))
                 }

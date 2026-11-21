@@ -14,6 +14,11 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
 import io.legado.app.help.sync.PendingProgressQueue
+import io.legado.app.help.sync.SyncData
+import io.legado.app.help.sync.UserDataSync
+import io.legado.app.utils.postEvent
+import io.legado.app.help.config.ReadBookConfig
+import io.legado.app.constant.EventBus
 import io.legado.app.lib.webdav.Authorization
 import io.legado.app.lib.webdav.WebDav
 import io.legado.app.lib.webdav.WebDavException
@@ -50,6 +55,9 @@ object AppWebDav {
      * 聚合进度文件：所有书的进度集中一处，一次请求即可完成全量对齐。
      * 旧格式（每本书一个 json）保留在 bookProgress/ 目录下，仅在迁移时读取。
      */
+    /** 书架分组 / 书签 / 书源的聚合同步文件 */
+    private val syncDataUrl get() = "${rootWebDavUrl}syncData.json"
+
     private val progressBundleUrl get() = "${rootWebDavUrl}bookProgress.json"
 
     /** 内存中的聚合进度，避免重复下载 */
@@ -352,7 +360,7 @@ object AppWebDav {
      * 全量同步：下载聚合文件并与本地逐本比较，取更靠后的进度写回本地记录。
      * @return 实际更新的书籍数量，0 表示无变化或同步失败
      */
-    suspend fun downloadAllBookProgress(): Int {
+    suspend fun downloadAllBookProgress(withUserData: Boolean = false): Int {
         if (!AppConfig.syncBookProgress) return 0
         if (!NetworkUtils.isAvailable()) return 0
         authorization ?: return 0
@@ -369,12 +377,84 @@ object AppWebDav {
                     updated++
                 }
             }
+            if (withUserData) syncUserData()
             updated
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
             AppLog.put("同步阅读进度失败\n${e.localizedMessage}", e)
             0
         }
+    }
+
+    /**
+     * 同步书架分组、书签、书源。
+     * 策略为「只增不删」：先并入云端有而本地没有的条目，再把本地全量回写云端。
+     * @return 本次从云端新增到本地的条目数
+     */
+    suspend fun syncUserData(): UserDataSync.Result {
+        if (!NetworkUtils.isAvailable()) return UserDataSync.Result()
+        val authorization = authorization ?: return UserDataSync.Result()
+        return kotlin.runCatching {
+            val remote = kotlin.runCatching {
+                val bytes = WebDav(syncDataUrl, authorization).download()
+                val json = String(bytes)
+                if (json.isJson()) GSON.fromJsonObject<SyncData>(json).getOrNull() else null
+            }.getOrNull()
+            val merged = if (remote != null) UserDataSync.merge(remote) else UserDataSync.Result()
+            val local = UserDataSync.export()
+            val json = GSON.toJson(local)
+            WebDav(syncDataUrl, authorization).upload(json.toByteArray(), "application/json")
+            merged
+        }.onFailure {
+            currentCoroutineContext().ensureActive()
+            AppLog.put("同步用户数据失败\n${it.localizedMessage}", it)
+        }.getOrElse { UserDataSync.Result() }
+    }
+
+    /**
+     * 同步阅读排版设置（字体、行距、边距、主题等）。
+     *
+     * 这类配置保存在 files/readConfig.json（配置档案数组）与 files/shareReadConfig.json（共享配置）。
+     * 以文件修改时间判定新旧：云端更新则覆盖本地并重新加载，否则把本地传上去。
+     * @return 本地配置是否被云端覆盖
+     */
+    suspend fun syncReadConfig(): Boolean {
+        if (!NetworkUtils.isAvailable()) return false
+        val authorization = authorization ?: return false
+        return kotlin.runCatching {
+            val remoteFiles = kotlin.runCatching {
+                WebDav(rootWebDavUrl, authorization).listFiles()
+            }.getOrNull().orEmpty().associateBy { it.displayName }
+            var overwritten = false
+            listOf(
+                ReadBookConfig.configFileName to ReadBookConfig.configFilePath,
+                ReadBookConfig.shareConfigFileName to ReadBookConfig.shareConfigFilePath
+            ).forEach { (name, path) ->
+                val localFile = File(path)
+                val remote = remoteFiles[name]
+                val remoteTime = remote?.lastModify ?: 0L
+                val localTime = if (localFile.exists()) localFile.lastModified() else 0L
+                if (remote != null && remoteTime > localTime) {
+                    // 云端更新：下载覆盖
+                    val bytes = WebDav("$rootWebDavUrl$name", authorization).download()
+                    localFile.writeBytes(bytes)
+                    overwritten = true
+                } else if (localFile.exists()) {
+                    // 本地更新或云端缺失：上传
+                    WebDav("$rootWebDavUrl$name", authorization)
+                        .upload(localFile.readBytes(), "application/json")
+                }
+            }
+            if (overwritten) {
+                ReadBookConfig.initConfigs()
+                ReadBookConfig.initShareConfig()
+                postEvent(EventBus.RECREATE, "")
+            }
+            overwritten
+        }.onFailure {
+            currentCoroutineContext().ensureActive()
+            AppLog.put("同步排版设置失败\n${it.localizedMessage}", it)
+        }.getOrDefault(false)
     }
 
     private suspend fun ensureProgressBundle(): BookProgressBundle? {

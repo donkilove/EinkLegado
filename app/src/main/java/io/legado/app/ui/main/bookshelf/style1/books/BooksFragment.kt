@@ -180,7 +180,9 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
             // 同步 v2：下拉刷新同时对读书籍的云端进度
             viewLifecycleOwner.lifecycleScope.launch {
                 val updated = withContext(IO) {
-                    AppWebDav.downloadAllBookProgress()
+                    val count = AppWebDav.downloadAllBookProgress(withUserData = true)
+                    AppWebDav.syncReadConfig()
+                    count
                 }
                 if (updated > 0) {
                     toastOnUi(getString(R.string.sync_progress_done, updated))
