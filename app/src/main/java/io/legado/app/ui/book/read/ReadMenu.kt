@@ -214,13 +214,9 @@ class ReadMenu @JvmOverloads constructor(
         } else {
             llBottomBg.setBackgroundColor(bgColor)
         }
-        fabSearch.backgroundTintList = bottomBackgroundList
         fabSearch.setColorFilter(textColor)
-        fabAutoPage.backgroundTintList = bottomBackgroundList
         fabAutoPage.setColorFilter(textColor)
-        fabReplaceRule.backgroundTintList = bottomBackgroundList
         fabReplaceRule.setColorFilter(textColor)
-        fabNightTheme.backgroundTintList = bottomBackgroundList
         fabNightTheme.setColorFilter(textColor)
         tvPre.setTextColor(textColor)
         tvNext.setTextColor(textColor)

@@ -154,19 +154,18 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/fabSearch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="16dp"
+                android:background="@drawable/bg_eink_circle_border"
                 android:contentDescription="@string/search_content"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_search"
                 android:tint="@color/primaryText"
                 android:tooltipText="@string/search_content"
-                app:backgroundTint="@color/background_menu"
-                app:elevation="2dp"
-                app:fabSize="mini"
-                app:pressedTranslationZ="2dp"
                 tools:ignore="UnusedAttribute" />
 
             <Space
@@ -174,19 +173,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/fabAutoPage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="16dp"
+                android:background="@drawable/bg_eink_circle_border"
                 android:contentDescription="@string/auto_next_page"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_auto_page"
                 android:tint="@color/primaryText"
                 android:tooltipText="@string/auto_next_page"
-                app:backgroundTint="@color/background_menu"
-                app:elevation="2dp"
-                app:fabSize="mini"
-                app:pressedTranslationZ="2dp"
                 tools:ignore="UnusedAttribute" />
 
             <Space
@@ -194,19 +192,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/fabReplaceRule"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="16dp"
+                android:background="@drawable/bg_eink_circle_border"
                 android:contentDescription="@string/replace_rule_title"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_find_replace"
                 android:tint="@color/primaryText"
                 android:tooltipText="@string/replace_rule_title"
-                app:backgroundTint="@color/background_menu"
-                app:elevation="2dp"
-                app:fabSize="mini"
-                app:pressedTranslationZ="2dp"
                 tools:ignore="UnusedAttribute" />
 
             <Space
@@ -214,19 +211,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/fabNightTheme"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="16dp"
+                android:background="@drawable/bg_eink_circle_border"
                 android:contentDescription="@string/dark_theme"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_brightness"
                 android:tint="@color/primaryText"
                 android:tooltipText="@string/dark_theme"
-                app:backgroundTint="@color/background_menu"
-                app:elevation="2dp"
-                app:fabSize="mini"
-                app:pressedTranslationZ="2dp"
                 tools:ignore="UnusedAttribute" />
 
         </LinearLayout>
