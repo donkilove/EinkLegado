@@ -15,6 +15,7 @@ import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
 import io.legado.app.help.sync.PendingProgressQueue
 import io.legado.app.help.sync.SyncData
+import io.legado.app.help.sync.SyncState
 import io.legado.app.help.sync.UserDataSync
 import io.legado.app.utils.postEvent
 import io.legado.app.help.config.ReadBookConfig
@@ -395,27 +396,71 @@ object AppWebDav {
         if (!NetworkUtils.isAvailable()) return UserDataSync.Result()
         val authorization = authorization ?: return UserDataSync.Result()
         return kotlin.runCatching {
+            val local = UserDataSync.export()
+            val localHash = UserDataSync.fingerprint(local)
+            val lastHash = SyncState.get()
+
             val remote = kotlin.runCatching {
                 val bytes = WebDav(syncDataUrl, authorization).download()
                 val json = String(bytes)
                 if (json.isJson()) GSON.fromJsonObject<SyncData>(json).getOrNull() else null
             }.getOrNull()
-            val merged = if (remote != null) UserDataSync.merge(remote) else UserDataSync.Result()
-            val local = UserDataSync.export()
-            val json = GSON.toJson(local)
-            WebDav(syncDataUrl, authorization).upload(json.toByteArray(), "application/json")
-            merged
+
+            // 云端还没有数据：上传本地
+            if (remote == null) {
+                uploadSyncData(local, authorization)
+                SyncState.save(localHash)
+                AppLog.put("syncUserData 云端无数据，已上传本地")
+                return@runCatching UserDataSync.Result()
+            }
+
+            val remoteHash = UserDataSync.fingerprint(remote)
+            when {
+                // 本地自上次同步后没改动：以云端为准整体替换本地，删除得以传播
+                localHash == lastHash -> {
+                    val changed = UserDataSync.replaceLocal(remote)
+                    SyncState.save(remoteHash)
+                    AppLog.put(
+                        "syncUserData 云端为准：分组 ${changed.groups} 书签 ${changed.bookmarks} 书源 ${changed.sources}"
+                    )
+                    changed
+                }
+                // 云端没动、本地动了：上传本地，删除得以传播到云端
+                remoteHash == lastHash -> {
+                    uploadSyncData(local, authorization)
+                    SyncState.save(localHash)
+                    AppLog.put("syncUserData 本地为准：已上传")
+                    UserDataSync.Result()
+                }
+                // 两边都动过：本地优先；但本地书源为空时不上传，避免冲掉云端书源
+                else -> {
+                    if (local.sources.isEmpty() && remote.sources.isNotEmpty()) {
+                        AppLog.put("syncUserData 本地书源为空，跳过上传以保护云端书源")
+                        UserDataSync.Result()
+                    } else {
+                        uploadSyncData(local, authorization)
+                        SyncState.save(localHash)
+                        AppLog.put("syncUserData 两边均有改动，以本地为准上传")
+                        UserDataSync.Result()
+                    }
+                }
+            }
         }.onFailure {
             currentCoroutineContext().ensureActive()
             AppLog.put("同步用户数据失败\n${it.localizedMessage}", it)
         }.getOrElse { UserDataSync.Result() }
     }
 
+    private suspend fun uploadSyncData(data: SyncData, authorization: Authorization) {
+        val json = GSON.toJson(data)
+        WebDav(syncDataUrl, authorization).upload(json.toByteArray(), "application/json")
+    }
+
     /**
      * 同步阅读排版设置（字体、行距、边距、主题等）。
      *
-     * 这类配置保存在 files/readConfig.json（配置档案数组）与 files/shareReadConfig.json（共享配置）。
-     * 以文件修改时间判定新旧：云端更新则覆盖本地并重新加载，否则把本地传上去。
+     * 保存在 files/readConfig.json（配置档案数组）与 files/shareReadConfig.json（共享配置）。
+     * 以文件修改时间判定新旧，云端更新则覆盖本地并重新加载，内容相同则不做任何事。
      * @return 本地配置是否被云端覆盖
      */
     suspend fun syncReadConfig(): Boolean {
@@ -435,14 +480,12 @@ object AppWebDav {
                 val remoteTime = remote?.lastModify ?: 0L
                 val localTime = if (localFile.exists()) localFile.lastModified() else 0L
                 if (remote != null && remoteTime > localTime) {
-                    // 云端时间更新：先比内容，避免内容相同也反复覆盖与重建界面
                     val bytes = WebDav("$rootWebDavUrl$name", authorization).download()
                     if (!localFile.exists() || !localFile.readBytes().contentEquals(bytes)) {
                         localFile.writeBytes(bytes)
                         overwritten = true
                     }
                 } else if (localFile.exists() && localTime > remoteTime) {
-                    // 本地更新：上传
                     WebDav("$rootWebDavUrl$name", authorization)
                         .upload(localFile.readBytes(), "application/json")
                 }
