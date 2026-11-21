@@ -1251,5 +1251,16 @@
     <string name="read_gesture">点击与手势</string>
     <string name="read_content">内容与显示</string>
     <string name="updating">更新中</string>
+    <string name="bookshelf_view_style">书架视图样式</string>
+    <string name="bookshelf_spacing">列表间距</string>
+    <string name="bookshelf_sort_condition">书籍排序条件</string>
+    <string-array name="bookshelf_sort">
+        <item>@string/bookshelf_px_0</item>
+        <item>@string/bookshelf_px_1</item>
+        <item>@string/bookshelf_px_2</item>
+        <item>@string/bookshelf_px_3</item>
+        <item>@string/bookshelf_px_4</item>
+        <item>@string/bookshelf_px_5</item>
+    </string-array>
 
 </resources>

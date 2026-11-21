@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  书架布局设置（墨水屏版）
+  分组固定为标签分组、视图固定为列表，因此分组样式与网格选项已移除。
+  三行结构：视图样式 / 列表间距 / 书籍排序条件，避免控件相互重叠。
+-->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
 
         <io.legado.app.lib.theme.view.ThemeSwitch
@@ -16,7 +22,6 @@
             android:layout_height="wrap_content"
             android:padding="6dp"
             android:text="@string/show_unread"
-            app:layout_constraintTop_toTopOf="parent"
             tools:ignore="TouchTargetSizeCheck" />
 
         <io.legado.app.lib.theme.view.ThemeSwitch
@@ -25,7 +30,6 @@
             android:layout_height="wrap_content"
             android:padding="6dp"
             android:text="@string/show_last_update_time"
-            app:layout_constraintTop_toBottomOf="@+id/sw_show_unread"
             tools:ignore="TouchTargetSizeCheck" />
 
         <io.legado.app.lib.theme.view.ThemeSwitch
@@ -34,7 +38,6 @@
             android:layout_height="wrap_content"
             android:padding="6dp"
             android:text="@string/show_wait_up_count"
-            app:layout_constraintTop_toBottomOf="@+id/sw_show_last_update_time"
             tools:ignore="TouchTargetSizeCheck" />
 
         <io.legado.app.lib.theme.view.ThemeSwitch
@@ -43,153 +46,91 @@
             android:layout_height="wrap_content"
             android:padding="6dp"
             android:text="@string/show_bookshelf_fast_scroller"
-            app:layout_constraintTop_toBottomOf="@+id/sw_show_wait_up_books"
             tools:ignore="TouchTargetSizeCheck" />
 
+        <!-- 行一：视图样式（固定为列表，仅展示） -->
         <LinearLayout
-            android:id="@+id/ll_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/ll_sort"
-            app:layout_constraintTop_toBottomOf="@+id/sw_show_bookshelf_fast_scroller">
-
-            <io.legado.app.ui.widget.text.AccentTextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="6dp"
-                android:text="@string/view"
-                android:textSize="16sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/layout_list"
-                    tools:ignore="TouchTargetSizeCheck" />
-            </RadioGroup>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/ll_sort"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintLeft_toRightOf="@+id/ll_layout"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/sw_show_bookshelf_fast_scroller">
-
-            <io.legado.app.ui.widget.text.AccentTextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="6dp"
-                android:text="@string/sort"
-                android:textSize="16sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_sort"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_0"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_1"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_2"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_3"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_4"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bookshelf_px_5"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-            </RadioGroup>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/book_name_choice"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/ll_layout">
-
-            <io.legado.app.ui.widget.text.AccentTextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="6dp"
-                android:text="@string/book_name"
-                android:textSize="16sp" />
-
-            <RadioGroup
-                android:id="@+id/rgb_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hide"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-                <RadioButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/overlay"
-                    tools:ignore="TouchTargetSizeCheck" />
-
-            </RadioGroup>
-        </LinearLayout>
-
-        <io.legado.app.ui.widget.DetailSeekBar
-            android:id="@+id/margin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/book_name_choice"
-            app:max="60"
-            app:title="@string/margin" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <io.legado.app.ui.widget.text.AccentTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/bookshelf_view_style"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tv_view_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/layout_list"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <!-- 行二：列表间距 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <io.legado.app.ui.widget.text.AccentTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bookshelf_spacing"
+                android:textSize="16sp" />
+
+            <SeekBar
+                android:id="@+id/sb_margin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:max="60"
+                tools:ignore="TouchTargetSizeCheck" />
+
+            <TextView
+                android:id="@+id/tv_margin_value"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textSize="16sp"
+                tools:text="12" />
+
+        </LinearLayout>
+
+        <!-- 行三：书籍排序条件（下拉） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <io.legado.app.ui.widget.text.AccentTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/bookshelf_sort_condition"
+                android:textSize="16sp" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/sp_sort"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/bookshelf_sort"
+                android:theme="@style/Spinner"
+                tools:ignore="TouchTargetSizeCheck" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 </androidx.core.widget.NestedScrollView>

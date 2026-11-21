@@ -1,6 +1,7 @@
 package io.legado.app.ui.main.bookshelf
 
 import android.annotation.SuppressLint
+import android.widget.SeekBar
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -155,51 +156,43 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
     @SuppressLint("InflateParams")
     fun configBookshelf() {
         alert(titleResource = R.string.bookshelf_layout) {
-            var bookshelfLayout = AppConfig.bookshelfLayout
             var bookshelfSort = AppConfig.bookshelfSort
-            var showBookname = AppConfig.showBookname
             val alertBinding =
                 DialogBookshelfConfigBinding.inflate(layoutInflater)
                     .apply {
-                        if (bookshelfLayout !in rgLayout.indices) {
-                            bookshelfLayout = 0
-                            AppConfig.bookshelfLayout = 0
-                        }
-                        if (bookshelfSort !in rgSort.indices) {
+                        if (bookshelfSort !in 0..<spSort.adapter.count) {
                             bookshelfSort = 0
                             AppConfig.bookshelfSort = 0
-                        }
-                        if (showBookname !in rgbLayout.indices) {
-                            showBookname = 0
-                            AppConfig.showBookname = 0
                         }
                         swShowUnread.isChecked = AppConfig.showUnread
                         swShowLastUpdateTime.isChecked = AppConfig.showLastUpdateTime
                         swShowWaitUpBooks.isChecked = AppConfig.showWaitUpCount
                         swShowBookshelfFastScroller.isChecked = AppConfig.showBookshelfFastScroller
-                        rgLayout.checkByIndex(bookshelfLayout)
-                        rgbLayout.checkByIndex(showBookname)
-                        if (bookshelfLayout < 2) {
-                            bookNameChoice.visibility = View.GONE
-                        }
-                        rgLayout.setOnCheckedChangeListener { group, checkedId ->
-                            val index = group.getCheckedIndex()
-                            bookNameChoice.visibility = if (index > 1) View.VISIBLE else View.GONE
-                        }
-                        rgSort.checkByIndex(bookshelfSort)
-                        margin.progress = AppConfig.bookshelfMargin
+                        spSort.setSelection(bookshelfSort)
+                        sbMargin.progress = AppConfig.bookshelfMargin
+                        tvMarginValue.text = AppConfig.bookshelfMargin.toString()
+                        sbMargin.setOnSeekBarChangeListener(
+                            object : SeekBar.OnSeekBarChangeListener {
+                                override fun onProgressChanged(
+                                    seekBar: SeekBar?,
+                                    progress: Int,
+                                    fromUser: Boolean
+                                ) {
+                                    tvMarginValue.text = progress.toString()
+                                }
+
+                                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+                                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+                            }
+                        )
                     }
             customView { alertBinding.root }
             okButton {
                 alertBinding.apply {
-                    var notifyMain = false
                     var recreate = false
-                    if (showBookname != rgbLayout.getCheckedIndex()) {
-                        AppConfig.showBookname = rgbLayout.getCheckedIndex()
-                        recreate = true
-                    }
-                    if (AppConfig.bookshelfMargin != margin.progress) {
-                        AppConfig.bookshelfMargin = margin.progress
+                    if (AppConfig.bookshelfMargin != sbMargin.progress) {
+                        AppConfig.bookshelfMargin = sbMargin.progress
                         recreate = true
                     }
                     if (AppConfig.showUnread != swShowUnread.isChecked) {
@@ -218,30 +211,18 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
                         AppConfig.showBookshelfFastScroller = swShowBookshelfFastScroller.isChecked
                         postEvent(EventBus.BOOKSHELF_REFRESH, "")
                     }
-                    if (bookshelfSort != rgSort.getCheckedIndex()) {
-                        AppConfig.bookshelfSort = rgSort.getCheckedIndex()
+                    if (bookshelfSort != spSort.selectedItemPosition) {
+                        AppConfig.bookshelfSort = spSort.selectedItemPosition
                         upSort()
-                    }
-                    if (bookshelfLayout != rgLayout.getCheckedIndex()) {
-                        AppConfig.bookshelfLayout = rgLayout.getCheckedIndex()
-                        if (AppConfig.bookshelfLayout < 2) {
-                            activityViewModel.booksGridRecycledViewPool.clear()
-                        } else {
-                            activityViewModel.booksListRecycledViewPool.clear()
-                        }
-                        recreate = true
                     }
                     if (recreate) {
                         postEvent(EventBus.RECREATE, "")
-                    } else if (notifyMain) {
-                        postEvent(EventBus.NOTIFY_MAIN, false)
                     }
                 }
             }
             cancelButton()
         }
     }
-
 
     private fun importBookshelfAlert(groupId: Long) {
         alert(titleResource = R.string.import_bookshelf) {
