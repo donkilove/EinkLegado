@@ -101,7 +101,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
             R.id.menu_bookshelf_layout -> configBookshelf()
             R.id.menu_group_manage -> showDialogFragment<GroupManageDialog>()
             R.id.menu_add_local -> startActivity<ImportBookActivity>()
-            R.id.menu_add_url -> showAddBookByUrlAlert()
             R.id.menu_bookshelf_manage -> startActivity<BookshelfManageActivity> {
                 putExtra("groupId", groupId)
             }
@@ -109,17 +108,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
             R.id.menu_download -> startActivity<CacheActivity> {
                 putExtra("groupId", groupId)
             }
-
-            R.id.menu_export_bookshelf -> viewModel.exportBookshelf(books) { file ->
-                exportResult.launch {
-                    mode = HandleFileContract.EXPORT
-                    fileData =
-                        HandleFileContract.FileData("bookshelf.json", file, "application/json")
-                }
-            }
-
-            R.id.menu_import_bookshelf -> importBookshelfAlert(groupId)
-            R.id.menu_log -> showDialogFragment<AppLogDialog>()
         }
     }
 
@@ -173,9 +161,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
             val alertBinding =
                 DialogBookshelfConfigBinding.inflate(layoutInflater)
                     .apply {
-                        if (AppConfig.bookGroupStyle !in 0..<spGroupStyle.count) {
-                            AppConfig.bookGroupStyle = 0
-                        }
                         if (bookshelfLayout !in rgLayout.indices) {
                             bookshelfLayout = 0
                             AppConfig.bookshelfLayout = 0
@@ -188,7 +173,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
                             showBookname = 0
                             AppConfig.showBookname = 0
                         }
-                        spGroupStyle.setSelection(AppConfig.bookGroupStyle)
                         swShowUnread.isChecked = AppConfig.showUnread
                         swShowLastUpdateTime.isChecked = AppConfig.showLastUpdateTime
                         swShowWaitUpBooks.isChecked = AppConfig.showWaitUpCount
@@ -210,10 +194,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
                 alertBinding.apply {
                     var notifyMain = false
                     var recreate = false
-                    if (AppConfig.bookGroupStyle != spGroupStyle.selectedItemPosition) {
-                        AppConfig.bookGroupStyle = spGroupStyle.selectedItemPosition
-                        notifyMain = true
-                    }
                     if (showBookname != rgbLayout.getCheckedIndex()) {
                         AppConfig.showBookname = rgbLayout.getCheckedIndex()
                         recreate = true

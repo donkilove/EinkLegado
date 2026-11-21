@@ -229,16 +229,18 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
     val screenOrientation: String?
         get() = appCtx.getPrefString(PreferKey.screenOrientation)
 
+    // 墨水屏专属：固定为标签分组（0），不再提供文件夹分组
     var bookGroupStyle: Int
-        get() = appCtx.getPrefInt(PreferKey.bookGroupStyle, 0)
+        get() = 0
         set(value) {
-            appCtx.putPrefInt(PreferKey.bookGroupStyle, value)
+            appCtx.putPrefInt(PreferKey.bookGroupStyle, 0)
         }
 
+    // 墨水屏专属：固定为列表视图（0），不再提供紧凑列表与网格
     var bookshelfLayout: Int
-        get() = appCtx.getPrefInt(PreferKey.bookshelfLayout, 0)
+        get() = 0
         set(value) {
-            appCtx.putPrefInt(PreferKey.bookshelfLayout, value)
+            appCtx.putPrefInt(PreferKey.bookshelfLayout, 0)
         }
 
     var saveTabPosition: Int

@@ -308,6 +308,26 @@ debug 对比：
 编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 1m30s。
 补充：四个设置类列表页项高规整，本次修正后条数未变（TXT 目录规则 5 项、替换净化 8 项）。
 
+--------------------------------------------------
+[16] 书架菜单与布局设置精简 · 真机验证
+--------------------------------------------------
+变更：
+  - main_bookshelf.xml 移除 menu_add_url / menu_export_bookshelf /
+    menu_import_bookshelf / menu_log，并删除对应的 onCompatOptionsItemSelected 分支
+  - dialog_bookshelf_config.xml 移除分组样式下拉、视图中的紧凑列表与网格 2~6
+  - AppConfig.bookGroupStyle 固定返回 0（标签分组）、bookshelfLayout 固定返回 0（列表）
+
+实测（BOOX Poke6）：
+  书架三点菜单剩余 7 项：
+    更新目录 / 添加本地 / 远程书籍 / 书架管理 / 缓存导出 / 分组管理 / 书架布局
+  点「书架布局」对话框内容：
+    显示未读标志 / 显示上次更新时间 / 显示等待更新数量 / 显示快速滚动条 /
+    视图（仅「列表」）/ 间距 / 排序（6 项）/ 取消 / 确定
+  分组样式选项已不存在。
+
+编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 1m50s。
+
+
 
 
 
