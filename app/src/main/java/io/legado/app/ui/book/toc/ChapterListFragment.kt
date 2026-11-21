@@ -52,12 +52,6 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
         viewModel.chapterListCallBack = this@ChapterListFragment
-        val bbg = bottomBackground
-        val btc = requireContext().getPrimaryTextColor(ColorUtils.isColorLight(bbg))
-        llChapterBaseInfo.setBackgroundColor(bbg)
-        tvCurrentChapterInfo.setTextColor(btc)
-        ivChapterTop.setColorFilter(btc, PorterDuff.Mode.SRC_IN)
-        ivChapterBottom.setColorFilter(btc, PorterDuff.Mode.SRC_IN)
         initRecyclerView()
         initView()
         viewModel.bookData.observe(this@ChapterListFragment) {
@@ -121,28 +115,16 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     }
 
     private fun initView() = binding.run {
-        ivChapterTop.setOnClickListener {
-            applyPage(0)
-        }
-        ivChapterBottom.setOnClickListener {
-            applyPage(paginator.pageCount - 1)
-        }
-        tvCurrentChapterInfo.setOnClickListener {
-            jumpToCurrentChapter()
-        }
         pageBar.onPageChange = { delta ->
             applyPage(paginator.page + delta)
         }
-        binding.llChapterBaseInfo.applyNavigationBarPadding()
+        binding.pageBar.applyNavigationBarPadding()
     }
 
-    @SuppressLint("SetTextI18n")
     private fun initBook(book: Book) {
         lifecycleScope.launch {
             upChapterList(null)
             durChapterIndex = book.durChapterIndex
-            binding.tvCurrentChapterInfo.text =
-                "${book.durChapterTitle}(${book.durChapterIndex + 1}/${book.simulatedTotalChapterNum()})"
             initCacheFileNames(book)
         }
     }
