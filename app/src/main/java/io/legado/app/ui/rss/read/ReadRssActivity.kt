@@ -247,7 +247,6 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         starMenuItem = menu.findItem(R.id.menu_rss_star)
-        ttsMenuItem = menu.findItem(R.id.menu_aloud)
         upStarMenu()
         return super.onPrepareOptionsMenu(menu)
     }
@@ -276,7 +275,6 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
                 } ?: toastOnUi(R.string.null_url)
             }
 
-            R.id.menu_aloud -> readAloud()
             R.id.menu_login -> startActivity<SourceLoginActivity> {
                 putExtra("type", "rssSource")
                 putExtra("key", viewModel.rssSource?.sourceUrl)
