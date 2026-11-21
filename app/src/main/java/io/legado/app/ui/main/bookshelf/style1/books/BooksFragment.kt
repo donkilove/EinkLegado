@@ -105,12 +105,24 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         upRecyclerData()
     }
 
+    private val hideRefreshingHint = Runnable { binding.tvRefreshing.isGone = true }
+
+    /**
+     * 墨水屏专属：下拉刷新不再显示旋转箭头，改为顶部短暂出现静态提示
+     */
+    private fun showRefreshingHint() {
+        binding.tvRefreshing.isGone = false
+        binding.tvRefreshing.removeCallbacks(hideRefreshingHint)
+        binding.tvRefreshing.postDelayed(hideRefreshingHint, 1500)
+    }
+
     private fun initRecyclerView() {
         binding.rvBookshelf.setEdgeEffectColor(primaryColor)
         upFastScrollerBar()
         binding.refreshLayout.setColorSchemeColors(accentColor)
         binding.refreshLayout.setOnRefreshListener {
             binding.refreshLayout.isRefreshing = false
+            showRefreshingHint()
             activityViewModel.upToc(booksAdapter.getItems(), onlyUpdateRead)
         }
         if (bookshelfLayout >= 2) {

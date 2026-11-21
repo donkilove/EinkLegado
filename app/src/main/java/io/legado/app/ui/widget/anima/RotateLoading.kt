@@ -179,6 +179,12 @@ class RotateLoading @JvmOverloads constructor(
     fun visible() {
         removeCallbacks(shown)
         removeCallbacks(hidden)
+        if (AppConfig.isEInkMode) {
+            // 墨水屏：直接显示静态图标，不做缩放与旋转
+            visibility = VISIBLE
+            invalidate()
+            return
+        }
         post(shown)
     }
 
@@ -197,6 +203,13 @@ class RotateLoading @JvmOverloads constructor(
     }
 
     private fun startInternal() {
+        if (AppConfig.isEInkMode) {
+            // 墨水屏：静态显示，跳过缩放动画
+            visibility = VISIBLE
+            isStarted = true
+            invalidate()
+            return
+        }
         startAnimator()
         isStarted = true
         invalidate()

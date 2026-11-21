@@ -193,6 +193,11 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                     (fragmentMap[1] as? ExploreFragment)?.compressExplore()
                 }
             }
+
+            R.id.menu_my_config -> {
+                // 墨水屏专属：再次点击「我的」回到根页
+                (fragmentMap[idMy] as? MyFragment)?.resetToRoot()
+            }
         }
     }
 
@@ -440,6 +445,10 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         override fun onPageSelected(position: Int) {
             pagePosition = position
             binding.bottomNavigationView.menu[realPositions[position]].isChecked = true
+            // 墨水屏专属：进入「我的」时回到根页，避免滞留在二级设置页
+            if (realPositions[position] == idMy) {
+                (fragmentMap[idMy] as? MyFragment)?.resetToRoot()
+            }
         }
 
     }

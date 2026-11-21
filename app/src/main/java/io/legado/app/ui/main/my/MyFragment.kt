@@ -69,6 +69,19 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
     }
 
+    /**
+     * 回到「我的」根页：切换 tab 或从其他页面回来时调用，避免滞留在二级页
+     */
+    fun resetToRoot() {
+        if (childFragmentManager.backStackEntryCount > 0) {
+            childFragmentManager.popBackStack(
+                null,
+                androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+            )
+        }
+        upTitleBarForSubScreen()
+    }
+
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             if (isVisible && childFragmentManager.backStackEntryCount > 0) {
