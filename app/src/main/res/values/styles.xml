@@ -18,6 +18,16 @@
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
+    <!-- 墨水屏主题：去掉点击水波纹、高亮动画与窗口切换动画 -->
+    <style name="AppTheme.EInk" parent="AppTheme.Light">
+        <item name="android:colorControlHighlight">@android:color/transparent</item>
+        <item name="android:selectableItemBackground">@drawable/bg_eink_selectable_item</item>
+        <item name="android:selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
+        <item name="selectableItemBackground">@drawable/bg_eink_selectable_item</item>
+        <item name="selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+    </style>
+
     <!-- Welcome主题 -->
     <style name="AppTheme.Welcome" parent="Base.AppTheme">
         <item name="android:windowNoTitle">true</item>

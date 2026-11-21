@@ -192,7 +192,7 @@ object BookCover {
         return ImageLoader.load(context, path)
             .apply(options)
             .transform(BlurTransformation(25), CenterCrop())
-            .transition(DrawableTransitionOptions.withCrossFade(1500))
+            .transition(DrawableTransitionOptions.withCrossFade(if (AppConfig.isEInkMode) 0 else 1500))
             .thumbnail(loadBlur)
     }
 

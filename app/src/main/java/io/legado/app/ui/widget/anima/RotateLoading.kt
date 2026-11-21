@@ -10,6 +10,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import io.legado.app.R
+import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.utils.dpToPx
 
@@ -136,6 +137,11 @@ class RotateLoading @JvmOverloads constructor(
         }
         if (bottomDegree > 360) {
             bottomDegree -= 360
+        }
+
+        // 墨水屏：不转圈，避免持续重绘
+        if (AppConfig.isEInkMode) {
+            return
         }
 
         if (changeBigger) {

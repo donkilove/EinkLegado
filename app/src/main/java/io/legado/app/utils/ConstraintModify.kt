@@ -4,11 +4,12 @@ import androidx.annotation.IdRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.transition.TransitionManager
+import io.legado.app.help.config.AppConfig
 
 @Suppress("unused")
 fun ConstraintLayout.modifyBegin(withAnim: Boolean = false): ConstraintModify.ConstraintBegin {
     val begin = ConstraintModify(this).begin
-    if (withAnim) {
+    if (withAnim && !AppConfig.isEInkMode) {
         TransitionManager.beginDelayedTransition(this)
     }
     return begin
@@ -33,7 +34,9 @@ class ConstraintModify(private val constraintLayout: ConstraintLayout) {
      * @return
      */
     fun beginWithAnim(): ConstraintBegin {
-        TransitionManager.beginDelayedTransition(constraintLayout)
+        if (!AppConfig.isEInkMode) {
+            TransitionManager.beginDelayedTransition(constraintLayout)
+        }
         return begin
     }
 
@@ -48,7 +51,9 @@ class ConstraintModify(private val constraintLayout: ConstraintLayout) {
      * 带动画的重置
      */
     fun reSetWidthAnim() {
-        TransitionManager.beginDelayedTransition(constraintLayout)
+        if (!AppConfig.isEInkMode) {
+            TransitionManager.beginDelayedTransition(constraintLayout)
+        }
         resetConstraintSet.applyTo(constraintLayout)
     }
 

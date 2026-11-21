@@ -147,8 +147,13 @@ abstract class BaseActivity<VB : ViewBinding>(
                window.decorView.applyBackgroundTint(backgroundColor)
             }
 
+            Theme.EInk -> setTheme(R.style.AppTheme_EInk)
+
             else -> {
-                if (ColorUtils.isColorLight(primaryColor)) {
+                if (AppConfig.isEInkMode) {
+                    // 墨水屏专属：去掉水波纹、高亮动画与窗口切换动画
+                    setTheme(R.style.AppTheme_EInk)
+                } else if (ColorUtils.isColorLight(primaryColor)) {
                     setTheme(R.style.AppTheme_Light)
                 } else {
                     setTheme(R.style.AppTheme_Dark)

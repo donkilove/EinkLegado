@@ -9,6 +9,7 @@ import android.view.animation.LinearInterpolator
 import android.widget.Checkable
 import androidx.core.view.postDelayed
 import io.legado.app.R
+import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.utils.dpToPx
 import io.legado.app.utils.getCompatColor
@@ -250,8 +251,9 @@ class SmoothCheckBox @JvmOverloads constructor(
     }
 
     private fun startCheckedAnimation() {
+        val dur = animDuration(mAnimDuration / 3 * 2)
         val animator = ValueAnimator.ofFloat(1.0f, 0f)
-        animator.duration = mAnimDuration / 3 * 2.toLong()
+        animator.duration = dur
         animator.interpolator = LinearInterpolator()
         animator.addUpdateListener { animation: ValueAnimator ->
             mScaleVal = animation.animatedValue as Float
@@ -264,7 +266,7 @@ class SmoothCheckBox @JvmOverloads constructor(
         }
         animator.start()
         val floorAnimator = ValueAnimator.ofFloat(1.0f, 0.8f, 1.0f)
-        floorAnimator.duration = mAnimDuration.toLong()
+        floorAnimator.duration = animDuration(mAnimDuration)
         floorAnimator.interpolator = LinearInterpolator()
         floorAnimator.addUpdateListener { animation: ValueAnimator ->
             mFloorScale = animation.animatedValue as Float
@@ -276,7 +278,7 @@ class SmoothCheckBox @JvmOverloads constructor(
 
     private fun startUnCheckedAnimation() {
         val animator = ValueAnimator.ofFloat(0f, 1.0f)
-        animator.duration = mAnimDuration.toLong()
+        animator.duration = animDuration(mAnimDuration)
         animator.interpolator = LinearInterpolator()
         animator.addUpdateListener { animation: ValueAnimator ->
             mScaleVal = animation.animatedValue as Float
@@ -289,7 +291,7 @@ class SmoothCheckBox @JvmOverloads constructor(
         }
         animator.start()
         val floorAnimator = ValueAnimator.ofFloat(1.0f, 0.8f, 1.0f)
-        floorAnimator.duration = mAnimDuration.toLong()
+        floorAnimator.duration = animDuration(mAnimDuration)
         floorAnimator.interpolator = LinearInterpolator()
         floorAnimator.addUpdateListener { animation: ValueAnimator ->
             mFloorScale = animation.animatedValue as Float
@@ -298,8 +300,13 @@ class SmoothCheckBox @JvmOverloads constructor(
         floorAnimator.start()
     }
 
+    /**
+     * 墨水屏下取消动画，直接取终态
+     */
+    private fun animDuration(base: Int): Long = if (AppConfig.isEInkMode) 0L else base.toLong()
+
     private fun drawTickDelayed() {
-        postDelayed(mAnimDuration.toLong()) {
+        postDelayed(animDuration(mAnimDuration)) {
             mTickDrawing = true
             postInvalidate()
         }

@@ -20,13 +20,10 @@ import io.legado.app.model.ReadBook
 import io.legado.app.service.BaseReadAloudService
 import io.legado.app.ui.book.read.ContentEditDialog
 import io.legado.app.ui.book.read.page.api.DataSource
-import io.legado.app.ui.book.read.page.delegate.CoverPageDelegate
 import io.legado.app.ui.book.read.page.delegate.HorizontalPageDelegate
 import io.legado.app.ui.book.read.page.delegate.NoAnimPageDelegate
 import io.legado.app.ui.book.read.page.delegate.PageDelegate
 import io.legado.app.ui.book.read.page.delegate.ScrollPageDelegate
-import io.legado.app.ui.book.read.page.delegate.SimulationPageDelegate
-import io.legado.app.ui.book.read.page.delegate.SlidePageDelegate
 import io.legado.app.ui.book.read.page.entities.PageDirection
 import io.legado.app.ui.book.read.page.entities.TextChapter
 import io.legado.app.ui.book.read.page.entities.TextLine
@@ -525,22 +522,11 @@ class ReadView(context: Context, attrs: AttributeSet) :
         isScroll = ReadBook.pageAnim() == 3
         ChapterProvider.upLayout()
         when (ReadBook.pageAnim()) {
-            PageAnim.coverPageAnim -> if (pageDelegate !is CoverPageDelegate) {
-                pageDelegate = CoverPageDelegate(this)
-            }
-
-            PageAnim.slidePageAnim -> if (pageDelegate !is SlidePageDelegate) {
-                pageDelegate = SlidePageDelegate(this)
-            }
-
-            PageAnim.simulationPageAnim -> if (pageDelegate !is SimulationPageDelegate) {
-                pageDelegate = SimulationPageDelegate(this)
-            }
-
             PageAnim.scrollPageAnim -> if (pageDelegate !is ScrollPageDelegate) {
                 pageDelegate = ScrollPageDelegate(this)
             }
 
+            // 墨水屏专属：覆盖/滑动/仿真三种翻页动画已移除，统一走无动画
             else -> if (pageDelegate !is NoAnimPageDelegate) {
                 pageDelegate = NoAnimPageDelegate(this)
             }

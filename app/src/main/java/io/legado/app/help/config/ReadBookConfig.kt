@@ -709,9 +709,15 @@ object ReadBookConfig {
         }
 
         fun setCurPageAnim(@PageAnim.Anim anim: Int) {
+            // 墨水屏专属：只保留「滚动」与「无动画」两种翻页方式
+            val animValue = if (anim == PageAnim.scrollPageAnim) {
+                PageAnim.scrollPageAnim
+            } else {
+                PageAnim.noAnim
+            }
             when {
-                AppConfig.isEInkMode -> pageAnimEInk = anim
-                else -> pageAnim = anim
+                AppConfig.isEInkMode -> pageAnimEInk = animValue
+                else -> pageAnim = animValue
             }
         }
 
@@ -725,7 +731,8 @@ object ReadBookConfig {
         fun setCurBg(bgType: Int, bg: String) {
             when {
                 AppConfig.isEInkMode -> {
-                    bgTypeEInk = bgType
+                    // 墨水屏专属：只支持纯色背景，忽略图片背景请求
+                    bgTypeEInk = 0
                     bgStrEInk = bg
                 }
 
@@ -760,6 +767,15 @@ object ReadBookConfig {
         fun curBgDrawable(width: Int, height: Int): Drawable {
             val curBgStr = curBgStr()
             isNineBgImg = curBgStr.endsWith(".9.png")
+            if (AppConfig.isEInkMode) {
+                // 墨水屏专属：背景只能是纯色，忽略任何图片背景配置
+                val color = if (curBgStr.startsWith("#")) {
+                    runCatching { curBgStr.toColorInt() }.getOrDefault(0xFFFFFFFF.toInt())
+                } else {
+                    0xFFFFFFFF.toInt()
+                }
+                return color.toDrawable()
+            }
             if (width == 0 || height == 0) {
                 return appCtx.getCompatColor(R.color.background).toDrawable()
             }

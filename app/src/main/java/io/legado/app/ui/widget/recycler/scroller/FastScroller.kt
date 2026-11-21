@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import io.legado.app.R
+import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.getCompatColor
@@ -420,11 +421,16 @@ class FastScroller : LinearLayout {
         animator?.cancel()
     }
 
+    /**
+     * 墨水屏下取消淡入淡出，时长归零
+     */
+    private fun animDuration(base: Int): Long = if (AppConfig.isEInkMode) 0L else base.toLong()
+
     private fun showBubble() {
         if (!isViewVisible(mBubbleView)) {
             mBubbleView.visibility = View.VISIBLE
             mBubbleAnimator = mBubbleView.animate().alpha(1f)
-                .setDuration(sBubbleAnimDuration.toLong())
+                .setDuration(animDuration(sBubbleAnimDuration))
                 .setListener(object : AnimatorListenerAdapter() {
 
                     // adapter required for new alpha value to stick
@@ -435,7 +441,7 @@ class FastScroller : LinearLayout {
     private fun hideBubble() {
         if (isViewVisible(mBubbleView)) {
             mBubbleAnimator = mBubbleView.animate().alpha(0f)
-                .setDuration(sBubbleAnimDuration.toLong())
+                .setDuration(animDuration(sBubbleAnimDuration))
                 .setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         super.onAnimationEnd(animation)
@@ -461,7 +467,7 @@ class FastScroller : LinearLayout {
                 mScrollbar.translationX = transX
                 mScrollbar.visibility = View.VISIBLE
                 mScrollbarAnimator = mScrollbar.animate().translationX(0f).alpha(1f)
-                    .setDuration(sScrollbarAnimDuration.toLong())
+                    .setDuration(animDuration(sScrollbarAnimDuration))
                     .setListener(object : AnimatorListenerAdapter() {
 
                         // adapter required for new alpha value to stick
@@ -474,7 +480,7 @@ class FastScroller : LinearLayout {
         val transX =
             resources.getDimensionPixelSize(R.dimen.fastscroll_scrollbar_padding_end).toFloat()
         mScrollbarAnimator = mScrollbar.animate().translationX(transX).alpha(0f)
-            .setDuration(sScrollbarAnimDuration.toLong())
+            .setDuration(animDuration(sScrollbarAnimDuration))
             .setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
@@ -503,7 +509,10 @@ class FastScroller : LinearLayout {
         mHandleView = findViewById(R.id.fastscroll_handle)
         mTrackView = findViewById(R.id.fastscroll_track)
         mScrollbar = findViewById(R.id.fastscroll_scrollbar)
-        @ColorInt var bubbleColor = ColorUtils.adjustAlpha(context.accentColor, 0.8f)
+        @ColorInt var bubbleColor = ColorUtils.adjustAlpha(
+            context.accentColor,
+            if (AppConfig.isEInkMode) 1f else 0.8f
+        )
         @ColorInt var handleColor = context.accentColor
         @ColorInt var trackColor = context.getCompatColor(R.color.transparent30)
         @ColorInt var textColor =

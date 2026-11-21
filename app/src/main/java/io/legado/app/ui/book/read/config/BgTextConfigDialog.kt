@@ -25,6 +25,7 @@ import io.legado.app.databinding.DialogReadBgTextBinding
 import io.legado.app.databinding.ItemBgImageBinding
 import io.legado.app.help.DefaultData
 import io.legado.app.help.book.isImage
+import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.http.newCallResponseBody
 import io.legado.app.help.http.okHttpClient
@@ -184,22 +185,28 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
                 override fun onNothingSelected(parent: AdapterView<*>) { }
             }
         }
-        recyclerView.adapter = adapter
-        adapter.addHeaderView {
-            ItemBgImageBinding.inflate(layoutInflater, it, false).apply {
-                tvName.setTextColor(secondaryTextColor)
-                tvName.text = getString(R.string.select_image)
-                ivBg.setImageResource(R.drawable.ic_image)
-                ivBg.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
-                root.setOnClickListener {
-                    selectBgImage.launch {
-                        mode = HandleFileContract.IMAGE
+        if (AppConfig.isEInkMode) {
+            // 墨水屏专属：只支持纯色背景，隐藏图片背景入口
+            binding.recyclerView.isGone = true
+            binding.tvBgImage.isGone = true
+        } else {
+            recyclerView.adapter = adapter
+            adapter.addHeaderView {
+                ItemBgImageBinding.inflate(layoutInflater, it, false).apply {
+                    tvName.setTextColor(secondaryTextColor)
+                    tvName.text = getString(R.string.select_image)
+                    ivBg.setImageResource(R.drawable.ic_image)
+                    ivBg.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
+                    root.setOnClickListener {
+                        selectBgImage.launch {
+                            mode = HandleFileContract.IMAGE
+                        }
                     }
                 }
             }
-        }
-        requireContext().assets.list("bg")?.let {
-            adapter.setItems(it.toList())
+            requireContext().assets.list("bg")?.let {
+                adapter.setItems(it.toList())
+            }
         }
     }
 

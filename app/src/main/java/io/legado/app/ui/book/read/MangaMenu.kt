@@ -99,7 +99,9 @@ class MangaMenu @JvmOverloads constructor(
         initAnimation()
         val brightnessBackground = GradientDrawable()
         brightnessBackground.cornerRadius = 5F.dpToPx()
-        brightnessBackground.setColor(ColorUtils.adjustAlpha(bgColor, 0.5f))
+        brightnessBackground.setColor(
+            if (AppConfig.isEInkMode) bgColor else ColorUtils.adjustAlpha(bgColor, 0.5f)
+        )
         if (AppConfig.isEInkMode) {
             titleBar.setBackgroundResource(R.drawable.bg_eink_border_bottom)
             bottomMenu.setBackgroundResource(R.drawable.bg_eink_border_top)

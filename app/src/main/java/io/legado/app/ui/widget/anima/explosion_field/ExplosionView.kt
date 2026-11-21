@@ -25,6 +25,7 @@ import android.graphics.Rect
 import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.View
+import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.DebugLog
 
 import java.util.*
@@ -94,6 +95,21 @@ class ExplosionView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     @JvmOverloads
     fun explode(view: View, restartState: Boolean? = false) {
+
+        if (AppConfig.isEInkMode) {
+            // 墨水屏：不做爆炸动画，直接恢复视图状态并回调
+            val dummy = ValueAnimator.ofFloat(0f, 1f).setDuration(0)
+            dummy.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    view.scaleX = 1f
+                    view.scaleY = 1f
+                    view.alpha = 1f
+                    mZAnimatorListener?.onAnimationEnd(animation, this@ExplosionView)
+                }
+            })
+            dummy.start()
+            return
+        }
 
         val r = Rect()
         view.getGlobalVisibleRect(r)
