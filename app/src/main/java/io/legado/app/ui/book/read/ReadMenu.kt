@@ -172,13 +172,6 @@ class ReadMenu @JvmOverloads constructor(
     }
 
     private fun initView(reset: Boolean = false) = binding.run {
-        if (AppConfig.isNightTheme) {
-            fabNightTheme.setImageResource(R.drawable.ic_daytime)
-        } else {
-            fabNightTheme.setImageResource(R.drawable.ic_brightness)
-        }
-        // 墨水屏专属：主题固定为 EInk，昼夜切换无效，隐藏该按钮
-        fabNightTheme.isGone = AppConfig.isEInkMode
         initAnimation()
         tvCustomBtn.setColorFilter(context.accentColor)
         if (immersiveMenu) {
@@ -217,7 +210,6 @@ class ReadMenu @JvmOverloads constructor(
         fabSearch.setColorFilter(textColor)
         fabAutoPage.setColorFilter(textColor)
         fabReplaceRule.setColorFilter(textColor)
-        fabNightTheme.setColorFilter(textColor)
         tvPre.setTextColor(textColor)
         tvNext.setTextColor(textColor)
         ivCatalog.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
@@ -561,11 +553,6 @@ class ReadMenu @JvmOverloads constructor(
         //替换
         fabReplaceRule.setOnClickListener { callBack.openReplaceRule() }
 
-        //夜间模式
-        fabNightTheme.setOnClickListener {
-            AppConfig.isNightTheme = !AppConfig.isNightTheme
-            ThemeConfig.applyDayNight(context)
-        }
 
         //上一章
         tvPre.setOnClickListener { ReadBook.moveToPrevChapter(upContent = true, toLast = false) }

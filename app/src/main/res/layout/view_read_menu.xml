@@ -154,6 +154,10 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/fabSearch"
                 android:layout_width="40dp"
@@ -210,20 +214,6 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
-
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/fabNightTheme"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="16dp"
-                android:background="@drawable/bg_eink_circle_border"
-                android:contentDescription="@string/dark_theme"
-                android:padding="8dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_brightness"
-                android:tint="@color/primaryText"
-                android:tooltipText="@string/dark_theme"
-                tools:ignore="UnusedAttribute" />
 
         </LinearLayout>
 
