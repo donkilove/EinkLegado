@@ -8,6 +8,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookProgress
 import io.legado.app.data.entities.BookProgressBundle
+import io.legado.app.data.entities.isAheadOf
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.storage.Backup
@@ -255,6 +256,10 @@ object AppWebDav {
     /**
      * 把一本书的进度写入聚合文件并上传
      */
+    /**
+     * 把一本书的进度写入聚合文件并上传。
+     * 遵循「进度只前进」：云端已有更靠后的进度时不覆盖，避免旧设备把新进度冲掉。
+     */
     suspend fun uploadBookProgress(
         book: Book,
         toast: Boolean = false,
@@ -263,13 +268,11 @@ object AppWebDav {
         if (!AppConfig.syncBookProgress) return
         if (!NetworkUtils.isAvailable()) return
         try {
-            progressMutex.withLock {
-                val bundle = ensureProgressBundle() ?: BookProgressBundle()
-                bundle.put(BookProgress(book))
-                pushProgressBundle(bundle)
+            val uploaded = pushProgress(BookProgress(book))
+            if (uploaded) {
+                book.syncTime = System.currentTimeMillis()
+                onSuccess?.invoke()
             }
-            book.syncTime = System.currentTimeMillis()
-            onSuccess?.invoke()
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
             AppLog.put("上传进度失败\n${e.localizedMessage}", e, toast)
@@ -280,12 +283,7 @@ object AppWebDav {
         if (!AppConfig.syncBookProgress) return
         if (!NetworkUtils.isAvailable()) return
         try {
-            progressMutex.withLock {
-                val bundle = ensureProgressBundle() ?: BookProgressBundle()
-                bundle.put(bookProgress)
-                pushProgressBundle(bundle)
-            }
-            onSuccess?.invoke()
+            if (pushProgress(bookProgress)) onSuccess?.invoke()
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
             AppLog.put("上传进度失败\n${e.localizedMessage}", e)
@@ -293,8 +291,23 @@ object AppWebDav {
     }
 
     /**
-     * 取一本书的云端进度（来自聚合文件）
+     * 写入聚合文件并上传；仅当新进度比云端更靠后时才真正上传
+     * @return 是否实际发生了上传
      */
+    private suspend fun pushProgress(progress: BookProgress): Boolean {
+        return progressMutex.withLock {
+            val bundle = ensureProgressBundle() ?: BookProgressBundle()
+            val existing = bundle.get(progress.name, progress.author)
+            if (existing != null && !progress.isAheadOf(existing)) {
+                // 云端进度更靠后，保留云端
+                return@withLock false
+            }
+            bundle.put(progress)
+            pushProgressBundle(bundle)
+            true
+        }
+    }
+
     suspend fun getBookProgress(book: Book): BookProgress? {
         val bundle = ensureProgressBundle() ?: return null
         return bundle.get(book.name, book.author)

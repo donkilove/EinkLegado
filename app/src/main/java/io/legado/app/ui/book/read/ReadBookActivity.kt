@@ -377,7 +377,9 @@ class ReadBookActivity : BaseReadBookActivity(),
         ReadBook.cancelPreDownloadTask()
         unregisterReceiver(timeBatteryReceiver)
         upSystemUiVisibility()
-        if (!BuildConfig.DEBUG && ReadBook.inBookshelf) {
+        // 退出阅读界面时同步进度。原实现在 debug 包下整块跳过（!BuildConfig.DEBUG），
+        // 导致调试包永远不上传，这里去掉该限制以便真实使用与验证。
+        if (ReadBook.inBookshelf) {
             if (AppConfig.syncBookProgressPlus) {
                 ReadBook.syncProgress()
             } else {
