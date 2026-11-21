@@ -92,6 +92,24 @@ abstract class BaseActivity<VB : ViewBinding>(
         }
         observeLiveBus()
         onActivityCreated(savedInstanceState)
+        // 墨水屏：显式关闭界面切换转场。
+        // 主题里的 windowAnimationStyle=@null 只能压掉传统的窗口动画，
+        // Android 12 及以上的系统转场（transition collecting）仍会让新界面横向滑入，
+        // 必须在代码里再关一次。
+        overrideActivityTransitionCompat()
+    }
+
+    /**
+     * 关闭本 Activity 的进入/退出转场。Android 13+ 用新 API，旧版本回落到 overridePendingTransition。
+     */
+    private fun overrideActivityTransitionCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0)
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -216,5 +234,12 @@ abstract class BaseActivity<VB : ViewBinding>(
     override fun finish() {
         currentFocus?.hideSoftInput()
         super.finish()
+        // 墨水屏：关闭退出转场
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
     }
 }
