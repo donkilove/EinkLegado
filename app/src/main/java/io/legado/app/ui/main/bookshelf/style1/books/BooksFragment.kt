@@ -126,6 +126,9 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
      */
     private fun calibratePageSize() {
         if (pageSizeCalibrated) return
+        // 校准前强制显示翻页栏：只有一页时它是隐藏的，RecyclerView 会更高，
+        // 按那个高度算出的每页条数在翻页栏出现后就放不下了（实测第 6 本被裁掉一半）。
+        binding.pageBar.visibility = android.view.View.VISIBLE
         binding.rvBookshelf.post {
             if (pageSizeCalibrated) return@post
             val rv = binding.rvBookshelf
