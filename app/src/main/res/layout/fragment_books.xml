@@ -4,22 +4,35 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <io.legado.app.ui.widget.StaticRefreshLayout
-        android:id="@+id/refresh_layout"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <io.legado.app.ui.widget.recycler.scroller.FastScrollRecyclerView
-            android:id="@+id/rv_bookshelf"
+        <io.legado.app.ui.widget.StaticRefreshLayout
+            android:id="@+id/refresh_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            tools:listitem="@layout/item_bookshelf_list" />
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-    </io.legado.app.ui.widget.StaticRefreshLayout>
+            <io.legado.app.ui.widget.recycler.scroller.FastScrollRecyclerView
+                android:id="@+id/rv_bookshelf"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                tools:listitem="@layout/item_bookshelf_list" />
+
+        </io.legado.app.ui.widget.StaticRefreshLayout>
+
+        <io.legado.app.ui.widget.PageBar
+            android:id="@+id/page_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_refreshing"

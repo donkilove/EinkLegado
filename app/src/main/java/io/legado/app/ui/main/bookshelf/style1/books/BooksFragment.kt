@@ -28,6 +28,7 @@ import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.book.info.BookInfoActivity
 import io.legado.app.ui.main.MainViewModel
+import io.legado.app.utils.Paginator
 import io.legado.app.utils.cnCompare
 import io.legado.app.utils.flowWithLifecycleAndDatabaseChangeFirst
 import io.legado.app.utils.observeEvent
@@ -90,6 +91,12 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     private var onlyUpdateRead = false
     private val bookshelfMargin by lazy { AppConfig.bookshelfMargin }
     private var itemCount = 0
+    // 墨水屏专属：书架分页，每页条数按可视区与列数自适应
+    private val paginator = Paginator<io.legado.app.data.entities.Book>(
+        if (bookshelfLayout >= 2) bookshelfLayout * 4 else 8
+    )
+    private var pageSizeCalibrated = false
+    private var calibrateAttempts = 0
     private var totalRows = 0
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
@@ -116,6 +123,56 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         binding.tvRefreshing.postDelayed(hideRefreshingHint, 1500)
     }
 
+    private fun upPageBar() {
+        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "本")
+    }
+
+    /**
+     * 按可视区与列数校准每页条数。
+     * 网格模式下每页必须是整行，所以按列步进累加行高，再乘以列数。
+     */
+    private fun calibratePageSize() {
+        if (pageSizeCalibrated) return
+        binding.rvBookshelf.post {
+            if (pageSizeCalibrated) return@post
+            val rv = binding.rvBookshelf
+            val visible = rv.height
+            val columns = if (bookshelfLayout >= 2) bookshelfLayout else 1
+            if (visible <= 0 || rv.childCount == 0) {
+                if (calibrateAttempts++ < 20) {
+                    rv.postDelayed({ calibratePageSize() }, 50)
+                }
+                return@post
+            }
+            var accumulated = 0
+            var rows = 0
+            var i = 0
+            while (i < rv.childCount) {
+                val itemHeight = rv.getChildAt(i).height
+                if (itemHeight <= 0) {
+                    i += columns
+                    continue
+                }
+                if (accumulated + itemHeight > visible) break
+                accumulated += itemHeight
+                rows++
+                i += columns
+            }
+            if (rows <= 0) {
+                if (calibrateAttempts++ < 20) {
+                    rv.postDelayed({ calibratePageSize() }, 50)
+                }
+                return@post
+            }
+            pageSizeCalibrated = true
+            val perPage = rows * columns
+            if (perPage != paginator.pageSize) {
+                booksAdapter.setItems(paginator.setPageSize(perPage))
+                upPageBar()
+            }
+        }
+    }
+
     private fun initRecyclerView() {
         binding.rvBookshelf.setEdgeEffectColor(primaryColor)
         upFastScrollerBar()
@@ -134,6 +191,14 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         }
         booksAdapter.stateRestorationPolicy = StateRestorationPolicy.PREVENT_WHEN_EMPTY
         binding.rvBookshelf.adapter = booksAdapter
+        binding.pageBar.onPageChange = { delta ->
+            val target = paginator.page + delta
+            if (target in 0 until paginator.pageCount) {
+                booksAdapter.setItems(paginator.moveTo(target))
+                binding.rvBookshelf.scrollToPosition(0)
+                upPageBar()
+            }
+        }
         /**
          * 应该是当初没有使用override val keepScrollPosition = true 加的代码
          * 最近阅读插入顶部时会造成滚动
@@ -225,8 +290,7 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     /**
      * 更新书籍列表信息
      */
-    private fun upRecyclerData() {
-        booksFlowJob?.cancel()
+    private fun upRecyclerData() {        booksFlowJob?.cancel()
         booksFlowJob = viewLifecycleOwner.lifecycleScope.launch {
             appDb.bookDao.flowByGroup(groupId).map { list ->
                 //排序
@@ -263,7 +327,10 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 }
                 binding.tvEmptyMsg.isGone = itemCount > 0
                 binding.refreshLayout.isEnabled = enableRefresh && itemCount > 0
-                booksAdapter.setItems(list)
+                paginator.setAll(list)
+                booksAdapter.setItems(paginator.slice())
+                upPageBar()
+                calibratePageSize()
                 delay(100)
             }
         }
