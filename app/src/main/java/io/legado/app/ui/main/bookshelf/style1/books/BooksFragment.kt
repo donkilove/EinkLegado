@@ -116,17 +116,6 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         upRecyclerData()
     }
 
-    private val hideRefreshingHint = Runnable { binding.tvRefreshing.isGone = true }
-
-    /**
-     * 墨水屏专属：下拉刷新不再显示旋转箭头，改为顶部短暂出现静态提示
-     */
-    private fun showRefreshingHint() {
-        binding.tvRefreshing.isGone = false
-        binding.tvRefreshing.removeCallbacks(hideRefreshingHint)
-        binding.tvRefreshing.postDelayed(hideRefreshingHint, 1500)
-    }
-
     private fun upPageBar() {
         binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "本")
     }
@@ -175,7 +164,6 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         binding.refreshLayout.setColorSchemeColors(accentColor)
         binding.refreshLayout.setOnRefreshListener {
             binding.refreshLayout.isRefreshing = false
-            showRefreshingHint()
             activityViewModel.upToc(booksAdapter.getItems(), onlyUpdateRead)
             // 同步 v2：下拉刷新同时对读书籍的云端进度
             viewLifecycleOwner.lifecycleScope.launch {
