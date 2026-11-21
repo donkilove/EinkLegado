@@ -8,6 +8,7 @@ import android.widget.Scroller
 import androidx.annotation.CallSuper
 import com.google.android.material.snackbar.Snackbar
 import io.legado.app.R
+import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.book.read.page.PageView
 import io.legado.app.ui.book.read.page.ReadView
 import io.legado.app.ui.book.read.page.entities.PageDirection
@@ -41,7 +42,13 @@ abstract class PageDelegate(protected val readView: ReadView) {
     }
 
     private val snackBar: Snackbar by lazy {
-        Snackbar.make(readView, "", Snackbar.LENGTH_SHORT)
+        Snackbar.make(readView, "", Snackbar.LENGTH_SHORT).apply {
+            // 墨水屏：翻到边界时的提示不要从底部滑入，避免拖影
+            if (AppConfig.isEInkMode) {
+                animationMode =
+                    com.google.android.material.snackbar.BaseTransientBottomBar.ANIMATION_MODE_FADE
+            }
+        }
     }
 
     var isMoved = false
