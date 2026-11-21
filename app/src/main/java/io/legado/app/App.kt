@@ -34,6 +34,7 @@ import io.legado.app.help.AppFreezeMonitor
 import io.legado.app.help.AppWebDav
 import io.legado.app.help.CrashHandler
 import io.legado.app.help.DefaultData
+import io.legado.app.help.DbMaintenance
 import io.legado.app.help.DispatchersMonitor
 import io.legado.app.help.LifecycleHelp
 import io.legado.app.help.RuleBigDataHelp
@@ -133,6 +134,11 @@ class App : Application() {
             }
             //调整排序序号
             SourceHelp.adjustSortNumber()
+            // 回收 WAL 占用：长期不做 checkpoint 时 -wal 会持续膨胀
+            launch {
+                DbMaintenance.configure()
+                DbMaintenance.checkpoint()
+            }
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
                 val updated = AppWebDav.downloadAllBookProgress(withUserData = true)

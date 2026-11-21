@@ -503,6 +503,30 @@ debug 对比：
   书架分组（新增与删除双向传播）✅
   排版设置 ✅
 
+--------------------------------------------------
+[20] 数据库体积优化 · 真机验证
+--------------------------------------------------
+问题：阅读器上数据库实际占用 53.5 MB，其中 legado.db-wal 高达 18 MB（约三分之一）。
+      项目只有「压缩数据库」执行 VACUUM，而 SQLite 默认 WAL 模式下仅 VACUUM 不会回收 -wal 文件。
+      轮询观察发现：一次操作后 WAL 又涨到 18 MB，说明增长很快，只在启动时处理不够。
+
+优化：
+  - 新增 DbMaintenance：checkpoint / shrink / totalSize / configure
+  - shrink 改为「先 wal_checkpoint(TRUNCATE) → VACUUM → 再截断」，修复原先只 VACUUM 的问题
+  - 启动时设置 wal_autocheckpoint=400（默认 1000 页易被长事务拖住）并执行一次 checkpoint
+  - 应用退到后台（Activity 全部 stop）时再 checkpoint
+
+实测（BOOX Poke6）：
+  优化前    legado.db 35.45 MB + legado.db-wal 18.06 MB = 53.5 MB
+  启动后    legado.db 35.40 MB + legado.db-wal  2.90 MB = 38.3 MB   ← 回收 15.2 MB
+  退后台    保持 2.90 MB（后台 checkpoint 生效，未再膨胀）
+  手动压缩  主库 35.37 → 34.66 MB（VACUUM 减 0.7 MB），
+           但 VACUUM 期间 WAL 会暂时暴涨到 34.9 MB（重建表产生大量写入），
+           需靠下次启动或退后台的 checkpoint 回收，实测重启后降到 6.8 MB、再启动降到 2.9 MB
+
+结论：体积问题的主因是 WAL 长期未回收，非数据本身冗余。主库 35 MB 为章节缓存与书籍数据，压缩空间有限。
+
+
 
 
 

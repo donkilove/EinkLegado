@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import io.legado.app.base.BaseService
+import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.utils.LogUtils
 import java.lang.ref.WeakReference
 
@@ -67,6 +68,7 @@ object LifecycleHelp : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityStarted(activity: Activity) {
         LogUtils.d(TAG, "${activity::class.simpleName} onStart")
+        startedCount++
     }
 
     override fun onActivityDestroyed(activity: Activity) {
@@ -86,8 +88,19 @@ object LifecycleHelp : Application.ActivityLifecycleCallbacks {
         LogUtils.d(TAG, "${activity::class.simpleName} onSaveInstanceState")
     }
 
+    /** 正在前台的 Activity 数量，归零表示应用退到后台 */
+    private var startedCount = 0
+
     override fun onActivityStopped(activity: Activity) {
         LogUtils.d(TAG, "${activity::class.simpleName} onStop")
+        startedCount--
+        if (startedCount <= 0) {
+            startedCount = 0
+            // 应用退到后台：此时数据库连接空闲，是把 WAL 合并回主库并截断的最佳时机
+            Coroutine.async {
+                DbMaintenance.checkpoint()
+            }
+        }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
