@@ -121,11 +121,16 @@ class OtherConfigFragment : PreferenceFragment(),
     private fun upTitleBar() {
         val act = activity as? ConfigActivity ?: return
         val subTitle = arguments?.getString(ARG_SUB_TITLE)
+        // 返回箭头始终保留：子页退回上级列表，根页关闭本页
         act.upTitleBar(
             title = subTitle ?: getString(R.string.other_setting),
-            showBack = subTitle != null
+            showBack = true
         ) {
-            parentFragmentManager.popBackStack()
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                parentFragmentManager.popBackStack()
+            } else {
+                act.finish()
+            }
         }
     }
 
