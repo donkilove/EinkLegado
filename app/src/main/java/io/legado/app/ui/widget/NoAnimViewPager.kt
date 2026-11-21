@@ -17,7 +17,7 @@ import kotlin.math.abs
  * 垂直手势不拦截，列表上下滚动照常。
  *
  * 若调用方设置了 [onHorizontalSwipe]，则水平滑动不再被默默丢弃，
- * 而是在手势结束时回调方向（-1 向左滑，1 向右滑），供目录页做翻页使用。
+ * 而是在手势结束时回调方向（-1 向左滑，1 向右滑），供列表翻页使用。
  */
 class NoAnimViewPager @JvmOverloads constructor(
     context: Context,

@@ -121,6 +121,18 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     }
 
     /**
+     * 水平滑动翻页：-1 上一页，1 下一页。已在首/末页时返回 false，由调用方忽略本次手势。
+     */
+    fun onSwipePage(direction: Int): Boolean {
+        val target = paginator.page + direction
+        if (target !in 0 until paginator.pageCount) return false
+        booksAdapter.setItems(paginator.moveTo(target))
+        binding.rvBookshelf.scrollToPosition(0)
+        upPageBar()
+        return true
+    }
+
+    /**
      * 按可视区与列数校准每页条数。
      * 网格模式下每页必须是整行，所以按列步进累加行高，再乘以列数。
      */
@@ -189,6 +201,8 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         }
         booksAdapter.stateRestorationPolicy = StateRestorationPolicy.PREVENT_WHEN_EMPTY
         binding.rvBookshelf.adapter = booksAdapter
+        // 墨水屏：左右滑动翻页，底栏只保留页码
+        binding.pageBar.showButtons = false
         binding.pageBar.onPageChange = { delta ->
             val target = paginator.page + delta
             if (target in 0 until paginator.pageCount) {

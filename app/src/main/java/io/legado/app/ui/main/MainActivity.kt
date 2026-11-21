@@ -256,6 +256,13 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             view.bottomPadding = height
             windowInsets.inset(0, 0, 0, height)
         }
+        // 墨水屏：外层 ViewPager 会先吞掉水平滑动，内层书架收不到，
+        // 因此在这里接住手势再转发给当前分组的书列表做翻页。
+        viewPagerMain.onHorizontalSwipe = { direction ->
+            if (realPositions.getOrNull(viewPagerMain.currentItem) == idBookshelf) {
+                (fragmentMap[getFragmentId(0)] as? BookshelfFragment1)?.handleSwipe(direction)
+            }
+        }
     }
 
     /**

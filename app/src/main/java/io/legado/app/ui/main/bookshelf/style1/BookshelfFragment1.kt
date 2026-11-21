@@ -67,6 +67,25 @@ class BookshelfFragment1() : BaseBookshelfFragment(R.layout.fragment_bookshelf1)
     private val selectedGroup: BookGroup?
         get() = bookGroups.getOrNull(tabLayout.selectedTabPosition)
 
+    /**
+     * 接收外层主页 ViewPager 转来的水平滑动，转交当前分组的书列表翻页。
+     * 外层会先拦截水平手势，内层 ViewPager 收不到，故由外层转发。
+     */
+    fun handleSwipe(direction: Int): Boolean {
+        return currentBooksFragment()?.onSwipePage(direction) ?: false
+    }
+
+    /**
+     * 取当前分组的列表页。不依赖 FragmentStatePagerAdapter 内部生成的 tag，
+     * 直接按 position 在孩子 Fragment 里找，避免 tag 规则变化导致找不到。
+     */
+    private fun currentBooksFragment(): BooksFragment? {
+        val target = binding.viewPagerBookshelf.currentItem
+        return childFragmentManager.fragments
+            .filterIsInstance<BooksFragment>()
+            .firstOrNull { it.position == target }
+    }
+
     private fun initView() {
         binding.viewPagerBookshelf.setEdgeEffectColor(primaryColor)
         tabLayout.isTabIndicatorFullWidth = false
