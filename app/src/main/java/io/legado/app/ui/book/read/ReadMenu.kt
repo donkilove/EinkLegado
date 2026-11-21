@@ -141,7 +141,6 @@ class ReadMenu @JvmOverloads constructor(
             binding.vwMenuBg.setOnClickListener { runMenuOut() }
             callBack.upSystemUiVisibility()
             if (!LocalConfig.readMenuHelpVersionIsLast) {
-                callBack.showHelp()
             }
         }
 
@@ -690,7 +689,6 @@ class ReadMenu @JvmOverloads constructor(
         fun showReadAloudDialog()
         fun upSystemUiVisibility()
         fun onClickReadAloud()
-        fun showHelp()
         fun showLogin()
         fun payAction()
         fun disableSource()

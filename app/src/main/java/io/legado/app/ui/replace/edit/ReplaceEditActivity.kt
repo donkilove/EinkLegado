@@ -22,7 +22,6 @@ import io.legado.app.utils.GSON
 import io.legado.app.utils.imeHeight
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
@@ -127,7 +126,6 @@ class ReplaceEditActivity :
 
     private fun initView() {
         binding.ivHelp.setOnClickListener {
-            showHelp("regexHelp")
         }
         binding.root.setOnApplyWindowInsetsListenerCompat { _, windowInsets ->
             softKeyboardTool.initialPadding = windowInsets.imeHeight
@@ -171,7 +169,6 @@ class ReplaceEditActivity :
 
     override fun onHelpActionSelect(action: String) {
         when (action) {
-            "regexHelp" -> showHelp("regexHelp")
         }
     }
 

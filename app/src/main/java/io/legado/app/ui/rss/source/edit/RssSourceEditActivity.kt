@@ -48,7 +48,6 @@ import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
 import io.legado.app.utils.share
 import io.legado.app.utils.shareWithQr
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -101,7 +100,6 @@ class RssSourceEditActivity :
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
         if (!LocalConfig.ruleHelpVersionIsLast) {
-            showHelp("rssRuleHelp")
         }
     }
 
@@ -204,7 +202,6 @@ class RssSourceEditActivity :
             )
 
             R.id.menu_log -> showDialogFragment<AppLogDialog>()
-            R.id.menu_help -> showHelp("rssRuleHelp")
         }
         return super.onCompatOptionsItemSelected(item)
     }
@@ -504,9 +501,6 @@ class RssSourceEditActivity :
                 sendText(it)
             }.show()
 
-            "ruleHelp" -> showHelp("rssRuleHelp")
-            "jsHelp" -> showHelp("jsHelp")
-            "regexHelp" -> showHelp("regexHelp")
             "selectFile" -> selectDoc.launch {
                 mode = HandleFileContract.FILE
             }

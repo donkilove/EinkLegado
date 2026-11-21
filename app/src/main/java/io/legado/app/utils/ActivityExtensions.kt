@@ -245,10 +245,3 @@ val Activity.navigationBarGravity: Int
         return gravity ?: Gravity.BOTTOM
     }
 
-/**
- * 显示目录help下的帮助文档
- */
-fun AppCompatActivity.showHelp(fileName: String) {
-    val mdText = String(assets.open("web/help/md/${fileName}.md").readBytes())
-    showDialogFragment(TextDialog(getString(R.string.help), mdText, TextDialog.Mode.MD))
-}

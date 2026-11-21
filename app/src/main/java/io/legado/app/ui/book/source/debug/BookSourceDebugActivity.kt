@@ -22,7 +22,6 @@ import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.launch
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.launch
@@ -201,7 +200,6 @@ class BookSourceDebugActivity : VMBaseActivity<ActivitySourceDebugBinding, BookS
                 initExploreKinds()
             }
 
-            R.id.menu_help -> showHelp("debugHelp")
         }
         return super.onCompatOptionsItemSelected(item)
     }

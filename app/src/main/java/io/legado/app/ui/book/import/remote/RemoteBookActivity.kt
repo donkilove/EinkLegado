@@ -25,7 +25,6 @@ import io.legado.app.utils.ArchiveUtils
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.find
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
@@ -86,7 +85,6 @@ class RemoteBookActivity : BaseImportBookActivity<RemoteBookViewModel>(),
         binding.selectActionBar.setMainActionText(R.string.add_to_bookshelf)
         binding.selectActionBar.setCallBack(this)
         if (!LocalConfig.webDavBookHelpVersionIsLast) {
-            showHelp("webDavBookHelp")
         }
     }
 
@@ -116,7 +114,6 @@ class RemoteBookActivity : BaseImportBookActivity<RemoteBookViewModel>(),
             R.id.menu_refresh -> upPath()
             R.id.menu_server_config -> showDialogFragment<ServersDialog>()
             R.id.menu_log -> showDialogFragment<AppLogDialog>()
-            R.id.menu_help -> showHelp("webDavBookHelp")
             R.id.menu_sort_name -> {
                 item.isChecked = true
                 sortCheck(RemoteBookSort.Name)

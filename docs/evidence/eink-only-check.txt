@@ -154,6 +154,25 @@ debug 对比：
 
 构建：gradlew assembleAppDebug（BUILD SUCCESSFUL in 1m10s）。
 
+--------------------------------------------------
+[12] 移除全部帮助入口
+--------------------------------------------------
+范围统计（改造前）：
+  showHelp 调用点            34 处，分布在 17 个界面类
+  菜单文件中的「帮助」项      12 个
+  showHelp 定义               Activity / Fragment 两个扩展函数 + ReadMenu 接口方法 + ReadBookActivity 重写
+
+处理：
+  - 删除 33 行调用（其余 1 行为接口声明）
+  - 删除 2 个扩展函数、ReadMenu.CallBack.showHelp、ReadBookActivity 的空重写
+  - 删除 12 个菜单文件的 <item ... menu_help .../>（main_my.xml 因此变为空菜单）
+  - 清理 16 处 import 与 BackupConfigFragment 中残留的 menu_help 分支
+  - 帮助 Markdown 文档保留在 assets/web/help/md/
+
+编译：首次失败（BackupConfigFragment 残留 R.id.menu_help 分支），修复后
+      gradlew assembleAppDebug BUILD SUCCESSFUL in 2m16s。
+
+
 
 
 

@@ -37,7 +37,6 @@ import io.legado.app.utils.imeHeight
 import io.legado.app.utils.putPrefBoolean
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
 class CodeEditActivity :
@@ -346,10 +345,6 @@ class CodeEditActivity :
 
     override fun onHelpActionSelect(action: String) {
         when (action) {
-            "ruleHelp" -> showHelp("ruleHelp")
-            "rssRuleHelp" -> showHelp("rssRuleHelp")
-            "jsHelp" -> showHelp("jsHelp")
-            "regexHelp" -> showHelp("regexHelp")
         }
     }
 

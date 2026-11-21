@@ -39,7 +39,6 @@ import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.share
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.transaction
@@ -158,7 +157,6 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
                 searchView.setQuery(getString(R.string.no_group), true)
             }
 
-            R.id.menu_help -> showHelp("SourceMRssHelp")
             else -> if (item.groupId == R.id.source_group) {
                 searchView.setQuery("group:${item.title}", true)
             }

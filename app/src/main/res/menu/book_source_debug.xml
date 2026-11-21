@@ -35,9 +35,4 @@
         android:title="@string/refresh_explore"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/menu_help"
-        android:title="@string/help"
-        app:showAsAction="never" />
-
 </menu>

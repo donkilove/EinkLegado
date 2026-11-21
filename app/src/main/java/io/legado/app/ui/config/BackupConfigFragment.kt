@@ -42,7 +42,6 @@ import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.launch
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showHelp
 import io.legado.app.utils.toEditable
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers.IO
@@ -146,7 +145,6 @@ class BackupConfigFragment : PreferenceFragment(),
         listView.setEdgeEffectColor(primaryColor)
         activity?.addMenuProvider(this, viewLifecycleOwner)
         if (!LocalConfig.backupHelpVersionIsLast) {
-            showHelp("webDavHelp")
         }
     }
 
@@ -157,11 +155,6 @@ class BackupConfigFragment : PreferenceFragment(),
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            R.id.menu_help -> {
-                showHelp("webDavHelp")
-                return true
-            }
-
             R.id.menu_log -> showDialogFragment<AppLogDialog>()
         }
         return false
