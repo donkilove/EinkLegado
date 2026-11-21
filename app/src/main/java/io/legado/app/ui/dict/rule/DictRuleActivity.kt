@@ -104,6 +104,24 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
         return super.onCompatCreateOptionsMenu(menu)
     }
 
+    // 每页条数按实际项高校准，各列表项高度不同，固定条数会让页内仍需滚动
+    private var pageSizeCalibrated = false
+
+    private fun calibratePageSize() {
+        if (pageSizeCalibrated) return
+        binding.recyclerView.post {
+            if (pageSizeCalibrated) return@post
+            val rv = binding.recyclerView
+            val itemHeight = rv.getChildAt(0)?.height ?: return@post
+            if (itemHeight <= 0 || rv.height <= 0) return@post
+            pageSizeCalibrated = true
+            val perPage = (rv.height / itemHeight).coerceAtLeast(io.legado.app.utils.Paginator.MIN_PAGE_SIZE)
+            if (perPage != paginator.pageSize) {
+                adapter.setItems(paginator.setPageSize(perPage), adapter.diffItemCallBack)
+                upPageBar()
+            }
+        }
+    }
     private fun upPageBar() {
         binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
     }
@@ -149,6 +167,7 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
                 paginator.setAll(it)
                 adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
                 upPageBar()
+                calibratePageSize()
             }
         }
     }
