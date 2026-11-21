@@ -22,6 +22,7 @@ import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.invisible
 import io.legado.app.utils.loadAnimation
 import io.legado.app.utils.visible
+import io.legado.app.help.config.AppConfig
 
 /**
  * 搜索界面菜单
@@ -33,8 +34,8 @@ class SearchMenu @JvmOverloads constructor(
     private val callBack: CallBack get() = activity as CallBack
     private val binding = ViewSearchMenuBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private val menuBottomIn: Animation = loadAnimation(context, R.anim.anim_readbook_bottom_in)
-    private val menuBottomOut: Animation = loadAnimation(context, R.anim.anim_readbook_bottom_out)
+    private val menuBottomIn: Animation = loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_bottom_in)
+    private val menuBottomOut: Animation = loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_bottom_out)
     private val bgColor: Int = context.bottomBackground
     private val textColor: Int = context.getPrimaryTextColor(ColorUtils.isColorLight(bgColor))
     private val bottomBackgroundList: ColorStateList =

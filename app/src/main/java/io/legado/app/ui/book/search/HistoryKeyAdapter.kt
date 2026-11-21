@@ -1,5 +1,7 @@
 package io.legado.app.ui.book.search
 
+import io.legado.app.help.config.AppConfig
+
 import android.view.ViewGroup
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
@@ -40,7 +42,10 @@ class HistoryKeyAdapter(activity: SearchActivity, val callBack: CallBack) :
                 }
             }
             onLongClick {
-                explosionField.explode(this, true)
+                // 墨水屏：跳过爆炸动画，直接删除，避免无谓的整屏重绘
+                if (!AppConfig.isEInkMode) {
+                    explosionField.explode(this, true)
+                }
                 getItemByLayoutPosition(holder.layoutPosition)?.let {
                     callBack.deleteHistory(it)
                 }

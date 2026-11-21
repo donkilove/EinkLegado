@@ -72,16 +72,16 @@ class ReadMenu @JvmOverloads constructor(
     private var confirmSkipToChapter: Boolean = false
     private var isMenuOutAnimating = false
     private val menuTopIn: Animation by lazy {
-        loadAnimation(context, R.anim.anim_readbook_top_in)
+        loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_top_in)
     }
     private val menuTopOut: Animation by lazy {
-        loadAnimation(context, R.anim.anim_readbook_top_out)
+        loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_top_out)
     }
     private val menuBottomIn: Animation by lazy {
-        loadAnimation(context, R.anim.anim_readbook_bottom_in)
+        loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_bottom_in)
     }
     private val menuBottomOut: Animation by lazy {
-        loadAnimation(context, R.anim.anim_readbook_bottom_out)
+        loadAnimation(context, if (AppConfig.isEInkMode) R.anim.anim_none else R.anim.anim_readbook_bottom_out)
     }
     private val immersiveMenu: Boolean
         get() = AppConfig.readBarStyleFollowPage && ReadBookConfig.durConfig.curBgType() == 0
