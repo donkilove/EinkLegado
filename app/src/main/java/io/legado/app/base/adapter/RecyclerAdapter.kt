@@ -16,6 +16,7 @@ import kotlinx.coroutines.ensureActive
 import splitties.views.onLongClick
 import java.util.Collections
 import androidx.core.util.size
+import io.legado.app.help.config.AppConfig
 
 /**
  * Created by Invincible on 2017/11/24.
@@ -436,6 +437,10 @@ abstract class RecyclerAdapter<ITEM, VB : ViewBinding>(protected val context: Co
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
+        // 墨水屏：统一关闭条目动画，避免数据变化时的淡入淡出与位移在电纸上留下残影
+        if (AppConfig.isEInkMode) {
+            recyclerView.itemAnimator = null
+        }
         val manager = recyclerView.layoutManager
         if (manager is GridLayoutManager) {
             manager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import splitties.views.onLongClick
+import io.legado.app.help.config.AppConfig
 
 /**
  * Created by Invincible on 2017/12/15.
@@ -173,6 +174,11 @@ abstract class DiffRecyclerAdapter<ITEM, VB : ViewBinding>(protected val context
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
+        // 墨水屏：统一关闭条目动画。数据变化时默认的 ItemAnimator 会做淡入淡出与位移动画，
+        // 电纸书上表现为整片刷新与残影。放在基类里，避免逐个列表遗漏。
+        if (AppConfig.isEInkMode) {
+            recyclerView.itemAnimator = null
+        }
         val manager = recyclerView.layoutManager
         layoutManager = manager
         if (manager is GridLayoutManager) {
