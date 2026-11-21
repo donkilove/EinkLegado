@@ -359,6 +359,25 @@ debug 对比：
 
 编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 3m26s。
 
+--------------------------------------------------
+[17b] 备份与恢复拆分为两个页面 · 真机验证
+--------------------------------------------------
+变更：
+  - pref_config_web_dav.xml（新增，7 项）：服务器地址 / 账号 / 密码 / 子文件夹 / 设备名称 /
+    同步阅读进度 / 同步增强
+  - pref_config_backup.xml（精简为 6 项）：备份路径 / 备份 / 恢复 / 恢复忽略列表 /
+    仅保留最新备份 / 自动检查新备份
+  - 新增 WebDavConfigFragment；BackupConfigFragment 精简为纯备份恢复逻辑（364 → 296 行）
+  - ConfigTag 新增 WEB_DAV_CONFIG 并在 ConfigActivity 分发
+
+实测（BOOX Poke6）：
+  「我的」根页 5 项：内容管理 / 设置 / 其它 / WebDav 设置 / 备份与恢复
+  点「WebDav 设置」→ 7 项连接与同步配置，账号与密码掩码显示正常
+  点「备份与恢复」→ 6 项备份恢复配置，备份路径与各项摘要正常
+
+编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 3m37s。
+
+
 
 
 

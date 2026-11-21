@@ -228,6 +228,10 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
                 }
 
                 "web_dav_setting" -> startActivity<ConfigActivity> {
+                    putExtra("configTag", ConfigTag.WEB_DAV_CONFIG)
+                }
+
+                "backup_restore_setting" -> startActivity<ConfigActivity> {
                     putExtra("configTag", ConfigTag.BACKUP_CONFIG)
                 }
 

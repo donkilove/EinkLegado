@@ -108,11 +108,19 @@
 
     </androidx.preference.PreferenceScreen>
 
-    <!-- 备份与恢复提升为一级入口 -->
+    <!-- WebDav 设置 -->
+    <io.legado.app.lib.prefs.Preference
+        android:icon="@drawable/ic_cfg_web"
+        android:key="web_dav_setting"
+        android:summary="@string/web_dav_set_s"
+        android:title="@string/web_dav_set"
+        app:iconSpaceReserved="false" />
+
+    <!-- 备份与恢复 -->
     <io.legado.app.lib.prefs.Preference
         android:icon="@drawable/ic_cfg_backup"
-        android:key="web_dav_setting"
-        android:summary="@string/web_dav_set_import_old"
+        android:key="backup_restore_setting"
+        android:summary="@string/backup_restore_s"
         android:title="@string/backup_restore"
         app:allowDividerBelow="false"
         app:iconSpaceReserved="false" />

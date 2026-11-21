@@ -3,7 +3,6 @@ package io.legado.app.ui.config
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.text.InputType
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -11,8 +10,6 @@ import android.view.View
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.constant.AppLog
@@ -42,7 +39,6 @@ import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.launch
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.toEditable
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -106,30 +102,6 @@ class BackupConfigFragment : PreferenceFragment(),
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_config_backup)
-        findPreference<EditTextPreference>(PreferKey.webDavPassword)?.let {
-            it.setOnBindEditTextListener { editText ->
-                editText.inputType =
-                    InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT
-                editText.setSelection(editText.text.length)
-            }
-        }
-        findPreference<EditTextPreference>(PreferKey.webDavDir)?.let {
-            it.setOnBindEditTextListener { editText ->
-                editText.text = AppConfig.webDavDir?.toEditable()
-                editText.setSelection(editText.text.length)
-            }
-        }
-        findPreference<EditTextPreference>(PreferKey.webDavDeviceName)?.let {
-            it.setOnBindEditTextListener { editText ->
-                editText.text = AppConfig.webDavDeviceName?.toEditable()
-                editText.setSelection(editText.text.length)
-            }
-        }
-        upPreferenceSummary(PreferKey.webDavUrl, getPrefString(PreferKey.webDavUrl))
-        upPreferenceSummary(PreferKey.webDavAccount, getPrefString(PreferKey.webDavAccount))
-        upPreferenceSummary(PreferKey.webDavPassword, getPrefString(PreferKey.webDavPassword))
-        upPreferenceSummary(PreferKey.webDavDir, AppConfig.webDavDir)
-        upPreferenceSummary(PreferKey.webDavDeviceName, AppConfig.webDavDeviceName)
         upPreferenceSummary(PreferKey.backupPath, getPrefString(PreferKey.backupPath))
         findPreference<io.legado.app.lib.prefs.Preference>("web_dav_restore")
             ?.onLongClick {
@@ -168,57 +140,12 @@ class BackupConfigFragment : PreferenceFragment(),
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         when (key) {
             PreferKey.backupPath -> upPreferenceSummary(key, getPrefString(key))
-            PreferKey.webDavUrl,
-            PreferKey.webDavAccount,
-            PreferKey.webDavPassword,
-            PreferKey.webDavDir -> listView.post {
-                upPreferenceSummary(key, appCtx.getPrefString(key))
-                viewModel.upWebDavConfig()
-            }
-
-            PreferKey.webDavDeviceName -> upPreferenceSummary(key, getPrefString(key))
         }
     }
 
     private fun upPreferenceSummary(preferenceKey: String, value: String?) {
         val preference = findPreference<Preference>(preferenceKey) ?: return
-        when (preferenceKey) {
-            PreferKey.webDavUrl ->
-                if (value.isNullOrBlank()) {
-                    preference.summary = getString(R.string.web_dav_url_s)
-                } else {
-                    preference.summary = value
-                }
-
-            PreferKey.webDavAccount ->
-                if (value.isNullOrBlank()) {
-                    preference.summary = getString(R.string.web_dav_account_s)
-                } else {
-                    preference.summary = value
-                }
-
-            PreferKey.webDavPassword ->
-                if (value.isNullOrEmpty()) {
-                    preference.summary = getString(R.string.web_dav_pw_s)
-                } else {
-                    preference.summary = "*".repeat(value.length)
-                }
-
-            PreferKey.webDavDir -> preference.summary = when (value) {
-                null -> "legado"
-                else -> value
-            }
-
-            else -> {
-                if (preference is ListPreference) {
-                    val index = preference.findIndexOfValue(value)
-                    // Set the summary to reflect the new value.
-                    preference.summary = if (index >= 0) preference.entries[index] else null
-                } else {
-                    preference.summary = value
-                }
-            }
-        }
+        preference.summary = value
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {

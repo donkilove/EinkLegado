@@ -1262,5 +1262,7 @@
         <item>@string/bookshelf_px_4</item>
         <item>@string/bookshelf_px_5</item>
     </string-array>
+    <string name="web_dav_set_s">WebDav 服务器与同步设置</string>
+    <string name="backup_restore_s">备份与恢复应用数据</string>
 
 </resources>

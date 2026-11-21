@@ -1369,5 +1369,7 @@
         <item>@string/bookshelf_px_4</item>
         <item>@string/bookshelf_px_5</item>
     </string-array>
+    <string name="web_dav_set_s">WebDav server and sync options</string>
+    <string name="backup_restore_s">Backup and restore app data</string>
 
 </resources>
