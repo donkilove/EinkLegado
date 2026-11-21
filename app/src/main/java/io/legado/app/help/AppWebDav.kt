@@ -435,12 +435,14 @@ object AppWebDav {
                 val remoteTime = remote?.lastModify ?: 0L
                 val localTime = if (localFile.exists()) localFile.lastModified() else 0L
                 if (remote != null && remoteTime > localTime) {
-                    // 云端更新：下载覆盖
+                    // 云端时间更新：先比内容，避免内容相同也反复覆盖与重建界面
                     val bytes = WebDav("$rootWebDavUrl$name", authorization).download()
-                    localFile.writeBytes(bytes)
-                    overwritten = true
-                } else if (localFile.exists()) {
-                    // 本地更新或云端缺失：上传
+                    if (!localFile.exists() || !localFile.readBytes().contentEquals(bytes)) {
+                        localFile.writeBytes(bytes)
+                        overwritten = true
+                    }
+                } else if (localFile.exists() && localTime > remoteTime) {
+                    // 本地更新：上传
                     WebDav("$rootWebDavUrl$name", authorization)
                         .upload(localFile.readBytes(), "application/json")
                 }
