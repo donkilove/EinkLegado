@@ -20,7 +20,11 @@ static def releaseTime() {
 
 def name = "legado"
 def version = "3." + releaseTime()
-def gitCommits = Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
+// 用 providers.exec 读取 git 提交数：直接字符串 execute() 会在配置阶段启动外部进程，
+// 导致 Gradle 配置缓存无法保存（每次都要重新配置）。providers 是配置缓存兼容的写法。
+def gitCommits = providers.exec {
+    commandLine 'git', 'rev-list', 'HEAD', '--count'
+}.standardOutput.asText.get().trim().toInteger()
 
 android {
     compileSdk = compile_sdk_version
