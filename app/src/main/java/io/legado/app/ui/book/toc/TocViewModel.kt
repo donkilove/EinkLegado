@@ -128,6 +128,12 @@ class TocViewModel(application: Application) : BaseViewModel(application) {
         fun clearDisplayTitle()
 
         fun upAdapter()
+
+        /**
+         * 水平滑动翻页（-1 左滑即上一页，1 右滑即下一页）
+         * @return true 表示本次滑动已被翻页消费
+         */
+        fun onSwipePage(direction: Int): Boolean
     }
 
     interface BookmarkCallBack {

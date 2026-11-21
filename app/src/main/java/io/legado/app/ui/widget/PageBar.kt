@@ -29,6 +29,16 @@ class PageBar @JvmOverloads constructor(
     /** 参数为 -1（上一页）或 +1（下一页） */
     var onPageChange: ((Int) -> Unit)? = null
 
+    /**
+     * 是否显示左右翻页按钮。目录页用滑动翻页，可只保留中间的页码显示。
+     */
+    var showButtons: Boolean = true
+        set(value) {
+            field = value
+            tvPrev.isVisible = value
+            tvNext.isVisible = value
+        }
+
     init {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL

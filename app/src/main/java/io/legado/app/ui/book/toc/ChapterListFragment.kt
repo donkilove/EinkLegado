@@ -115,10 +115,22 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     }
 
     private fun initView() = binding.run {
+        // 目录页用左右滑动翻页，底栏只保留页码显示
+        pageBar.showButtons = false
         pageBar.onPageChange = { delta ->
             applyPage(paginator.page + delta)
         }
         binding.pageBar.applyNavigationBarPadding()
+    }
+
+    /**
+     * 水平滑动翻页：-1 上一页，1 下一页。已在首/末页时返回 false 让手势无效果。
+     */
+    override fun onSwipePage(direction: Int): Boolean {
+        val target = paginator.page + direction
+        if (target !in 0 until paginator.pageCount) return false
+        applyPage(target)
+        return true
     }
 
     private fun initBook(book: Book) {

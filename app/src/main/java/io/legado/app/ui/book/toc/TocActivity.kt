@@ -57,6 +57,12 @@ class TocActivity : VMBaseActivity<ActivityChapterListBinding, TocViewModel>(),
         tabLayout.isTabIndicatorFullWidth = false
         tabLayout.setSelectedTabIndicatorColor(accentColor)
         binding.viewPager.adapter = TabFragmentPageAdapter()
+        // 墨水屏：左右滑动不再切换「目录/书签」，改为目录翻页；切换书签点顶部页签
+        binding.viewPager.onHorizontalSwipe = { direction ->
+            if (binding.viewPager.currentItem == 0) {
+                viewModel.chapterListCallBack?.onSwipePage(direction)
+            }
+        }
         tabLayout.setupWithViewPager(binding.viewPager)
         tabLayout.tabGravity = TabLayout.GRAVITY_CENTER
         viewModel.bookData.observe(this) {

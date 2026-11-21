@@ -15,15 +15,29 @@ import kotlin.math.abs
  *
  * 水平手势会被主动吞掉，避免漏到子视图上被误判为点击（实测会导致书架误打开书籍）；
  * 垂直手势不拦截，列表上下滚动照常。
+ *
+ * 若调用方设置了 [onHorizontalSwipe]，则水平滑动不再被默默丢弃，
+ * 而是在手势结束时回调方向（-1 向左滑，1 向右滑），供目录页做翻页使用。
  */
 class NoAnimViewPager @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : ViewPager(context, attrs) {
 
+    /** 水平滑动回调：-1 左滑，1 右滑。为 null 时保持「吞掉手势」的原行为 */
+    var onHorizontalSwipe: ((direction: Int) -> Unit)? = null
+
     private var downX = 0f
     private var downY = 0f
+    private var lastX = 0f
+    private var lastY = 0f
+    private var swiping = false
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+
+    /** 识别为一次翻页手势所需的最小水平位移，取屏宽的 15% 左右 */
+    private val swipeThreshold: Int by lazy {
+        (resources.displayMetrics.widthPixels * 0.15f).toInt()
+    }
 
     override fun setCurrentItem(item: Int, smoothScroll: Boolean) {
         super.setCurrentItem(item, false)
@@ -35,13 +49,19 @@ class NoAnimViewPager @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 downX = ev.x
                 downY = ev.y
+                lastX = ev.x
+                lastY = ev.y
+                swiping = false
             }
 
             MotionEvent.ACTION_MOVE -> {
+                lastX = ev.x
+                lastY = ev.y
                 val dx = abs(ev.x - downX)
                 val dy = abs(ev.y - downY)
                 if (dx > touchSlop && dx > dy * 1.5f) {
                     // 水平滑动：拦截下来自行消费，不切换页面也不下发给子视图
+                    swiping = true
                     return true
                 }
             }
@@ -49,5 +69,25 @@ class NoAnimViewPager @JvmOverloads constructor(
         return false
     }
 
-    override fun onTouchEvent(ev: MotionEvent?): Boolean = true
+    override fun onTouchEvent(ev: MotionEvent?): Boolean {
+        if (ev == null) return true
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_MOVE -> {
+                lastX = ev.x
+                lastY = ev.y
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (swiping) {
+                    val dx = lastX - downX
+                    val dy = lastY - downY
+                    if (abs(dx) >= swipeThreshold && abs(dx) > abs(dy) * 1.5f) {
+                        onHorizontalSwipe?.invoke(if (dx > 0) -1 else 1)
+                    }
+                }
+                swiping = false
+            }
+        }
+        return true
+    }
 }
