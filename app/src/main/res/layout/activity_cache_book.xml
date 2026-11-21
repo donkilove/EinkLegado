@@ -14,7 +14,13 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false" />
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:layout_weight="1" />
+
+    <io.legado.app.ui.widget.PageBar
+        android:id="@+id/page_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

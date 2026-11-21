@@ -39,13 +39,16 @@ class PageBar @JvmOverloads constructor(
         tvInfo = TextView(context).apply {
             gravity = Gravity.CENTER
             textSize = 14f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
             setTextColor(Color.BLACK)
         }
         tvNext = createButton("下一页")
 
+        // 按钮宽度随文字自适应，避免窄屏下挤压中间的页码信息
         addView(
             tvPrev,
-            LayoutParams(dp(88), LayoutParams.MATCH_PARENT)
+            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT)
         )
         addView(
             tvInfo,
@@ -53,7 +56,7 @@ class PageBar @JvmOverloads constructor(
         )
         addView(
             tvNext,
-            LayoutParams(dp(88), LayoutParams.MATCH_PARENT)
+            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT)
         )
 
         tvPrev.setOnClickListener { if (tvPrev.isEnabled) onPageChange?.invoke(-1) }

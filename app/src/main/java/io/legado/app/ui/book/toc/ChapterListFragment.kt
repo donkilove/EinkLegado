@@ -43,6 +43,11 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     private val adapter by lazy { ChapterListAdapter(requireContext(), this) }
     private var durChapterIndex = 0
 
+    // 墨水屏专属：目录分页，每页条数按可视区自适应
+    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.BookChapter>()
+    private var pageSizeCalibrated = false
+    private var calibrateAttempts = 0
+
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
         viewModel.chapterListCallBack = this@ChapterListFragment
         val bbg = bottomBackground
@@ -58,6 +63,54 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
         }
     }
 
+    private fun upPageBar() {
+        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "章")
+    }
+
+    private fun applyPage(target: Int) {
+        if (target !in 0 until paginator.pageCount) return
+        adapter.setItems(paginator.moveTo(target))
+        upPageBar()
+        mLayoutManager.scrollToPositionWithOffset(0, 0)
+    }
+
+    /** 跳到当前阅读章节所在的页，并在页内定位到该章 */
+    private fun jumpToCurrentChapter() {
+        if (paginator.total <= 0) return
+        val size = paginator.pageSize
+        val page = (durChapterIndex / size).coerceIn(0, paginator.pageCount - 1)
+        adapter.setItems(paginator.moveTo(page))
+        upPageBar()
+        val posInPage = (durChapterIndex - page * size).coerceAtLeast(0)
+        mLayoutManager.scrollToPositionWithOffset(posInPage, 0)
+    }
+
+    private fun calibratePageSize() {
+        if (pageSizeCalibrated) return
+        binding.recyclerView.post {
+            if (pageSizeCalibrated) return@post
+            val rv = binding.recyclerView
+            val visible = rv.height
+            if (visible <= 0 || rv.childCount == 0) {
+                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
+                return@post
+            }
+            var fitCount = 0
+            for (i in 0 until rv.childCount) {
+                if (rv.getChildAt(i).bottom > visible) break
+                fitCount++
+            }
+            if (fitCount <= 0) {
+                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
+                return@post
+            }
+            pageSizeCalibrated = true
+            if (fitCount != paginator.pageSize) {
+                adapter.setItems(paginator.setPageSize(fitCount))
+                upPageBar()
+            }
+        }
+    }
     private fun initRecyclerView() {
         binding.recyclerView.layoutManager = mLayoutManager
         binding.recyclerView.addItemDecoration(VerticalDivider(requireContext()))
@@ -66,15 +119,16 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
     private fun initView() = binding.run {
         ivChapterTop.setOnClickListener {
-            mLayoutManager.scrollToPositionWithOffset(0, 0)
+            applyPage(0)
         }
         ivChapterBottom.setOnClickListener {
-            if (adapter.itemCount > 0) {
-                mLayoutManager.scrollToPositionWithOffset(adapter.itemCount - 1, 0)
-            }
+            applyPage(paginator.pageCount - 1)
         }
         tvCurrentChapterInfo.setOnClickListener {
-            mLayoutManager.scrollToPositionWithOffset(durChapterIndex, 0)
+            jumpToCurrentChapter()
+        }
+        pageBar.onPageChange = { delta ->
+            applyPage(paginator.page + delta)
         }
         binding.llChapterBaseInfo.applyNavigationBarPadding()
     }
@@ -130,25 +184,19 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
                     else -> appDb.bookChapterDao.search(viewModel.bookUrl, searchKey, 0, end)
                 }
-            }.let {
-                adapter.setItems(it)
+            }.let { list ->
+                paginator.setAll(list)
+                adapter.setItems(paginator.slice())
+                upPageBar()
+                calibratePageSize()
             }
         }
     }
 
     override fun onListChanged() {
         lifecycleScope.launch {
-            var scrollPos = 0
-            withContext(Default) {
-                adapter.getItems().forEachIndexed { index, bookChapter ->
-                    if (bookChapter.index >= durChapterIndex) {
-                        return@withContext
-                    }
-                    scrollPos = index
-                }
-            }
-            mLayoutManager.scrollToPositionWithOffset(scrollPos, 0)
-            adapter.upDisplayTitles(scrollPos)
+            jumpToCurrentChapter()
+            adapter.upDisplayTitles(mLayoutManager.findFirstVisibleItemPosition())
         }
     }
 

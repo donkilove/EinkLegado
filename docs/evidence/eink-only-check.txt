@@ -526,6 +526,43 @@ debug 对比：
 
 结论：体积问题的主因是 WAL 长期未回收，非数据本身冗余。主库 35 MB 为章节缓存与书籍数据，压缩空间有限。
 
+--------------------------------------------------
+[21] 编译缓慢排查：in-process 策略禁用增量编译
+--------------------------------------------------
+现象：改一个 Kotlin 文件后 assembleAppDebug 需 5~6 分钟，长期无法忍受。
+profile 显示 compileAppDebugKotlin 占 4m47s（总 5m41s），其余任务均在 20s 内。
+
+排查掉的非根因：
+  磁盘       NVMe SSD，非 I/O 瓶颈
+  JDK        17，版本足够
+  Kotlin     2.3.10，K2 已启用，无升级空间
+  注解处理    已是 KSP，不存在 kapt 开销
+  内存       6G + 编译器 4G，充足
+  杀毒       Defender 已排除项目与缓存目录，无改善（316s → 372s，含配置缓存重建）
+  caching/parallel  早已开启
+  配置缓存    项目构建脚本用 'git rev-list'.execute() 在配置阶段起外部进程导致无法保存，
+             改用 providers.exec 后修复，但仅省约 20~25s
+
+根因（Kotlin 构建报告）：
+  开启 kotlin.build.report.output=file 后，报告明确写出：
+    REBUILD_REASON: In-process execution
+    Non incremental inprocess compilation: 147.777 s
+  即此前为提高速度加的 kotlin.compiler.execution.strategy=in-process
+  会使 Kotlin 强制全量编译——增量编译在该策略下不生效。
+
+修复：移除 in-process，恢复默认 daemon 策略。
+
+修复后实测（改一个 Kotlin 文件后 assembleAppDebug）：
+  第 1 轮  20.3 s
+  第 2 轮  31.2 s
+  无变更   10.9 s
+  Kotlin 任务 9.7 s，其中 Incremental compilation in daemon 5.9 s
+  配置阶段 0.537 s（配置缓存命中）
+
+结论：从 316~372s 降至 20~31s，约 10~15 倍提升。
+教训：优化编译速度的手段本身可能反而破坏增量，必须用 kotlin.build.report 验证。
+
+
 
 
 

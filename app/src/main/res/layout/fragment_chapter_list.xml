@@ -11,8 +11,14 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:overScrollMode="never"
-        app:layout_constraintBottom_toTopOf="@+id/ll_chapter_base_info"
+        app:layout_constraintBottom_toTopOf="@+id/page_bar"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <io.legado.app.ui.widget.PageBar
+        android:id="@+id/page_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/ll_chapter_base_info" />
 
     <LinearLayout
         android:id="@+id/ll_chapter_base_info"
