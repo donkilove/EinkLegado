@@ -112,7 +112,8 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
         binding.recyclerView.layoutManager = mLayoutManager
         binding.recyclerView.addItemDecoration(VerticalDivider(requireContext()))
         binding.recyclerView.adapter = adapter
-    }
+        // 墨水屏：翻页时不做淡入淡出
+        binding.recyclerView.itemAnimator = null    }
 
     private fun initView() = binding.run {
         // 目录页用左右滑动翻页，底栏只保留页码显示

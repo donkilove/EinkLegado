@@ -25,7 +25,8 @@ abstract class PreferenceFragment : PreferenceFragmentCompat() {
         // 墨水屏：去掉 Preference 列表的默认增删动画。点击开关或页面状态变化时，
         // ItemAnimator 会让整行淡入淡出并反复刷新，是设置页看到"点一下闪一下"的来源。
         listView.itemAnimator = null
-    }
+        // 墨水屏：关闭列表到达边界的拉伸回弹（Android 12+ 会把内容拉伸变形）
+        listView.overScrollMode = View.OVER_SCROLL_NEVER    }
 
     @SuppressLint("RestrictedApi")
     override fun onDisplayPreferenceDialog(preference: Preference) {

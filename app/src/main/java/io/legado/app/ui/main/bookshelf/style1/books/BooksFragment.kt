@@ -201,7 +201,8 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         }
         booksAdapter.stateRestorationPolicy = StateRestorationPolicy.PREVENT_WHEN_EMPTY
         binding.rvBookshelf.adapter = booksAdapter
-        // 墨水屏：左右滑动翻页，底栏只保留页码
+        // 墨水屏：数据集变化时不做淡入淡出，否则翻页会看到整页内容先变灰再刷新
+        binding.rvBookshelf.itemAnimator = null        // 墨水屏：左右滑动翻页，底栏只保留页码
         binding.pageBar.showButtons = false
         binding.pageBar.onPageChange = { delta ->
             val target = paginator.page + delta
