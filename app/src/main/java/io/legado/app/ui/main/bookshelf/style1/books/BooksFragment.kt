@@ -144,20 +144,13 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 }
                 return@post
             }
-            var accumulated = 0
-            var rows = 0
-            var i = 0
-            while (i < rv.childCount) {
-                val itemHeight = rv.getChildAt(i).height
-                if (itemHeight <= 0) {
-                    i += columns
-                    continue
-                }
-                if (accumulated + itemHeight > visible) break
-                accumulated += itemHeight
-                rows++
-                i += columns
+            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
+            var fitCount = 0
+            for (i in 0 until rv.childCount) {
+                if (rv.getChildAt(i).bottom > visible) break
+                fitCount++
             }
+            val rows = fitCount / columns
             if (rows <= 0) {
                 if (calibrateAttempts++ < 20) {
                     rv.postDelayed({ calibratePageSize() }, 50)
@@ -172,7 +165,6 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
             }
         }
     }
-
     private fun initRecyclerView() {
         binding.rvBookshelf.setEdgeEffectColor(primaryColor)
         upFastScrollerBar()

@@ -151,14 +151,10 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
                 }
                 return@post
             }
-            // 累加到头就填满了可视区
-            var accumulated = 0
+            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
             var fitCount = 0
             for (i in 0 until rv.childCount) {
-                val itemHeight = rv.getChildAt(i).height
-                if (itemHeight <= 0) continue
-                if (accumulated + itemHeight > visible) break
-                accumulated += itemHeight
+                if (rv.getChildAt(i).bottom > visible) break
                 fitCount++
             }
             if (fitCount <= 0) {
