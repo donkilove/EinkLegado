@@ -48,6 +48,7 @@ import io.legado.app.help.http.ObsoleteUrlFactory
 import io.legado.app.help.http.okHttpClient
 import io.legado.app.help.rhino.NativeBaseSource
 import io.legado.app.help.source.SourceHelp
+import io.legado.app.receiver.NetworkChangedListener
 import io.legado.app.help.storage.Backup
 import io.legado.app.model.BookCover
 import io.legado.app.utils.ChineseUtils
@@ -68,6 +69,17 @@ class App : Application() {
 
     private lateinit var oldConfig: Configuration
 
+    /** 网络恢复时补传离线期间积压的阅读进度 */
+    private val networkChangedListener by lazy {
+        NetworkChangedListener(this).apply {
+            onNetworkChanged = {
+                Coroutine.async {
+                    AppWebDav.flushPendingProgress()
+                }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         CrashHandler(this)
@@ -78,6 +90,7 @@ class App : Application() {
         applyDayNightInit(this)
         registerActivityLifecycleCallbacks(LifecycleHelp)
         defaultSharedPreferences.registerOnSharedPreferenceChangeListener(AppConfig)
+        runCatching { networkChangedListener.register() }
         Coroutine.async {
             LogUtils.init(this@App)
             LogUtils.d("App", "onCreate")

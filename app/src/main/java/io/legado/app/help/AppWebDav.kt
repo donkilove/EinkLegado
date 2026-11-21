@@ -13,6 +13,7 @@ import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
+import io.legado.app.help.sync.PendingProgressQueue
 import io.legado.app.lib.webdav.Authorization
 import io.legado.app.lib.webdav.WebDav
 import io.legado.app.lib.webdav.WebDavException
@@ -260,40 +261,74 @@ object AppWebDav {
      * 把一本书的进度写入聚合文件并上传。
      * 遵循「进度只前进」：云端已有更靠后的进度时不覆盖，避免旧设备把新进度冲掉。
      */
+    /**
+     * 把一本书的进度写入聚合文件并上传。
+     * 遵循「进度只前进」：云端已有更靠后的进度时不覆盖。
+     * 断网或失败时进入待推送队列，等网络恢复或下次同步补传。
+     */
     suspend fun uploadBookProgress(
         book: Book,
         toast: Boolean = false,
         onSuccess: (() -> Unit)? = null
     ) {
         if (!AppConfig.syncBookProgress) return
-        if (!NetworkUtils.isAvailable()) return
+        val progress = BookProgress(book)
+        if (!NetworkUtils.isAvailable()) {
+            PendingProgressQueue.add(progress)
+            return
+        }
         try {
-            val uploaded = pushProgress(BookProgress(book))
-            if (uploaded) {
+            if (pushProgress(progress)) {
                 book.syncTime = System.currentTimeMillis()
                 onSuccess?.invoke()
             }
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
-            AppLog.put("上传进度失败\n${e.localizedMessage}", e, toast)
+            PendingProgressQueue.add(progress)
+            AppLog.put("上传进度失败，已加入待推送队列\n${e.localizedMessage}", e, toast)
         }
     }
 
     suspend fun uploadBookProgress(bookProgress: BookProgress, onSuccess: (() -> Unit)? = null) {
         if (!AppConfig.syncBookProgress) return
-        if (!NetworkUtils.isAvailable()) return
+        if (!NetworkUtils.isAvailable()) {
+            PendingProgressQueue.add(bookProgress)
+            return
+        }
         try {
             if (pushProgress(bookProgress)) onSuccess?.invoke()
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
-            AppLog.put("上传进度失败\n${e.localizedMessage}", e)
+            PendingProgressQueue.add(bookProgress)
+            AppLog.put("上传进度失败，已加入待推送队列\n${e.localizedMessage}", e)
         }
     }
 
     /**
-     * 写入聚合文件并上传；仅当新进度比云端更靠后时才真正上传
-     * @return 是否实际发生了上传
+     * 补传待推送队列中的进度。
+     * 在网络恢复、启动同步、手动刷新时调用。
+     * @return 成功补传的条数
      */
+    suspend fun flushPendingProgress(): Int {
+        if (!AppConfig.syncBookProgress) return 0
+        if (!NetworkUtils.isAvailable()) return 0
+        val pending = PendingProgressQueue.all()
+        if (pending.isEmpty()) return 0
+        var done = 0
+        pending.forEach { progress ->
+            kotlin.runCatching {
+                if (pushProgress(progress)) done++
+                // 无论成功还是被「只前进」拒绝，都不再需要补传这条
+                PendingProgressQueue.remove(
+                    BookProgressBundle.progressKey(progress.name, progress.author)
+                )
+            }.onFailure {
+                AppLog.put("补传进度失败\n${it.localizedMessage}", it)
+            }
+        }
+        return done
+    }
+
     private suspend fun pushProgress(progress: BookProgress): Boolean {
         return progressMutex.withLock {
             val bundle = ensureProgressBundle() ?: BookProgressBundle()
@@ -322,6 +357,8 @@ object AppWebDav {
         if (!NetworkUtils.isAvailable()) return 0
         authorization ?: return 0
         return try {
+            // 先把离线期间积压的进度补传上去，再拉取云端
+            flushPendingProgress()
             migrateOldProgressIfNeeded()
             val bundle = fetchProgressBundle(force = true) ?: return 0
             var updated = 0
