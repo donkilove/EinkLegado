@@ -345,6 +345,21 @@ debug 对比：
 
 编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 4m16s。
 
+--------------------------------------------------
+[17] 备份与恢复提升为一级入口 · 真机验证
+--------------------------------------------------
+变更：pref_main.xml 中 web_dav_setting 从 mySettingScreen 移到根层级。
+      点击处理未改（仍按 key 分发到 ConfigActivity 的 BACKUP 页）。
+
+实测（BOOX Poke6）：
+  「我的」根页显示 4 项：内容管理 / 设置 / 其它 / 备份与恢复
+  点「备份与恢复」→ 正常打开配置页（WebDav 设置、服务器地址、账号、子文件夹、设备名称、
+    同步阅读进度、备份与恢复等）
+  「设置」子页相应只剩 2 项：主题设置 / 其它设置
+
+编译：gradlew assembleAppDebug BUILD SUCCESSFUL in 3m26s。
+
+
 
 
 
