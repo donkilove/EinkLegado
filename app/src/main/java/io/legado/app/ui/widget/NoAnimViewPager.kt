@@ -43,6 +43,15 @@ class NoAnimViewPager @JvmOverloads constructor(
         super.setCurrentItem(item, false)
     }
 
+    /**
+     * TabLayout.setupWithViewPager 内部调用的是这个单参数版本，
+     * 它不会经过上面的双参数重载，而是自行以 smoothScroll=true 滚动，
+     * 导致点分组标签时整页横向滑动。这里一并覆盖为瞬时切换。
+     */
+    override fun setCurrentItem(item: Int) {
+        super.setCurrentItem(item, false)
+    }
+
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
         if (ev == null) return false
         when (ev.actionMasked) {
