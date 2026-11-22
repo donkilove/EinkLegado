@@ -3,6 +3,7 @@ package io.legado.app.help.config
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.getBoolean
 import io.legado.app.utils.putBoolean
 import io.legado.app.utils.putLong
@@ -41,23 +42,30 @@ by appCtx.getSharedPreferences("local", Context.MODE_PRIVATE) {
             putBoolean("privacyPolicyOk", value)
         }
 
+    /*
+     * 墨水屏：以下「首次进入就弹帮助/引导」的判断一律视为已完成，
+     * 直接短路掉。这些引导弹窗分布在阅读界面、阅读菜单、备份、书源管理、
+     * WebDav 书籍、规则编辑等多个位置，逐个改容易漏，统一在这里处理。
+     */
+    private fun helpShownOnEInk(): Boolean = AppConfig.isEInkMode
+
     val readHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "readHelpVersion", "firstRead")
+        get() = helpShownOnEInk() || isLastVersion(1, "readHelpVersion", "firstRead")
 
     val backupHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "backupHelpVersion", "firstBackup")
+        get() = helpShownOnEInk() || isLastVersion(1, "backupHelpVersion", "firstBackup")
 
     val readMenuHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "readMenuHelpVersion", "firstReadMenu")
+        get() = helpShownOnEInk() || isLastVersion(1, "readMenuHelpVersion", "firstReadMenu")
 
     val bookSourcesHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "bookSourceHelpVersion", "firstOpenBookSources")
+        get() = helpShownOnEInk() || isLastVersion(1, "bookSourceHelpVersion", "firstOpenBookSources")
 
     val webDavBookHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "webDavBookHelpVersion", "firstOpenWebDavBook")
+        get() = helpShownOnEInk() || isLastVersion(1, "webDavBookHelpVersion", "firstOpenWebDavBook")
 
     val ruleHelpVersionIsLast: Boolean
-        get() = isLastVersion(1, "ruleHelpVersion")
+        get() = helpShownOnEInk() || isLastVersion(1, "ruleHelpVersion")
 
     val needUpHttpTTS: Boolean
         get() = !isLastVersion(6, "httpTtsVersion")

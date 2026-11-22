@@ -198,6 +198,7 @@ class TitleBar @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         attachToActivity()
+        setupEInkOverflow()
     }
 
     fun setNavigationOnClickListener(clickListener: ((View) -> Unit)) {
@@ -275,6 +276,65 @@ class TitleBar @JvmOverloads constructor(
                 it.supportActionBar?.setDisplayHomeAsUpEnabled(displayHomeAsUp)
             }
         }
+    }
+
+    /**
+     * 墨水屏：接管 Toolbar 的溢出菜单，去掉展开/淡出动画。
+     *
+     * Toolbar 的溢出菜单由 ActionMenuPresenter 内部创建，PopupWindow 的动画样式
+     * 既不受主题 windowAnimationStyle 控制，也无法通过 popupAnimationStyle 影响。
+     * 这里替换掉溢出按钮的点击行为，改用自己构造的 PopupMenu，
+     * 并直接给它的内部 PopupWindow 设 animationStyle=0。
+     */
+    private fun setupEInkOverflow() {
+        if (!AppConfig.isEInkMode) return
+        post {
+            runCatching {
+                val presenterField = Toolbar::class.java.getDeclaredField("mMenuPresenter")
+                presenterField.isAccessible = true
+                val presenter = presenterField.get(toolbar) ?: return@post
+                val buttonField = presenter.javaClass.getDeclaredField("mOverflowButton")
+                buttonField.isAccessible = true
+                val overflowButton = buttonField.get(presenter) as? View ?: return@post
+                overflowButton.setOnClickListener {
+                    showEInkMenu(it)
+                }
+            }
+        }
+    }
+
+    private fun showEInkMenu(anchor: View) {
+        val popup = androidx.appcompat.widget.PopupMenu(context, anchor)
+        toolbar.menu.children.forEachIndexed { index, item ->
+            val newItem = popup.menu.add(0, item.itemId, index, item.title)
+            newItem.setIcon(item.icon)
+            newItem.isVisible = item.isVisible
+            newItem.isEnabled = item.isEnabled
+        }
+        // 关掉内部 PopupWindow 的动画：既清 animationStyle，也清 enter/exit transition
+        runCatching {
+            val helperField = androidx.appcompat.widget.PopupMenu::class.java
+                .getDeclaredField("mPopup")
+            helperField.isAccessible = true
+            val helper = helperField.get(popup) ?: return@runCatching
+            val innerPopup = helper.javaClass.getMethod("getPopup").invoke(helper)
+                ?: return@runCatching
+            val windowField = innerPopup.javaClass.getDeclaredField("mPopup")
+            windowField.isAccessible = true
+            val window = windowField.get(innerPopup)
+                as? androidx.appcompat.widget.MenuPopupWindow ?: return@runCatching
+            window.setAnimationStyle(0)
+            window.setEnterTransition(null)
+            window.setExitTransition(null)
+            android.util.Log.d("EInkMenu", "已关闭菜单动画: ${window.javaClass.simpleName}")
+        }.onFailure {
+            android.util.Log.w("EInkMenu", "关闭菜单动画失败: $it")
+        }
+        popup.setOnMenuItemClickListener { item ->
+            toolbar.menu.performIdentifierAction(item.itemId, 0)
+            true
+        }
+        popup.show()
     }
 
 }

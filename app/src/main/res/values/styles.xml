@@ -25,9 +25,9 @@
         <item name="android:selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
         <item name="selectableItemBackground">@drawable/bg_eink_selectable_item</item>
         <item name="selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
-        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowAnimationStyle">@style/Style.NoAnimation</item>
         <!-- 墨水屏：弹窗菜单（长按菜单、溢出菜单等）默认带淡入/缩放动画，这里一并关闭 -->
-        <item name="android:popupAnimationStyle">@null</item>
+        <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
 
     <!-- Welcome主题 -->
@@ -58,9 +58,22 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
         <item name="overlapAnchor">false</item>
         <item name="colorAccent">@color/md_grey_900</item>
+        <!-- 墨水屏：Toolbar 的溢出菜单用的是这个 popupTheme（见 view_title_bar.xml），
+             它之前没有窗口动画配置，于是沿用了系统默认的展开/淡出动画。
+             只改 Activity 主题覆盖不到这条路径，必须在这里关掉。 -->
+        <item name="android:windowAnimationStyle">@style/Style.NoAnimation</item>
+        <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
 
     <style name="Spinner" parent="android:Theme.Holo.Light" />
+
+    <!-- 墨水屏：显式的「无动画」窗口动画样式。
+         @null 作为动画资源值会被当成「未设置」而回落到系统默认动画，
+         必须指向一个真实存在的空动画资源（@anim/anim_none 是空 <set/>）才能真正关闭。 -->
+    <style name="Style.NoAnimation" parent="@android:style/Animation">
+        <item name="android:windowEnterAnimation">@anim/anim_none</item>
+        <item name="android:windowExitAnimation">@anim/anim_none</item>
+    </style>
 
     //**********System Style******************//
 
@@ -79,6 +92,9 @@
 
     <style name="Style.PopupMenu" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+        <!-- 墨水屏：父样式自带了淡入/缩放动画，主题上的 popupAnimationStyle 会被它盖掉，
+             必须在样式本身覆盖才能彻底关掉溢出菜单的展开动画 -->
+        <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
 
 

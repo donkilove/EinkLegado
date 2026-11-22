@@ -83,6 +83,7 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        disableAnimatorsForEInk()
         CrashHandler(this)
         if (isDebuggable) {
             ThreadUtils.setThreadAssertsDisabledForTesting(true)
@@ -282,4 +283,24 @@ class App : Application() {
         }
     }
 
+
+    /**
+     * 墨水屏：把进程内的动画时长缩放压到 0。
+     *
+     * 不少系统与三方组件的弹出动画（例如 Toolbar 溢出菜单的「从右上角向左下展开」）
+     * 走的是 ValueAnimator 驱动的属性动画，样式层面的 windowAnimationStyle /
+     * popupAnimationStyle 覆盖不到它们。把 sDurationScale 置 0 后，
+     * 这类动画会在同一帧内直接完成，视觉上就是「瞬间出现」。
+     */
+    private fun disableAnimatorsForEInk() {
+        if (!AppConfig.isEInkMode) return
+        // ValueAnimator 的时长缩放是隐藏 API，只能反射。失败时静默忽略——
+        // 弹窗动画主要靠主题里的 Style.NoAnimation 解决，这里只是额外兜底。
+        runCatching {
+            val field = android.animation.ValueAnimator::class.java
+                .getDeclaredField("sDurationScale")
+            field.isAccessible = true
+            field.set(null, 0f)
+        }
+    }
 }

@@ -306,14 +306,16 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             return@sc
         }
         LocalConfig.versionCode = appInfo.versionCode
-        if (LocalConfig.isFirstOpenApp) {
+        // 墨水屏：首次安装不再弹帮助文档。这条路径不在「我的」页面的帮助入口里，
+        // 之前只删了入口，首次引导仍会弹出来。
+        if (LocalConfig.isFirstOpenApp && !AppConfig.isEInkMode) {
             val help = String(assets.open("web/help/md/appHelp.md").readBytes())
             val dialog = TextDialog(getString(R.string.help), help, TextDialog.Mode.MD)
             dialog.setOnDismissListener {
                 block.resume(null)
             }
             showDialogFragment(dialog)
-        } else if (!BuildConfig.DEBUG) {
+        } else if (!BuildConfig.DEBUG && !AppConfig.isEInkMode) {
             val log = String(assets.open("updateLog.md").readBytes())
             val dialog = TextDialog(getString(R.string.update_log), log, TextDialog.Mode.MD)
             dialog.setOnDismissListener {
