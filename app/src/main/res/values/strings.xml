@@ -1345,6 +1345,9 @@
     <string name="shibboleth">口令</string>
     <!-- 设置页二级入口 -->
     <string name="my_content">Content</string>
+    <string name="my_content_s">Book sources, catalog rules, replacements</string>
+    <string name="setting_s">Theme settings, other settings</string>
+    <string name="other_s">Bookmarks, reading history, file management, about</string>
     <string name="other_language_ui">Language &amp; Interface</string>
     <string name="other_read_update">Reading &amp; Update</string>
     <string name="other_network">Network</string>

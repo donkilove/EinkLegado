@@ -11,6 +11,7 @@
     <androidx.preference.PreferenceScreen
         android:icon="@drawable/ic_cfg_source"
         android:key="myContentScreen"
+        android:summary="@string/my_content_s"
         android:title="@string/my_content"
         app:iconSpaceReserved="false">
 
@@ -47,6 +48,7 @@
     <androidx.preference.PreferenceScreen
         android:icon="@drawable/ic_cfg_theme"
         android:key="mySettingScreen"
+        android:summary="@string/setting_s"
         android:title="@string/setting"
         app:iconSpaceReserved="false">
 
@@ -70,6 +72,7 @@
     <androidx.preference.PreferenceScreen
         android:icon="@drawable/ic_cfg_about"
         android:key="myOtherScreen"
+        android:summary="@string/other_s"
         android:title="@string/other"
         app:iconSpaceReserved="false">
 
