@@ -61,7 +61,6 @@ import java.io.FileOutputStream
 @Suppress("SameParameterValue")
 class ThemeConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener,
-    PreferenceFragmentCompat.OnPreferenceStartScreenCallback,
     MenuProvider {
 
     private val requestCodeBgLight = 121
@@ -115,30 +114,52 @@ class ThemeConfigFragment : PreferenceFragment(),
         }
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        listView.setEdgeEffectColor(primaryColor)
+        activity?.addMenuProvider(this, viewLifecycleOwner)
+        upTitleBar()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        upTitleBar()
+    }
+
     /**
-     * 进入某个二级设置页：按 rootKey 重建一个同类型的 Fragment 并压入返回栈。
+     * 墨水屏：进入二级设置页。
+     *
+     * 不能依赖 AndroidX 的 onPreferenceStartScreen —— 那个默认实现会在这个宿主
+     * （Activity 直接持有 Fragment + 自建返回键回调）下替换错容器，
+     * 返回时还会触发 Fragment already added。这里显式 replace 并压栈，与
+     * OtherConfigFragment 的做法保持一致。
      */
-    override fun onPreferenceStartScreen(
-        caller: PreferenceFragmentCompat,
-        pref: PreferenceScreen
-    ): Boolean {
+    private fun openSubScreen(screen: PreferenceScreen) {
         val fragment = ThemeConfigFragment().apply {
             arguments = Bundle().apply {
-                putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
+                putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, screen.key)
+                putString(ARG_SUB_TITLE, screen.title?.toString())
             }
         }
         parentFragmentManager.beginTransaction()
-            .replace(R.id.configFrameLayout, fragment)
+            .replace(R.id.configFrameLayout, fragment, ConfigTag.THEME_CONFIG)
             .addToBackStack(null)
             .commit()
-        return true
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        activity?.setTitle(R.string.theme_setting)
-        listView.setEdgeEffectColor(primaryColor)
-        activity?.addMenuProvider(this, viewLifecycleOwner)
+    private fun upTitleBar() {
+        val act = activity as? ConfigActivity ?: return
+        val subTitle = arguments?.getString(ARG_SUB_TITLE)
+        act.upTitleBar(
+            title = subTitle ?: getString(R.string.theme_setting),
+            showBack = true
+        ) {
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                parentFragmentManager.popBackStack()
+            } else {
+                act.finish()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -201,6 +222,11 @@ class ThemeConfigFragment : PreferenceFragment(),
 
     @SuppressLint("PrivateResource")
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        // 墨水屏：二级页导航自己接管，见 openSubScreen 的说明
+        if (preference is PreferenceScreen && preference.preferenceCount > 0) {
+            openSubScreen(preference)
+            return true
+        }
         when (val key = preference.key) {
             PreferKey.barElevation -> NumberPickerDialog(requireContext())
                 .setTitle(getString(R.string.bar_elevation))
@@ -436,6 +462,11 @@ class ThemeConfigFragment : PreferenceFragment(),
                 appCtx.toastOnUi(it.localizedMessage)
             }
         }
+    }
+
+    companion object {
+        /** 二级设置页的标题，用于替换标题栏文字 */
+        private const val ARG_SUB_TITLE = "subScreenTitle"
     }
 
 }
