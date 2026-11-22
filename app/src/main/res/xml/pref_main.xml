@@ -9,6 +9,7 @@
     app:allowDividerBelow="false">
 
     <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
         android:icon="@drawable/ic_cfg_source"
         android:key="myContentScreen"
         android:summary="@string/my_content_s"
@@ -46,6 +47,7 @@
     </androidx.preference.PreferenceScreen>
 
     <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
         android:icon="@drawable/ic_cfg_theme"
         android:key="mySettingScreen"
         android:summary="@string/setting_s"
@@ -70,6 +72,7 @@
     </androidx.preference.PreferenceScreen>
 
     <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
         android:icon="@drawable/ic_cfg_about"
         android:key="myOtherScreen"
         android:summary="@string/other_s"

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  墨水屏：二级页入口（PreferenceScreen）专用布局。
+  系统和项目自定义的 Preference 用了两套不同的模板，左侧间距不一致，
+  同一个列表里「二级页入口」和「普通条目」的图标、标题会横向错开。
+  这里按 view_preference 的间距重做一份，但 id 使用 androidx 约定的
+  @android:id/title / summary / icon，这样 PreferenceScreen 的默认绑定逻辑能正常工作。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_prefs_color"
+    android:paddingLeft="16dp"
+    android:paddingTop="10dp"
+    android:paddingRight="16dp"
+    android:paddingBottom="10dp"
+    android:minHeight="60dp"
+    android:clickable="true"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@android:id/icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginRight="16dp"
+        android:scaleType="fitCenter"
+        android:paddingTop="1dp"
+        tools:ignore="ContentDescription,RtlHardcoded" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_weight="1.0"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@android:id/title"
+            android:singleLine="true"
+            android:textSize="16sp"
+            android:textColor="@color/primaryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@android:id/summary"
+            android:textSize="14sp"
+            android:textColor="@color/tv_text_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@android:id/widget_frame"
+        android:layout_gravity="center"
+        android:layout_marginLeft="8dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:ignore="RtlHardcoded" />
+
+</LinearLayout>
