@@ -101,6 +101,20 @@ class Paginator<T>(defaultPageSize: Int = DEFAULT_PAGE_SIZE) {
     }
 
     /**
+     * 所有页统一用 [size] 条，并丢弃已测量的各页边界。
+     *
+     * 列表项高度一致时（目录、缓存这类单行列表）用这个：页边界稳定，
+     * 「第几页」才是个确定的含义，按下标跳页/定位才不会错位。
+     * 反过来，项高不一致的列表（如同一规则有 1 或 2 行摘要）必须逐页测量，
+     * 否则总会有页溢出或留大片空白。
+     */
+    fun setUniformPageSize(size: Int) {
+        defaultPageSize = size.coerceAtLeast(MIN_PAGE_SIZE)
+        measuredSizes.clear()
+        page = 0
+    }
+
+    /**
      * 当前页的条数。
      * 供尚未迁移到 EinkPager 的旧调用方读取。
      */
@@ -126,6 +140,27 @@ class Paginator<T>(defaultPageSize: Int = DEFAULT_PAGE_SIZE) {
         page = target
         return slice()
     }
+
+    /**
+     * 找出第 [itemIndex] 条数据所在页。
+     * 每页条数各不相同，无法用「下标 / 每页条数」直接算，只能按累计边界逐个走。
+     */
+    fun pageOfItem(itemIndex: Int): Int {
+        if (itemIndex <= 0) return 0
+        var start = 0
+        var p = 0
+        val count = pageCount
+        while (p < count) {
+            val size = sizeOf(p).coerceAtLeast(1)
+            if (itemIndex < start + size) return p
+            start += size
+            p++
+        }
+        return (count - 1).coerceAtLeast(0)
+    }
+
+    /** 第 [pageIndex] 页的起始下标 */
+    fun pageStart(pageIndex: Int): Int = startOf(pageIndex)
 
     fun slice(): List<T> {
         if (all.isEmpty()) return emptyList()

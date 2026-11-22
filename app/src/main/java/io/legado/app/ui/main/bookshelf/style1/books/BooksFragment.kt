@@ -28,7 +28,7 @@ import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.book.info.BookInfoActivity
 import io.legado.app.ui.main.MainViewModel
-import io.legado.app.utils.Paginator
+import io.legado.app.ui.widget.EinkPager
 import io.legado.app.utils.cnCompare
 import io.legado.app.utils.flowWithLifecycleAndDatabaseChangeFirst
 import io.legado.app.utils.observeEvent
@@ -95,12 +95,18 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     private var onlyUpdateRead = false
     private val bookshelfMargin by lazy { AppConfig.bookshelfMargin }
     private var itemCount = 0
-    // 墨水屏专属：书架分页，每页条数按可视区与列数自适应
-    private val paginator = Paginator<io.legado.app.data.entities.Book>(
-        if (bookshelfLayout >= 2) bookshelfLayout * 4 else 8
-    )
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
+
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理；网格模式按列数对齐 */
+    private val pager by lazy {
+        EinkPager<io.legado.app.data.entities.Book>(
+            binding.rvBookshelf,
+            binding.pageBar,
+            "本",
+            if (bookshelfLayout >= 2) bookshelfLayout else 1
+        ).apply {
+            onItemsChanged = { items -> booksAdapter.setItems(items) }
+        }
+    }
     private var totalRows = 0
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
@@ -116,63 +122,11 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         upRecyclerData()
     }
 
-    private fun upPageBar() {
-        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "本")
-    }
-
     /**
      * 水平滑动翻页：-1 上一页，1 下一页。已在首/末页时返回 false，由调用方忽略本次手势。
      */
-    fun onSwipePage(direction: Int): Boolean {
-        val target = paginator.page + direction
-        if (target !in 0 until paginator.pageCount) return false
-        booksAdapter.setItems(paginator.moveTo(target))
-        binding.rvBookshelf.scrollToPosition(0)
-        upPageBar()
-        return true
-    }
+    fun onSwipePage(direction: Int): Boolean = pager.onSwipe(direction)
 
-    /**
-     * 按可视区与列数校准每页条数。
-     * 网格模式下每页必须是整行，所以按列步进累加行高，再乘以列数。
-     */
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        // 校准前强制显示翻页栏：只有一页时它是隐藏的，RecyclerView 会更高，
-        // 按那个高度算出的每页条数在翻页栏出现后就放不下了（实测第 6 本被裁掉一半）。
-        binding.pageBar.visibility = android.view.View.VISIBLE
-        binding.rvBookshelf.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.rvBookshelf
-            val visible = rv.height
-            val columns = if (bookshelfLayout >= 2) bookshelfLayout else 1
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) {
-                    rv.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            val rows = fitCount / columns
-            if (rows <= 0) {
-                if (calibrateAttempts++ < 20) {
-                    rv.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            pageSizeCalibrated = true
-            val perPage = rows * columns
-            if (perPage != paginator.pageSize) {
-                booksAdapter.setItems(paginator.setPageSize(perPage))
-                upPageBar()
-            }
-        }
-    }
     private fun initRecyclerView() {
         binding.rvBookshelf.setEdgeEffectColor(primaryColor)
         upFastScrollerBar()
@@ -202,16 +156,7 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
         booksAdapter.stateRestorationPolicy = StateRestorationPolicy.PREVENT_WHEN_EMPTY
         binding.rvBookshelf.adapter = booksAdapter
         // 墨水屏：数据集变化时不做淡入淡出，否则翻页会看到整页内容先变灰再刷新
-        binding.rvBookshelf.itemAnimator = null        // 墨水屏：左右滑动翻页，底栏只保留页码
-        binding.pageBar.showButtons = false
-        binding.pageBar.onPageChange = { delta ->
-            val target = paginator.page + delta
-            if (target in 0 until paginator.pageCount) {
-                booksAdapter.setItems(paginator.moveTo(target))
-                binding.rvBookshelf.scrollToPosition(0)
-                upPageBar()
-            }
-        }
+        binding.rvBookshelf.itemAnimator = null
         /**
          * 应该是当初没有使用override val keepScrollPosition = true 加的代码
          * 最近阅读插入顶部时会造成滚动
@@ -340,10 +285,7 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 }
                 binding.tvEmptyMsg.isGone = itemCount > 0
                 binding.refreshLayout.isEnabled = enableRefresh && itemCount > 0
-                paginator.setAll(list)
-                booksAdapter.setItems(paginator.slice())
-                upPageBar()
-                calibratePageSize()
+                pager.setAll(list)
                 delay(100)
             }
         }

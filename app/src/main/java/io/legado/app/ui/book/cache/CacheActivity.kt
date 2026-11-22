@@ -64,6 +64,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.init.appCtx
 import kotlin.math.max
+import io.legado.app.ui.widget.EinkPager
 
 /**
  * cache/download 缓存界面
@@ -80,10 +81,20 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
     private val layoutManager by lazy { LinearLayoutManager(this) }
     private val adapter by lazy { CacheAdapter(this, this) }
 
-    // 墨水屏专属：缓存列表分页，每页条数按可视区自适应
-    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.Book>()
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
+    // 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理；缓存项高度一致，用统一条数
+    private val pager by lazy {
+        EinkPager<io.legado.app.data.entities.Book>(
+            binding.recyclerView,
+            binding.pageBar,
+            "本",
+            uniformItemHeight = true
+        ).apply {
+            onItemsChanged = { items -> adapter.setItems(items) }
+        }
+    }
+
+    override fun onHorizontalSwipe(direction: Int): Boolean = pager.onSwipe(direction)
+
     private var booksFlowJob: Job? = null
     private var menu: Menu? = null
     private val groupList: ArrayList<BookGroup> = arrayListOf()
@@ -235,50 +246,10 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
         return onCompatOptionsItemSelected(item)
     }
 
-    private fun upPageBar() {
-        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "本")
-    }
-
-    private fun applyPage(target: Int) {
-        if (target !in 0 until paginator.pageCount) return
-        adapter.setItems(paginator.moveTo(target))
-        upPageBar()
-        binding.recyclerView.scrollToPosition(0)
-    }
-
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        binding.recyclerView.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.recyclerView
-            val visible = rv.height
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
-                return@post
-            }
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            if (fitCount <= 0) {
-                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
-                return@post
-            }
-            pageSizeCalibrated = true
-            if (fitCount != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(fitCount))
-                upPageBar()
-            }
-        }
-    }
     private fun initRecyclerView() {
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.adapter = adapter
         binding.recyclerView.applyNavigationBarPadding()
-        binding.pageBar.onPageChange = { delta ->
-            applyPage(paginator.page + delta)
-        }
     }
 
     private fun initBookData() {
@@ -307,10 +278,7 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
                 AppLog.put("缓存管理界面获取书籍列表失败\n${it.localizedMessage}", it)
             }.flowOn(IO).conflate().collect { books ->
                 viewModel.loadCacheFiles(books)
-                paginator.setAll(books)
-                adapter.setItems(paginator.slice())
-                upPageBar()
-                calibratePageSize()
+                pager.setAll(books)
             }
         }
     }

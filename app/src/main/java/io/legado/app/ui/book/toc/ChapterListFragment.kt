@@ -33,6 +33,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.legado.app.ui.widget.EinkPager
 
 class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapter_list),
     ChapterListAdapter.Callback,
@@ -43,12 +44,19 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     private val adapter by lazy { ChapterListAdapter(requireContext(), this) }
     private var durChapterIndex = 0
 
-    // 墨水屏专属：目录分页，每页条数按可视区自适应
-    // 初始值故意取大：目录项较矮，若初始条数少于屏幕能放下的数量，校准无从得知还能再多放几条
-    private val paginator =
-        io.legado.app.utils.Paginator<io.legado.app.data.entities.BookChapter>(20)
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理；目录项高度一致，用统一条数 */
+    private val pager by lazy {
+        EinkPager<io.legado.app.data.entities.BookChapter>(
+            binding.recyclerView,
+            binding.pageBar,
+            "章",
+            uniformItemHeight = true
+        ).apply {
+            onItemsChanged = { items -> adapter.setItems(items) }
+            // 测量会把页码重置到第一页，定位当前章必须等它完成，否则会被覆盖
+            onCalibrated = { jumpToCurrentChapter() }
+        }
+    }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
         viewModel.chapterListCallBack = this@ChapterListFragment
@@ -59,68 +67,33 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
         }
     }
 
-    private fun upPageBar() {
-        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "章")
-    }
-
     private fun applyPage(target: Int) {
-        if (target !in 0 until paginator.pageCount) return
-        adapter.setItems(paginator.moveTo(target))
-        upPageBar()
-        mLayoutManager.scrollToPositionWithOffset(0, 0)
+        if (!pager.moveTo(target)) return
+        (pager.layoutManager)?.scrollToPositionWithOffset(0, 0)
     }
 
     /** 跳到当前阅读章节所在的页，并在页内定位到该章 */
     private fun jumpToCurrentChapter() {
-        if (paginator.total <= 0) return
-        val size = paginator.pageSize
-        val page = (durChapterIndex / size).coerceIn(0, paginator.pageCount - 1)
-        adapter.setItems(paginator.moveTo(page))
-        upPageBar()
-        val posInPage = (durChapterIndex - page * size).coerceAtLeast(0)
-        mLayoutManager.scrollToPositionWithOffset(posInPage, 0)
+        if (pager.total <= 0) return
+        // durChapterIndex 是章节序号，而目录列表里可能混有「卷」等条目，
+        // 序号与列表下标并不一致，必须按序号在列表里查真实位置
+        val pos = chapterList?.indexOfFirst { it.index == durChapterIndex } ?: -1
+        if (pos < 0) return
+        if (!pager.jumpToItem(pos)) return
+        pager.layoutManager?.scrollToPositionWithOffset(pager.indexInPage(pos), 0)
     }
 
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        binding.recyclerView.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.recyclerView
-            val visible = rv.height
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
-                return@post
-            }
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            if (fitCount <= 0) {
-                if (calibrateAttempts++ < 20) rv.postDelayed({ calibratePageSize() }, 50)
-                return@post
-            }
-            pageSizeCalibrated = true
-            if (fitCount != paginator.pageSize) {
-                paginator.setPageSize(fitCount)
-            }
-            // 校准会重置页码，收敛后再定位到当前阅读章节，否则打开目录落在第一页
-            jumpToCurrentChapter()
-        }
-    }
     private fun initRecyclerView() {
         binding.recyclerView.layoutManager = mLayoutManager
         binding.recyclerView.addItemDecoration(VerticalDivider(requireContext()))
         binding.recyclerView.adapter = adapter
         // 墨水屏：翻页时不做淡入淡出
-        binding.recyclerView.itemAnimator = null    }
+        binding.recyclerView.itemAnimator = null
+    }
 
     private fun initView() = binding.run {
         // 目录页用左右滑动翻页，底栏只保留页码显示
         pageBar.showButtons = false
-        pageBar.onPageChange = { delta ->
-            applyPage(paginator.page + delta)
-        }
         binding.pageBar.applyNavigationBarPadding()
     }
 
@@ -128,9 +101,8 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
      * 水平滑动翻页：-1 上一页，1 下一页。已在首/末页时返回 false 让手势无效果。
      */
     override fun onSwipePage(direction: Int): Boolean {
-        val target = paginator.page + direction
-        if (target !in 0 until paginator.pageCount) return false
-        applyPage(target)
+        if (!pager.onSwipe(direction)) return false
+        pager.layoutManager?.scrollToPositionWithOffset(0, 0)
         return true
     }
 
@@ -183,17 +155,14 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
                     else -> appDb.bookChapterDao.search(viewModel.bookUrl, searchKey, 0, end)
                 }
             }.let { list ->
-                paginator.setAll(list)
-                adapter.setItems(paginator.slice())
-                upPageBar()
-                calibratePageSize()
+                pager.setAll(list)
             }
         }
     }
 
     override fun onListChanged() {
         lifecycleScope.launch {
-            // 只刷新当前页的章节标题。定位当前章由 calibratePageSize 完成后负责，
+            // 只刷新当前页的章节标题。定位当前章在首次装载后由 jumpToCurrentChapter 负责，
             // 否则每次翻页 setItems 触发本回调，都会被强制拉回当前章所在页。
             adapter.upDisplayTitles(0)
         }
