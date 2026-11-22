@@ -42,6 +42,7 @@ import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import io.legado.app.ui.widget.setupPreferencePaging
 
 class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInterface,
     PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
@@ -202,6 +203,9 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             listView.setEdgeEffectColor(primaryColor)
+            // 墨水屏：设置项用翻页代替滚动。分页条在 MyFragment 的布局里。
+            val bar = (parentFragment as? MyFragment)?.binding?.pageBar
+            setupPreferencePaging(bar)
         }
 
         override fun onResume() {

@@ -16,6 +16,7 @@ import io.legado.app.utils.getPrefString
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.toEditable
 import splitties.init.appCtx
+import io.legado.app.ui.widget.setupPreferencePaging
 
 /**
  * WebDav 连接与同步设置。
@@ -61,6 +62,8 @@ class WebDavConfigFragment : PreferenceFragment(),
         activity?.setTitle(R.string.web_dav_set)
         preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
         listView.setEdgeEffectColor(primaryColor)
+        // 墨水屏：设置项用翻页代替滚动
+        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
     }
 
     override fun onDestroy() {

@@ -28,6 +28,7 @@ import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.toastOnUi
 import splitties.init.appCtx
 import java.io.FileOutputStream
+import io.legado.app.ui.widget.setupPreferencePaging
 
 class CoverConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener {
@@ -57,6 +58,8 @@ class CoverConfigFragment : PreferenceFragment(),
         super.onViewCreated(view, savedInstanceState)
         activity?.setTitle(R.string.cover_config)
         listView.setEdgeEffectColor(primaryColor)
+        // 墨水屏：设置项用翻页代替滚动
+        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

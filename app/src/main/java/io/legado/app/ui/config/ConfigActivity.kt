@@ -11,11 +11,15 @@ import io.legado.app.constant.EventBus
 import io.legado.app.databinding.ActivityConfigBinding
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import io.legado.app.ui.widget.PageBar
 
 class ConfigActivity : VMBaseActivity<ActivityConfigBinding, ConfigViewModel>() {
 
     override val binding by viewBinding(ActivityConfigBinding::inflate)
     override val viewModel by viewModels<ConfigViewModel>()
+
+    /** 设置页分页条：由各设置 Fragment 在 onViewCreated 里接入 */
+    val pageBar: PageBar get() = binding.pageBar
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         when (val configTag = intent.getStringExtra("configTag")) {

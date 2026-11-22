@@ -103,9 +103,35 @@ class PreferencePager(
 
     fun bindPageBar() {
         pageBar.onPageChange = { delta -> moveBy(delta) }
+        // 视图销毁后把回调摘掉，避免 pageBar（常属于 Activity）持有已失效的分页器
+        recyclerView.addOnAttachStateChangeListener(
+            object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) {}
+                override fun onViewDetachedFromWindow(v: View) {
+                    pageBar.onPageChange = null
+                    pageBar.hide()
+                }
+            }
+        )
     }
 
     private companion object {
         const val LAYOUT_RETRY_DELAY = 80L
+    }
+}
+
+/**
+ * 给设置页接入分页。
+ *
+ * 宿主（Activity 或外层 Fragment）提供 [pageBar]，这里负责把它与列表绑定起来。
+ * 页面项少到一页就能放下时，PageBar 会自行隐藏。
+ */
+fun androidx.preference.PreferenceFragmentCompat.setupPreferencePaging(
+    pageBar: PageBar?
+): PreferencePager? {
+    if (pageBar == null) return null
+    return PreferencePager(listView, pageBar).apply {
+        bindPageBar()
+        preferenceScreen?.let { bind(it) }
     }
 }

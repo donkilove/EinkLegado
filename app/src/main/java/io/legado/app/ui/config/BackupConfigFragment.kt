@@ -48,6 +48,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.init.appCtx
+import io.legado.app.ui.widget.setupPreferencePaging
 
 class BackupConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener,
@@ -115,6 +116,8 @@ class BackupConfigFragment : PreferenceFragment(),
         activity?.setTitle(R.string.backup_restore)
         preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
         listView.setEdgeEffectColor(primaryColor)
+        // 墨水屏：设置项用翻页代替滚动
+        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
         activity?.addMenuProvider(this, viewLifecycleOwner)
         if (!LocalConfig.backupHelpVersionIsLast) {
         }
