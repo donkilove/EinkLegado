@@ -21,6 +21,7 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.association.ImportTxtTocRuleDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.qrcode.QrCodeResult
+import io.legado.app.ui.widget.EinkPager
 import io.legado.app.ui.widget.SelectActionBar
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
@@ -49,7 +50,19 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
 
     override val viewModel by viewModels<TxtTocRuleViewModel>()
     override val binding by viewBinding(ActivityTxtTocRuleBinding::inflate)
-    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.TxtTocRule>()
+
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理 */
+    private val pager by lazy {
+        EinkPager<TxtTocRule>(
+            binding.recyclerView,
+            binding.pageBar,
+            "条规则"
+        ).apply {
+            onItemsChanged = { items -> adapter.setItems(items, adapter.diffItemCallBack) }
+        }
+    }
+
+    override fun onHorizontalSwipe(direction: Int): Boolean = pager.onSwipe(direction)
 
     private val adapter: TxtTocRuleAdapter by lazy {
         TxtTocRuleAdapter(this, this)
@@ -106,14 +119,7 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
         recyclerView.setEdgeEffectColor(primaryColor)
         recyclerView.addItemDecoration(VerticalDivider(this@TxtTocRuleActivity))
         recyclerView.adapter = adapter
-        binding.pageBar.onPageChange = { delta ->
-            val target = paginator.page + delta
-            if (target in 0 until paginator.pageCount) {
-                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallBack)
-                binding.recyclerView.scrollToPosition(0)
-                upPageBar()
-            }
-        }
+        // 墨水屏：分页、禁滚动、左右滑动翻页统一交给 EinkPager
         // When this page is opened, it is in selection mode
         val dragSelectTouchHelper =
             DragSelectTouchHelper(adapter.dragSelectCallback).setSlideArea(16, 50)
@@ -132,57 +138,12 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
         binding.selectActionBar.setCallBack(this)
     }
 
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
-
-    /**
-     * 逐项累加实际高度，算出可视区能完整放下的条数后重排一次。
-     * 首次触发时列表可能尚未渲染完成，按 50ms 重试至多 20 次。
-     */
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        binding.recyclerView.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.recyclerView
-            val visible = rv.height
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            if (fitCount <= 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            pageSizeCalibrated = true
-            if (fitCount != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(fitCount), adapter.diffItemCallBack)
-                upPageBar()
-            }
-        }
-    }
-    private fun upPageBar() {
-        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
-    }
-
     private fun initData() {
         lifecycleScope.launch {
             appDb.txtTocRuleDao.observeAll().catch {
                 AppLog.put("TXT目录规则界面获取数据失败\n${it.localizedMessage}", it)
             }.flowOn(IO).conflate().collect { tocRules ->
-                paginator.setAll(tocRules)
-                adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
-                upPageBar()
-                calibratePageSize()
+                pager.setAll(tocRules)
             }
         }
     }

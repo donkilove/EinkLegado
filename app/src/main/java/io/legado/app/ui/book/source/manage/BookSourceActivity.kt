@@ -63,7 +63,6 @@ import io.legado.app.utils.share
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.startActivity
-import io.legado.app.utils.Paginator
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.transaction
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -77,6 +76,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import io.legado.app.ui.widget.EinkPager
 
 /**
  * 书源管理界面
@@ -90,8 +90,17 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
     override val viewModel by viewModels<BookSourceViewModel>()
     private val importRecordKey = "bookSourceRecordKey"
     private val adapter by lazy { BookSourceAdapter(this, this, binding.recyclerView) }
-    // 墨水屏专属：每页 8 项，用翻页代替长距离滚动
-    private val paginator = Paginator<BookSourcePart>()
+
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理 */
+    private val pager by lazy {
+        EinkPager<BookSourcePart>(binding.recyclerView, binding.pageBar, "个书源").apply {
+            onItemsChanged = { items ->
+                adapter.setItems(items, adapter.diffItemCallback, !Debug.isChecking)
+            }
+        }
+    }
+
+    override fun onHorizontalSwipe(direction: Int): Boolean = pager.onSwipe(direction)
     private val itemTouchCallback by lazy { ItemTouchCallback(adapter) }
     private val searchView: SearchView by lazy {
         binding.titleBar.findViewById(R.id.search_view)
@@ -296,61 +305,6 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
         dragSelectTouchHelper.activeSlideSelect()
         // Note: need judge selection first, so add ItemTouchHelper after it.
         ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
-        binding.pageBar.onPageChange = { delta ->
-            val target = paginator.page + delta
-            if (target in 0 until paginator.pageCount) {
-                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallback, !Debug.isChecking)
-                binding.recyclerView.scrollToPosition(0)
-                upPageBar()
-            }
-        }
-    }
-
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
-
-    /**
-     * 逐项累加实际高度，算出可视区能完整放下的条数后重排一次。
-     * 首次触发时列表可能尚未渲染完成，按 50ms 重试至多 20 次。
-     */
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        binding.recyclerView.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.recyclerView
-            val visible = rv.height
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            if (fitCount <= 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            pageSizeCalibrated = true
-            if (fitCount != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(fitCount), adapter.diffItemCallback, !Debug.isChecking)
-                upPageBar()
-            }
-        }
-    }
-    private fun upPageBar() {
-        binding.pageBar.update(
-            paginator.page,
-            paginator.pageCount,
-            paginator.total,
-            "个书源"
-        )
     }
 
     private fun initSearchView() {
@@ -454,10 +408,8 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
             ).catch {
                 AppLog.put("书源界面更新书源出错", it)
             }.flowOn(IO).conflate().collect { data ->
-                paginator.setAll(data)
-                adapter.setItems(paginator.slice(), adapter.diffItemCallback, !Debug.isChecking)
-                upPageBar()
-                calibratePageSize()
+                // 搜索、排序、分组会改变数据与项高，重新校准每页条数
+                pager.setAllAndRecalibrate(data)
                 itemTouchCallback.isCanDrag =
                     sort == BookSourceSort.Default && !groupSourcesByDomain
                 delay(500)

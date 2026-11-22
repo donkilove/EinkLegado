@@ -37,6 +37,7 @@ import io.legado.app.utils.setNavigationBarColorAuto
 import io.legado.app.utils.setStatusBarColorAuto
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.windowSize
+import kotlin.math.abs
 
 abstract class BaseActivity<VB : ViewBinding>(
     val fullScreen: Boolean = true,
@@ -97,6 +98,39 @@ abstract class BaseActivity<VB : ViewBinding>(
         // Android 12 及以上的系统转场（transition collecting）仍会让新界面横向滑入，
         // 必须在代码里再关一次。
         overrideActivityTransitionCompat()
+    }
+
+    /**
+     * 墨水屏：页面级左右滑动回调。
+     *
+     * 列表分页后，左右滑动用于翻页；没有分页的页面保持默认（不响应）。
+     * 返回 true 表示该次手势已被消费。
+     */
+    open fun onHorizontalSwipe(direction: Int): Boolean = false
+
+    private var swipeDownX = 0f
+    private var swipeDownY = 0f
+
+    /**
+     * 识别左右滑动并转交给 [onHorizontalSwipe]。不消费事件，正常分发照旧。
+     */
+    private fun detectHorizontalSwipe(ev: MotionEvent) {
+        if (!AppConfig.isEInkMode) return
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                swipeDownX = ev.x
+                swipeDownY = ev.y
+            }
+
+            MotionEvent.ACTION_UP -> {
+                val dx = ev.x - swipeDownX
+                val dy = ev.y - swipeDownY
+                val threshold = resources.displayMetrics.widthPixels * 0.15f
+                if (abs(dx) > threshold && abs(dx) > abs(dy) * 1.5f) {
+                    onHorizontalSwipe(if (dx > 0) -1 else 1)
+                }
+            }
+        }
     }
 
     /**
@@ -223,6 +257,7 @@ abstract class BaseActivity<VB : ViewBinding>(
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        detectHorizontalSwipe(ev)
         return try {
             super.dispatchTouchEvent(ev)
         } catch (e: IllegalArgumentException) {

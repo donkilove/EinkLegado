@@ -40,6 +40,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import io.legado.app.ui.widget.EinkPager
 
 class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewModel>(),
     PopupMenu.OnMenuItemClickListener,
@@ -49,7 +50,15 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
     override val viewModel by viewModels<DictRuleViewModel>()
     override val binding by viewBinding(ActivityDictRuleBinding::inflate)
     private val importRecordKey = "dictRuleUrls"
-    private val paginator = io.legado.app.utils.Paginator<io.legado.app.data.entities.DictRule>()
+
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理 */
+    private val pager by lazy {
+        EinkPager<DictRule>(binding.recyclerView, binding.pageBar, "条规则").apply {
+            onItemsChanged = { items -> adapter.setItems(items, adapter.diffItemCallBack) }
+        }
+    }
+
+    override fun onHorizontalSwipe(direction: Int): Boolean = pager.onSwipe(direction)
 
     private val adapter by lazy { DictRuleAdapter(this, this) }
     private val qrCodeResult = registerForActivityResult(QrCodeResult()) {
@@ -104,60 +113,10 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
         return super.onCompatCreateOptionsMenu(menu)
     }
 
-    private var pageSizeCalibrated = false
-    private var calibrateAttempts = 0
-
-    /**
-     * 逐项累加实际高度，算出可视区能完整放下的条数后重排一次。
-     * 首次触发时列表可能尚未渲染完成，按 50ms 重试至多 20 次。
-     */
-    private fun calibratePageSize() {
-        if (pageSizeCalibrated) return
-        binding.recyclerView.post {
-            if (pageSizeCalibrated) return@post
-            val rv = binding.recyclerView
-            val visible = rv.height
-            if (visible <= 0 || rv.childCount == 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            // 以子视图的实际底边判断：height 不含 margin 与分割线，会把溢出的条目也算进来
-            var fitCount = 0
-            for (i in 0 until rv.childCount) {
-                if (rv.getChildAt(i).bottom > visible) break
-                fitCount++
-            }
-            if (fitCount <= 0) {
-                if (calibrateAttempts++ < 20) {
-                    binding.recyclerView.postDelayed({ calibratePageSize() }, 50)
-                }
-                return@post
-            }
-            pageSizeCalibrated = true
-            if (fitCount != paginator.pageSize) {
-                adapter.setItems(paginator.setPageSize(fitCount), adapter.diffItemCallBack)
-                upPageBar()
-            }
-        }
-    }
-    private fun upPageBar() {
-        binding.pageBar.update(paginator.page, paginator.pageCount, paginator.total, "条规则")
-    }
-
     private fun initRecyclerView() {
         binding.recyclerView.setEdgeEffectColor(primaryColor)
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
-        binding.pageBar.onPageChange = { delta ->
-            val target = paginator.page + delta
-            if (target in 0 until paginator.pageCount) {
-                adapter.setItems(paginator.moveTo(target), adapter.diffItemCallBack)
-                binding.recyclerView.scrollToPosition(0)
-                upPageBar()
-            }
-        }
         binding.recyclerView.addItemDecoration(VerticalDivider(this))
         val itemTouchCallback = ItemTouchCallback(adapter)
         itemTouchCallback.isCanDrag = true
@@ -184,10 +143,7 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
             appDb.dictRuleDao.flowAll().catch {
                 AppLog.put("字典规则获取数据失败\n${it.localizedMessage}", it)
             }.flowOn(IO).collect {
-                paginator.setAll(it)
-                adapter.setItems(paginator.slice(), adapter.diffItemCallBack)
-                upPageBar()
-                calibratePageSize()
+                pager.setAll(it)
             }
         }
     }
@@ -317,3 +273,4 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
         }
     }
 }
+
