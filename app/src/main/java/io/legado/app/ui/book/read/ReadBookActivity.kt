@@ -140,6 +140,7 @@ import androidx.lifecycle.Lifecycle
 import com.script.rhino.runScriptWithContext
 import io.legado.app.model.analyzeRule.AnalyzeUrl.Companion.paramPattern
 import io.legado.app.ui.login.SourceLoginJsExtensions
+import io.legado.app.help.config.ThemeConfig
 
 /**
  * 阅读界面
@@ -407,6 +408,8 @@ class ReadBookActivity : BaseReadBookActivity(),
             }.show()
         }
         binding.readMenu.refreshMenuColorFilter()
+        // 菜单项已就绪，重新接管溢出按钮（此前的接管早于菜单 inflate，会失效）
+        binding.readMenu.refreshEInkOverflow()
         return super.onCompatCreateOptionsMenu(menu)
     }
 
@@ -1175,6 +1178,17 @@ class ReadBookActivity : BaseReadBookActivity(),
     }
 
     /**
+     * 日间/夜间切换。
+     *
+     * 配色固定为纯黑白，只切昼夜。applyDayNight 内部会 setDefaultNightMode
+     * 并发出 RECREATE 事件，本页监听后重建，让 values-night 资源整体生效。
+     */
+    override fun toggleDayNight() {
+        AppConfig.isNightTheme = !AppConfig.isNightTheme
+        ThemeConfig.applyDayNight(this)
+    }
+
+    /**
      * 打开目录
      */
     override fun openChapterList() {
@@ -1701,6 +1715,8 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun observeLiveBus() = binding.run {
         observeEvent<String>(EventBus.TIME_CHANGED) { readView.upTime() }
+        // 日间/夜间切换后重建，让 values-night 资源与主题色一起生效
+        observeEvent<String>(EventBus.RECREATE) { recreate() }
         observeEvent<Int>(EventBus.BATTERY_CHANGED) { readView.upBattery(it) }
         observeEvent<Boolean>(EventBus.MEDIA_BUTTON) {
             if (it) {

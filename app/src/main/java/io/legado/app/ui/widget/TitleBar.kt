@@ -290,7 +290,7 @@ class TitleBar @JvmOverloads constructor(
      * popupAnimationStyle、以及反射改 PopupWindow 的 animationStyle 都碰不到它。
      * 因此这里不再使用任何弹出窗口，改成在页面内叠加一层普通 View 来显示菜单。
      */
-    private fun setupEInkOverflow() {
+    private fun setupEInkOverflow(retry: Int = 0) {
         if (!AppConfig.isEInkMode) return
         post {
             runCatching {
@@ -299,12 +299,31 @@ class TitleBar @JvmOverloads constructor(
                 val presenter = presenterField.get(toolbar) ?: return@post
                 val buttonField = presenter.javaClass.getDeclaredField("mOverflowButton")
                 buttonField.isAccessible = true
-                val overflowButton = buttonField.get(presenter) as? View ?: return@post
+                val overflowButton = buttonField.get(presenter) as? View
+                if (overflowButton == null) {
+                    // 菜单项可能还没 inflate：阅读界面的菜单由 Activity 的
+                    // onCreateOptionsMenu 提供，晚于 TitleBar 的 onAttachedToWindow。
+                    // 此时 mOverflowButton 还不存在，隔一小段时间重试几次。
+                    if (retry < OVERFLOW_RETRY_MAX) {
+                        postDelayed({ setupEInkOverflow(retry + 1) }, OVERFLOW_RETRY_DELAY)
+                    }
+                    return@post
+                }
                 overflowButton.setOnClickListener {
                     showEInkMenu()
                 }
             }
         }
+    }
+
+    /**
+     * 菜单项发生变化后重新接管溢出按钮。
+     *
+     * Toolbar 重建溢出按钮时会丢掉我们替换的点击监听（菜单项增减都会触发），
+     * 因此由宿主在 onCreateOptionsMenu / onPrepareOptionsMenu 之后调用一次。
+     */
+    fun refreshEInkOverflow() {
+        setupEInkOverflow()
     }
 
     private fun showEInkMenu() {
@@ -374,6 +393,10 @@ class TitleBar @JvmOverloads constructor(
 
     private companion object {
         const val EINK_MENU_TAG = "eink_menu_overlay"
+
+        /** 溢出按钮晚于本 View 创建时的重试次数与间隔 */
+        const val OVERFLOW_RETRY_MAX = 10
+        const val OVERFLOW_RETRY_DELAY = 60L
     }
 
 }

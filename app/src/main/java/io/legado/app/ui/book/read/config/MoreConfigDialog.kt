@@ -37,11 +37,17 @@ import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.removePref
 import io.legado.app.utils.setEdgeEffectColor
+import io.legado.app.ui.widget.PreferencePager
+import io.legado.app.ui.widget.PageBar
 
 class MoreConfigDialog : BasePrefDialogFragment() {
     private val readPreferTag = "readPreferenceFragment"
     private lateinit var headerBar: LinearLayout
     private lateinit var headerTitle: TextView
+
+    /** 分页条：设置项在电子纸上同样不滚动，交给 EinkPager 翻页 */
+    lateinit var pageBar: PageBar
+        private set
 
     override fun onStart() {
         super.onStart()
@@ -107,6 +113,13 @@ class MoreConfigDialog : BasePrefDialogFragment() {
             LinearLayout(ctx).apply { id = R.id.tag1 },
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
         )
+        pageBar = PageBar(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        root.addView(pageBar)
         return root
     }
 
@@ -166,6 +179,21 @@ class MoreConfigDialog : BasePrefDialogFragment() {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             listView.setEdgeEffectColor(primaryColor)
+            // 墨水屏：设置项用翻页代替滚动
+            val bar = (parentFragment as? MoreConfigDialog)?.pageBar
+            if (bar != null) {
+                pager = PreferencePager(listView, bar).apply {
+                    bindPageBar()
+                    preferenceScreen?.let { bind(it) }
+                }
+            }
+        }
+
+        private var pager: PreferencePager? = null
+
+        override fun onDestroyView() {
+            pager = null
+            super.onDestroyView()
         }
 
         override fun onPause() {

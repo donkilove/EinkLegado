@@ -210,6 +210,7 @@ class ReadMenu @JvmOverloads constructor(
         fabSearch.setColorFilter(textColor)
         fabAutoPage.setColorFilter(textColor)
         fabReplaceRule.setColorFilter(textColor)
+        fabThemeSwitch.setColorFilter(textColor)
         tvPre.setTextColor(textColor)
         tvNext.setTextColor(textColor)
         ivCatalog.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
@@ -244,6 +245,14 @@ class ReadMenu @JvmOverloads constructor(
         if (immersiveMenu) {
             binding.titleBar.setColorFilter(textColor)
         }
+    }
+
+    /**
+     * 菜单项变化后重新接管溢出按钮（改成页面内覆盖层，去掉系统窗口过渡动画）。
+     * 阅读界面的菜单由 Activity 提供，inflate 时机晚于本 View，需要在菜单就绪后再调一次。
+     */
+    fun refreshEInkOverflow() {
+        binding.titleBar.refreshEInkOverflow()
     }
 
     private fun upColorConfig() {
@@ -551,6 +560,13 @@ class ReadMenu @JvmOverloads constructor(
         //替换
         fabReplaceRule.setOnClickListener { callBack.openReplaceRule() }
 
+        //日间/夜间切换
+        fabThemeSwitch.setOnClickListener {
+            runMenuOut {
+                callBack.toggleDayNight()
+            }
+        }
+
 
         //上一章
         tvPre.setOnClickListener { ReadBook.moveToPrevChapter(upContent = true, toLast = false) }
@@ -656,6 +672,7 @@ class ReadMenu @JvmOverloads constructor(
         fun autoPage()
         fun openReplaceRule()
         fun openChapterList()
+        fun toggleDayNight()
         fun openSearchActivity(searchWord: String?)
         fun openSourceEditActivity()
         fun openBookInfoActivity()

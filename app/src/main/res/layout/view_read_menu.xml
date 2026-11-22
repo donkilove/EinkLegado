@@ -215,6 +215,26 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
+            <!-- 日间/夜间切换 -->
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/fabThemeSwitch"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="16dp"
+                android:background="@drawable/bg_eink_circle_border"
+                android:contentDescription="@string/theme_night_mode"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_daytime"
+                android:tint="@color/primaryText"
+                android:tooltipText="@string/theme_night_mode"
+                tools:ignore="UnusedAttribute" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
         </LinearLayout>
 
         <!--底部设置栏-->
