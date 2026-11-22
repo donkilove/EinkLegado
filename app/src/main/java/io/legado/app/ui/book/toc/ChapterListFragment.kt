@@ -1,9 +1,7 @@
 package io.legado.app.ui.book.toc
 
-import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.activityViewModels
@@ -19,16 +17,12 @@ import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.isVideo
 import io.legado.app.help.book.simulatedTotalChapterNum
-import io.legado.app.lib.theme.bottomBackground
-import io.legado.app.lib.theme.getPrimaryTextColor
 import io.legado.app.ui.widget.recycler.UpLinearLayoutManager
 import io.legado.app.ui.widget.recycler.VerticalDivider
-import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch

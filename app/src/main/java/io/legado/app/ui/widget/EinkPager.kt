@@ -78,12 +78,7 @@ class EinkPager<T>(
      */
     var onCalibrated: (() -> Unit)? = null
 
-    val page: Int get() = paginator.page
-    val pageCount: Int get() = paginator.pageCount
     val total: Int get() = paginator.total
-
-    /** 列数（网格模式下 >1） */
-    val columnCount: Int get() = columns
 
     init {
         disableScrolling()
@@ -187,16 +182,6 @@ class EinkPager<T>(
     /** 第 [itemIndex] 条数据在当前页内的位置 */
     fun indexInPage(itemIndex: Int): Int =
         (itemIndex - paginator.pageStart(paginator.page)).coerceAtLeast(0)
-
-    /**
-     * 回到第一页（搜索、筛选后调用）。
-     */
-    fun reset() {
-        onItemsChanged?.invoke(paginator.reset())
-        updatePageBar()
-        recyclerView.scrollToPosition(0)
-        measureCurrentPage()
-    }
 
     /**
      * 测量当前页实际能完整放下几条，回填给分页器。

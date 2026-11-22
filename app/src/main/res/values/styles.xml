@@ -26,7 +26,11 @@
         <item name="selectableItemBackground">@drawable/bg_eink_selectable_item</item>
         <item name="selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
         <item name="android:windowAnimationStyle">@style/Style.NoAnimation</item>
-        <!-- 墨水屏：弹窗菜单（长按菜单、溢出菜单等）默认带淡入/缩放动画，这里一并关闭 -->
+        <!--
+          Toolbar 的溢出菜单实测是系统窗口过渡，只在 windowAnimationScale=0 时才消失，
+          主题里的这两个属性对它无效，现已改为 TitleBar 内绘制覆盖层实现（见 TitleBar.setupEInkOverflow）。
+          这里保留配置，用于其他仍走系统弹出窗口的对话框/菜单。
+        -->
         <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
 
@@ -58,9 +62,12 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
         <item name="overlapAnchor">false</item>
         <item name="colorAccent">@color/md_grey_900</item>
-        <!-- 墨水屏：Toolbar 的溢出菜单用的是这个 popupTheme（见 view_title_bar.xml），
-             它之前没有窗口动画配置，于是沿用了系统默认的展开/淡出动画。
-             只改 Activity 主题覆盖不到这条路径，必须在这里关掉。 -->
+        <!--
+          Toolbar 的溢出菜单用的是这个 popupTheme（见 view_title_bar.xml）。
+          它此前没有窗口动画配置，会沿用系统默认的展开/淡出；
+          但实测该动画属于系统窗口过渡，配置 popupAnimationStyle 并不能关掉，
+          现已改由 TitleBar 用页面内覆盖层实现。这里保留作为兜底。
+        -->
         <item name="android:windowAnimationStyle">@style/Style.NoAnimation</item>
         <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
@@ -92,8 +99,8 @@
 
     <style name="Style.PopupMenu" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/bg_popup_menu</item>
-        <!-- 墨水屏：父样式自带了淡入/缩放动画，主题上的 popupAnimationStyle 会被它盖掉，
-             必须在样式本身覆盖才能彻底关掉溢出菜单的展开动画 -->
+        <!-- 墨水屏：溢出菜单已改为 TitleBar 内的覆盖层实现，不再走 PopupWindow。
+             这里保留无动画配置，供其他仍使用该样式的弹出菜单使用。 -->
         <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
     </style>
 

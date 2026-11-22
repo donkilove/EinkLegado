@@ -18,10 +18,10 @@ class Paginator<T>(defaultPageSize: Int = DEFAULT_PAGE_SIZE) {
 
     companion object {
         /** 未测量的页使用的初始条数 */
-        const val DEFAULT_PAGE_SIZE = 8
+        private const val DEFAULT_PAGE_SIZE = 8
 
         /** 单页最少条数，避免项特别高时每页只剩一两条 */
-        const val MIN_PAGE_SIZE = 3
+        private const val MIN_PAGE_SIZE = 3
     }
 
     private var defaultPageSize: Int = defaultPageSize
@@ -61,19 +61,9 @@ class Paginator<T>(defaultPageSize: Int = DEFAULT_PAGE_SIZE) {
             }
         }
 
-    val hasPrev: Boolean get() = page > 0
-    val hasNext: Boolean get() = page < pageCount - 1
-
     /** 全量数据变化：丢弃已测量的页边界，回到第一页 */
     fun setAll(items: List<T>): List<T> {
         all = items
-        measuredSizes.clear()
-        page = 0
-        return slice()
-    }
-
-    /** 回到第一页并返回切片（搜索、筛选后使用） */
-    fun reset(): List<T> {
         measuredSizes.clear()
         page = 0
         return slice()
@@ -112,21 +102,6 @@ class Paginator<T>(defaultPageSize: Int = DEFAULT_PAGE_SIZE) {
         defaultPageSize = size.coerceAtLeast(MIN_PAGE_SIZE)
         measuredSizes.clear()
         page = 0
-    }
-
-    /**
-     * 当前页的条数。
-     * 供尚未迁移到 EinkPager 的旧调用方读取。
-     */
-    val pageSize: Int get() = sizeOf(page)
-
-    /**
-     * 设置当前页条数并返回新切片。
-     * 供尚未迁移到 EinkPager 的旧调用方使用。
-     */
-    fun setPageSize(size: Int): List<T> {
-        commitPageSize(size)
-        return slice()
     }
 
     fun moveTo(target: Int): List<T> {
