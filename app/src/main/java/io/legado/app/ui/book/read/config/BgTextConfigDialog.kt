@@ -19,7 +19,6 @@ import io.legado.app.constant.AppLog
 import io.legado.app.constant.EventBus
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.databinding.DialogReadBgTextBinding
-import io.legado.app.databinding.ItemBgImageBinding
 import io.legado.app.help.DefaultData
 import io.legado.app.help.book.isImage
 import io.legado.app.help.config.AppConfig
@@ -76,15 +75,9 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
 
     private val binding by viewBinding(DialogReadBgTextBinding::bind)
     private val configFileName = "readConfig.zip"
-    private val adapter by lazy { BgAdapter(requireContext(), secondaryTextColor) }
     private var primaryTextColor = 0
     private var secondaryTextColor = 0
     private val importFormNet = "网络导入"
-    private val selectBgImage = registerForActivityResult(HandleFileContract()) {
-        it.uri?.let { uri ->
-            setBgFromUri(uri)
-        }
-    }
     private val selectExportDir = registerForActivityResult(HandleFileContract()) {
         it.uri?.let { uri ->
             exportConfig(uri)
@@ -142,7 +135,6 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
         ivExport.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
         ivDelete.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
         tvBgAlpha.setTextColor(primaryTextColor)
-        tvBgImage.setTextColor(primaryTextColor)
         if (ReadBook.book?.isImage == true) {
             spUnderline.isGone = true
         } else {
@@ -176,29 +168,7 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
                 override fun onNothingSelected(parent: AdapterView<*>) { }
             }
         }
-        if (AppConfig.isEInkMode) {
-            // 墨水屏专属：只支持纯色背景，隐藏图片背景入口
-            binding.recyclerView.isGone = true
-            binding.tvBgImage.isGone = true
-        } else {
-            recyclerView.adapter = adapter
-            adapter.addHeaderView {
-                ItemBgImageBinding.inflate(layoutInflater, it, false).apply {
-                    tvName.setTextColor(secondaryTextColor)
-                    tvName.text = getString(R.string.select_image)
-                    ivBg.setImageResource(R.drawable.ic_image)
-                    ivBg.setColorFilter(primaryTextColor, PorterDuff.Mode.SRC_IN)
-                    root.setOnClickListener {
-                        selectBgImage.launch {
-                            mode = HandleFileContract.IMAGE
-                        }
-                    }
-                }
-            }
-            requireContext().assets.list("bg")?.let {
-                adapter.setItems(it.toList())
-            }
-        }
+        // 墨水屏：背景固定为纯色，图片背景入口已整体移除
     }
 
     @SuppressLint("InflateParams")
@@ -304,11 +274,6 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
             }
             configFile.writeText(GSON.toJson(config))
             exportFiles.add(configFile)
-            repeat(3) {
-                val path = ReadBookConfig.durConfig.getBgPath(it) ?: return@repeat
-                val bgExportFile = copyBgImage(path, configDir) ?: return@repeat
-                exportFiles.add(bgExportFile)
-            }
             val configZipPath = FileUtils.getPath(requireContext().externalCache, configFileName)
             if (ZipUtils.zipFiles(exportFiles, File(configZipPath))) {
                 val exportDir = FileDoc.fromDir(uri)
@@ -327,19 +292,6 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
             AppLog.put("导出失败:${it.localizedMessage}", it)
             longToast("导出失败:${it.localizedMessage}")
         }
-    }
-
-    private fun copyBgImage(path: String, configDir: File): File? {
-        val bgName = FileUtils.getName(path)
-        val bgFile = File(path)
-        if (bgFile.exists()) {
-            val bgExportFile = File(FileUtils.getPath(configDir, bgName))
-            if (!bgExportFile.exists()) {
-                bgFile.copyTo(bgExportFile)
-                return bgExportFile
-            }
-        }
-        return null
     }
 
     @SuppressLint("InflateParams")
@@ -387,70 +339,6 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
         }.onError {
             it.printOnDebug()
             longToast("导入失败:${it.localizedMessage}")
-        }
-    }
-
-    private fun setBgFromUri(uri: Uri) {
-        if (uri.scheme?.lowercase() in listOf("http", "https")) {
-            lifecycleScope.launch {
-                kotlin.runCatching {
-                    appCtx.toastOnUi("下载图片中...")
-                    val analyzeUrl = AnalyzeUrl(uri.toString())
-                    val url = analyzeUrl.urlNoQuery
-                    var file = requireContext().externalFiles
-                    val res = okHttpClient.newCallResponse(0) {
-                        addHeaders(analyzeUrl.headerMap)
-                        url(url)
-                    }
-                    val contentType = res.header("Content-Type") ?: "image/jpeg"
-                    val imageType = when {
-                        contentType.contains("png", ignoreCase = true) -> "png"
-                        contentType.contains("gif", ignoreCase = true) -> "gif"
-                        contentType.contains("webp", ignoreCase = true) -> "webp"
-                        else -> "jpg"
-                    }
-                    val suffix = if (url.contains(".9.png", true)) {
-                        ".9.png"
-                    } else {
-                        ".$imageType"
-                    }
-                    val fileName = MD5Utils.md5Encode(url) + suffix
-                    file = FileUtils.createFileIfNotExist(file, "bg", fileName)
-                    res.body.byteStream().use { inputStream ->
-                        FileOutputStream(file).use { outputStream ->
-                            inputStream.copyTo(outputStream)
-                        }
-                    }
-                    ReadBookConfig.durConfig.setCurBg(2, fileName)
-                    postEvent(EventBus.UP_CONFIG, arrayListOf(1))
-                }.onSuccess {
-                    appCtx.toastOnUi("设定成功")
-                }.onFailure {
-                    appCtx.toastOnUi(it.localizedMessage)
-                }
-            }
-            return
-        }
-        readUri(uri) { fileDoc, inputStream ->
-            kotlin.runCatching {
-                var file = requireContext().externalFiles
-                val suffix = if (fileDoc.name.contains(".9.png", true)) {
-                    ".9.png"
-                } else {
-                    "." + fileDoc.name.substringAfterLast(".")
-                }
-                val fileName = uri.inputStream(requireContext()).getOrThrow().use {
-                    MD5Utils.md5Encode(it) + suffix
-                }
-                file = FileUtils.createFileIfNotExist(file, "bg", fileName)
-                FileOutputStream(file).use { outputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-                ReadBookConfig.durConfig.setCurBg(2, fileName)
-                postEvent(EventBus.UP_CONFIG, arrayListOf(1))
-            }.onFailure {
-                appCtx.toastOnUi(it.localizedMessage)
-            }
         }
     }
 }

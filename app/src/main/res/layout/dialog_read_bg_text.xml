@@ -149,21 +149,4 @@
         android:padding="6dp"
         tools:ignore="UnusedAttribute" />
 
-    <TextView
-        android:id="@+id/tv_bg_image"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="6dp"
-        android:paddingRight="6dp"
-        android:text="@string/bg_image" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:orientation="horizontal"
-        android:padding="6dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/item_bg_image" />
-
 </LinearLayout>

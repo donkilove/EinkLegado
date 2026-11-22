@@ -390,17 +390,10 @@ object ThemeConfig {
      * 更新主题
      */
     fun applyTheme(context: Context) = with(context) {
+        // 墨水屏：此前这里有一支 isEInkMode 分支，把主题硬编码成白底黑字，
+        // 导致「白天主题/夜间主题」里的颜色配置全部失效，而阅读界面又按配置取色，
+        // 两边不一致。现已去掉该分支，让用户配置的配色真正生效。
         when {
-            AppConfig.isEInkMode -> {
-                ThemeStore.editTheme(this)
-                    .primaryColor(Color.WHITE)
-                    .accentColor(Color.BLACK)
-                    .backgroundColor(Color.WHITE)
-                    .bottomBackground(Color.WHITE)
-                    .transparentNavBar(false)
-                    .apply()
-            }
-
             AppConfig.isNightTheme -> {
                 val primary =
                     getPrefInt(PreferKey.cNPrimary, getCompatColor(R.color.md_blue_grey_600))

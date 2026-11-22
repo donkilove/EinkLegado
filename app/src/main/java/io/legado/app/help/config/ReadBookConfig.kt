@@ -701,50 +701,9 @@ object ReadBookConfig {
         }
 
         fun curBgDrawable(width: Int, height: Int): Drawable {
-            val curBgStr = curBgStr()
-            isNineBgImg = curBgStr.endsWith(".9.png")
-            if (AppConfig.isEInkMode) {
-                // 墨水屏专属：背景只能是纯色，忽略任何图片背景配置
-                val color = if (curBgStr.startsWith("#")) {
-                    runCatching { curBgStr.toColorInt() }.getOrDefault(0xFFFFFFFF.toInt())
-                } else {
-                    0xFFFFFFFF.toInt()
-                }
-                return color.toDrawable()
-            }
-            if (width == 0 || height == 0) {
-                return appCtx.getCompatColor(R.color.background).toDrawable()
-            }
-            var bgDrawable: Drawable? = null
-            val resources = appCtx.resources
-            try {
-                bgDrawable = when (curBgType()) {
-                    0 -> curBgStr.toColorInt().toDrawable()
-                    1 -> {
-                        val path = "bg" + File.separator + curBgStr
-                        val bitmap = BitmapUtils.decodeAssetsBitmap(appCtx, path, width, height)
-                        bitmap?.resizeAndRecycle(width, height)?.toDrawable(resources)
-                    }
-
-                    else -> {
-                        val path = curBgStr.let {
-                            if (it.contains(File.separator)) it
-                            else FileUtils.getPath(appCtx.externalFiles, "bg", it)
-                        }
-                        if (isNineBgImg) {
-                            BitmapUtils.decodeNinePatchDrawable(path)
-                        } else {
-                            val bitmap = BitmapUtils.decodeBitmap(path, width, height)
-                            bitmap?.resizeAndRecycle(width, height)?.toDrawable(resources)
-                        }
-                    }
-                }
-            } catch (e: OutOfMemoryError) {
-                e.printOnDebug()
-            } catch (e: Exception) {
-                e.printOnDebug()
-            }
-            return bgDrawable ?: appCtx.getCompatColor(R.color.background).toDrawable()
+            // 墨水屏：背景固定为纯色，图片背景相关逻辑已移除
+            val color = runCatching { curBgStr().toColorInt() }.getOrDefault(0xFFFFFFFF.toInt())
+            return color.toDrawable()
         }
 
         fun getBgPath(bgIndex: Int): String? {
