@@ -198,7 +198,7 @@ class ReadMenu @JvmOverloads constructor(
         if (AppConfig.isEInkMode) {
             // 墨水屏：描边。阅读背景通常也是浅色，没有描边时这个浮在正文上的亮度条
             // 完全看不出边界，会与文字糊在一起。
-            brightnessBackground.setStroke(1.dpToPx().toInt(), textColor)
+            brightnessBackground.setStroke(1.dpToPx(), textColor)
         }
         llBrightness.background = brightnessBackground
         if (AppConfig.isEInkMode) {
