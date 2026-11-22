@@ -2,7 +2,6 @@ package io.legado.app.ui.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.Gravity
@@ -10,11 +9,17 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
+import io.legado.app.lib.theme.bottomBackground
+import io.legado.app.lib.theme.primaryTextColor
+import io.legado.app.utils.ColorUtils
 
 /**
  * 翻页栏：电子纸上用翻页代替滚动。
  *
  * 三个元素：上一页 / 页码信息 / 下一页。到达首尾时对应按钮置灰不可点。
+ *
+ * 颜色跟随主题（日间白底黑字、夜间黑底白字）。原先这里写死 Color.WHITE / Color.BLACK，
+ * 夜间主题下就变成深色列表里嵌一条白色横条。
  */
 @SuppressLint("ViewConstructor")
 class PageBar @JvmOverloads constructor(
@@ -43,17 +48,23 @@ class PageBar @JvmOverloads constructor(
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(12), dp(4), dp(12), dp(4))
-        setBackgroundColor(Color.WHITE)
 
-        tvPrev = createButton("上一页")
+        val bgColor = context.bottomBackground
+        setBackgroundColor(bgColor)
+
+        // 正文色按背景明暗取，保证任何一套主题下都有足够对比度
+        val textColor = context.primaryTextColor
+        val disabledColor = ColorUtils.withAlpha(textColor, 0.4f)
+
+        tvPrev = createButton("上一页", textColor, disabledColor)
         tvInfo = TextView(context).apply {
             gravity = Gravity.CENTER
             textSize = 14f
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-            setTextColor(Color.BLACK)
+            setTextColor(textColor)
         }
-        tvNext = createButton("下一页")
+        tvNext = createButton("下一页", textColor, disabledColor)
 
         // 按钮宽度随文字自适应，避免窄屏下挤压中间的页码信息
         addView(
@@ -75,16 +86,19 @@ class PageBar @JvmOverloads constructor(
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-    private fun createButton(text: String): TextView = TextView(context).apply {
-        this.text = text
-        gravity = Gravity.CENTER
-        textSize = 15f
-        setTextColor(Color.BLACK)
-        setTypeface(typeface, Typeface.NORMAL)
-        setPadding(dp(8), dp(10), dp(8), dp(10))
-        isClickable = true
-        isFocusable = true
-    }
+    private fun createButton(text: String, color: Int, disabledColor: Int): TextView =
+        TextView(context).apply {
+            this.text = text
+            gravity = Gravity.CENTER
+            textSize = 15f
+            setTextColor(color)
+            setTypeface(typeface, Typeface.NORMAL)
+            setPadding(dp(8), dp(10), dp(8), dp(10))
+            isClickable = true
+            isFocusable = true
+            // 置灰色随主题走，避免深色主题下用固定的浅灰
+            tag = disabledColor
+        }
 
     /**
      * @param page 当前页，从 0 开始
@@ -102,7 +116,9 @@ class PageBar @JvmOverloads constructor(
 
     private fun setButtonEnabled(button: TextView, enabled: Boolean) {
         button.isEnabled = enabled
-        button.setTextColor(if (enabled) Color.BLACK else Color.parseColor("#999999"))
+        val normalColor = context.primaryTextColor
+        val disabledColor = button.tag as? Int ?: ColorUtils.withAlpha(normalColor, 0.4f)
+        button.setTextColor(if (enabled) normalColor else disabledColor)
     }
 
     /** 用于隐藏整条翻页栏（例如空列表） */

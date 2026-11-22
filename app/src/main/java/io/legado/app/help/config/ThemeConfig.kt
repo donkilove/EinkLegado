@@ -388,11 +388,27 @@ object ThemeConfig {
 
     /**
      * 更新主题
+     *
+     * 墨水屏：配色不再支持自定义，固定为两套纯黑白——
+     * 日间为白底黑字，夜间为黑底白字。
+     * 这样所有控件只需要按「背景明暗」取色，不会再出现深底深字、
+     * 浅底浅字这类需要逐处修补的对比度问题。
      */
     fun applyTheme(context: Context) = with(context) {
-        // 墨水屏：此前这里有一支 isEInkMode 分支，把主题硬编码成白底黑字，
-        // 导致「白天主题/夜间主题」里的颜色配置全部失效，而阅读界面又按配置取色，
-        // 两边不一致。现已去掉该分支，让用户配置的配色真正生效。
+        if (AppConfig.isEInkMode) {
+            val isNight = AppConfig.isNightTheme
+            val bg = if (isNight) Color.BLACK else Color.WHITE
+            val fg = if (isNight) Color.WHITE else Color.BLACK
+            ThemeStore.editTheme(this)
+                .primaryColor(bg)
+                .primaryColorDark(bg)
+                .accentColor(fg)
+                .backgroundColor(bg)
+                .bottomBackground(bg)
+                .transparentNavBar(false)
+                .apply()
+            return@with
+        }
         when {
             AppConfig.isNightTheme -> {
                 val primary =
