@@ -792,6 +792,8 @@
     <string name="save_day_theme_summary">保存白天主题配置以供调用和分享</string>
     <string name="save_night_theme_summary">保存夜间主题配置以供调用和分享</string>
     <string name="theme_list">主题列表</string>
+    <string name="theme_night_mode">夜间模式</string>
+    <string name="theme_night_mode_s">黑底白字，关闭则为白底黑字</string>
     <!-- 主题设置页的三个二级入口 -->
     <string name="theme_screen_app">软件设置</string>
     <string name="theme_screen_app_s">图标、启动界面、字体大小等</string>

@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  墨水屏：本页拆成三个二级入口（软件设置 / 白天主题 / 夜间主题），
-  避免一页里几十项需要长距离滚动。各子项 key 保持不变，
-  ThemeConfigFragment 的点击处理无需改动。
+  墨水屏：配色不再支持自定义，固定两套纯黑白——日间白底黑字、夜间黑底白字。
+  因此这里只剩「夜间模式」开关和「软件设置」一项，颜色相关的条目全部移除。
+
+  原来的白天主题 / 夜间主题两个子页里有主色调、强调色、背景色、底部操作栏颜色、
+  背景图片、沉浸式操作栏、保存主题配置等共 14 项，它们要么已经失效、
+  要么与固定配色冲突，一并删除。
 -->
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:divider="@color/transparent"
     app:allowDividerBelow="false">
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="false"
+        android:key="themeNightMode"
+        android:summary="@string/theme_night_mode_s"
+        android:title="@string/theme_night_mode"
+        app:iconSpaceReserved="false" />
 
     <androidx.preference.PreferenceScreen
         android:layout="@layout/view_preference_screen"
@@ -62,130 +72,6 @@
             android:key="coverConfig"
             android:title="@string/cover_config"
             android:summary="@string/cover_config_summary"
-            app:allowDividerAbove="false"
-            app:allowDividerBelow="false"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.Preference
-            android:key="themeList"
-            android:summary="@string/theme_list_summary"
-            android:title="@string/theme_list"
-            app:allowDividerAbove="false"
-            app:allowDividerBelow="false"
-            app:iconSpaceReserved="false" />
-
-    </androidx.preference.PreferenceScreen>
-
-    <androidx.preference.PreferenceScreen
-        android:layout="@layout/view_preference_screen"
-        android:icon="@drawable/ic_cfg_theme"
-        android:key="themeDayScreen"
-        android:summary="@string/theme_screen_day_s"
-        android:title="@string/theme_screen_day"
-        app:iconSpaceReserved="false">
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_brown_500"
-            android:key="colorPrimary"
-            android:summary="@string/day_color_primary"
-            android:title="@string/primary"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_red_600"
-            android:key="colorAccent"
-            android:summary="@string/day_color_accent"
-            android:title="@string/accent"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_grey_100"
-            android:key="colorBackground"
-            android:summary="@string/day_background_color"
-            android:title="@string/background_color"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_grey_200"
-            android:key="colorBottomBackground"
-            android:summary="@string/day_navbar_color"
-            android:title="@string/navbar_color"
-            app:allowDividerAbove="false"
-            app:allowDividerBelow="false"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.SwitchPreference
-            android:defaultValue="false"
-            android:key="transparentNavBar"
-            android:summary="@string/day_nav_bar_immersion"
-            android:title="@string/immersion_nav_bar"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.Preference
-            android:key="saveDayTheme"
-            android:summary="@string/save_day_theme_summary"
-            android:title="@string/save_theme_config"
-            app:allowDividerAbove="false"
-            app:allowDividerBelow="false"
-            app:iconSpaceReserved="false" />
-
-    </androidx.preference.PreferenceScreen>
-
-    <androidx.preference.PreferenceScreen
-        android:layout="@layout/view_preference_screen"
-        android:icon="@drawable/ic_cfg_theme"
-        android:key="themeNightScreen"
-        android:summary="@string/theme_screen_night_s"
-        android:title="@string/theme_screen_night"
-        app:iconSpaceReserved="false">
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_blue_grey_600"
-            android:key="colorPrimaryNight"
-            android:summary="@string/night_primary"
-            android:title="@string/primary"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_deep_orange_800"
-            android:key="colorAccentNight"
-            android:summary="@string/night_accent"
-            android:title="@string/accent"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_grey_900"
-            android:key="colorBackgroundNight"
-            android:summary="@string/night_background_color"
-            android:title="@string/background_color"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.ColorPreference
-            android:defaultValue="@color/md_grey_850"
-            android:key="colorBottomBackgroundNight"
-            android:summary="@string/night_navbar_color"
-            android:title="@string/navbar_color"
-            app:cpv_dialogType="preset"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.SwitchPreference
-            android:defaultValue="false"
-            android:key="transparentNavBarNight"
-            android:summary="@string/night_nav_bar_immersion"
-            android:title="@string/immersion_nav_bar"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.Preference
-            android:key="saveNightTheme"
-            android:summary="@string/save_night_theme_summary"
-            android:title="@string/save_theme_config"
             app:allowDividerAbove="false"
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />

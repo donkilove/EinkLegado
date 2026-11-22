@@ -795,6 +795,8 @@
     <string name="save_day_theme_summary">Save day theme config</string>
     <string name="save_night_theme_summary">Save night theme config</string>
     <string name="theme_list">Theme list</string>
+    <string name="theme_night_mode">Night mode</string>
+    <string name="theme_night_mode_s">White text on black background; off for black text on white</string>
     <!-- 主题设置页的三个二级入口 -->
     <string name="theme_screen_app">Appearance</string>
     <string name="theme_screen_app_s">Icon, launch screen, font size</string>

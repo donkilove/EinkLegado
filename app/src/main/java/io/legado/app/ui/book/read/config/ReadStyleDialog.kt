@@ -10,16 +10,12 @@ import androidx.core.view.get
 import com.github.liuyueyi.quick.transfer.constants.TransType
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
-import io.legado.app.base.adapter.ItemViewHolder
-import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.constant.EventBus
 import io.legado.app.constant.PageAnim
 import io.legado.app.databinding.DialogReadBookStyleBinding
-import io.legado.app.databinding.ItemReadStyleBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.lib.dialogs.selector
-import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.lib.theme.getPrimaryTextColor
 import io.legado.app.model.ReadBook
@@ -27,19 +23,16 @@ import io.legado.app.ui.book.read.ReadBookActivity
 import io.legado.app.ui.font.FontSelectDialog
 import io.legado.app.utils.ChineseUtils
 import io.legado.app.utils.ColorUtils
-import io.legado.app.utils.dpToPx
 import io.legado.app.utils.getIndexById
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.viewbindingdelegate.viewBinding
-import splitties.views.onLongClick
 
 class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
     FontSelectDialog.CallBack {
 
     private val binding by viewBinding(DialogReadBookStyleBinding::bind)
     private val callBack get() = activity as? ReadBookActivity
-    private lateinit var styleAdapter: StyleAdapter
 
     override fun onStart() {
         super.onStart()
@@ -74,7 +67,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         val textColor = requireContext().getPrimaryTextColor(isLight)
         rootView.setBackgroundColor(bg)
         tvPageAnim.setTextColor(textColor)
-        tvBgTs.setTextColor(textColor)
         tvShareLayout.setTextColor(textColor)
         dsbTextSize.valueFormat = {
             (it + 5).toString()
@@ -84,27 +76,11 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         }
         dsbLineSize.valueFormat = { ((it - 10) / 10f).toString() }
         dsbParagraphSpacing.valueFormat = { (it / 10f).toString() }
-        styleAdapter = StyleAdapter()
-        rvStyle.adapter = styleAdapter
-        styleAdapter.addFooterView {
-            ItemReadStyleBinding.inflate(layoutInflater, it, false).apply {
-                ivStyle.setPadding(6.dpToPx(), 6.dpToPx(), 6.dpToPx(), 6.dpToPx())
-                ivStyle.setText(null)
-                ivStyle.setColorFilter(textColor)
-                ivStyle.borderColor = textColor
-                ivStyle.setImageResource(R.drawable.ic_add)
-                root.setOnClickListener {
-                    ReadBookConfig.configList.add(ReadBookConfig.Config())
-                    showBgTextConfig(ReadBookConfig.configList.lastIndex)
-                }
-            }
-        }
     }
 
     private fun initData() {
         binding.cbShareLayout.isChecked = ReadBookConfig.shareLayout
         upView()
-        styleAdapter.setItems(ReadBookConfig.configList)
     }
 
     private fun initViewEvent() = binding.run {
@@ -168,26 +144,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         }
     }
 
-    private fun changeBgTextConfig(index: Int) {
-        val oldIndex = ReadBookConfig.styleSelect
-        if (index != oldIndex) {
-            ReadBookConfig.styleSelect = index
-            upView()
-            styleAdapter.notifyItemChanged(oldIndex)
-            styleAdapter.notifyItemChanged(index)
-            postEvent(EventBus.UP_CONFIG, arrayListOf(1, 2, 5))
-            if (AppConfig.readBarStyleFollowPage) {
-                postEvent(EventBus.UPDATE_READ_ACTION_BAR, true)
-            }
-        }
-    }
-
-    private fun showBgTextConfig(index: Int): Boolean {
-        dismissAllowingStateLoss()
-        changeBgTextConfig(index)
-        callBack?.showBgTextConfig()
-        return true
-    }
 
     private fun upView() = binding.run {
         textFontWeightConverter.upUi(ReadBookConfig.textBold)
@@ -214,49 +170,5 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
             ReadBookConfig.textFont = path
             postEvent(EventBus.UP_CONFIG, arrayListOf(2, 5))
         }
-    }
-
-    inner class StyleAdapter :
-        RecyclerAdapter<ReadBookConfig.Config, ItemReadStyleBinding>(requireContext()) {
-
-        override fun getViewBinding(parent: ViewGroup): ItemReadStyleBinding {
-            return ItemReadStyleBinding.inflate(inflater, parent, false)
-        }
-
-        override fun convert(
-            holder: ItemViewHolder,
-            binding: ItemReadStyleBinding,
-            item: ReadBookConfig.Config,
-            payloads: MutableList<Any>
-        ) {
-            binding.apply {
-                ivStyle.setText(item.name.ifBlank { "文字" })
-                ivStyle.setTextColor(item.curTextColor())
-                ivStyle.setImageDrawable(item.curBgDrawable(100, 150))
-                if (ReadBookConfig.styleSelect == holder.layoutPosition) {
-                    ivStyle.borderColor = accentColor
-                    ivStyle.setTextBold(true)
-                } else {
-                    ivStyle.borderColor = item.curTextColor()
-                    ivStyle.setTextBold(false)
-                }
-            }
-        }
-
-        override fun registerListener(holder: ItemViewHolder, binding: ItemReadStyleBinding) {
-            binding.apply {
-                ivStyle.setOnClickListener {
-                    if (ivStyle.isInView) {
-                        changeBgTextConfig(holder.layoutPosition)
-                    }
-                }
-                ivStyle.onLongClick(ivStyle.isInView) {
-                    if (ivStyle.isInView) {
-                        showBgTextConfig(holder.layoutPosition)
-                    }
-                }
-            }
-        }
-
     }
 }
