@@ -73,7 +73,7 @@ class WebDavConfigFragment : PreferenceFragment(),
             PreferKey.webDavUrl,
             PreferKey.webDavAccount,
             PreferKey.webDavPassword,
-            PreferKey.webDavDir -> listView.post {
+            PreferKey.webDavDir -> view?.post {
                 upPreferenceSummary(key, appCtx.getPrefString(key))
                 viewModel.upWebDavConfig()
             }

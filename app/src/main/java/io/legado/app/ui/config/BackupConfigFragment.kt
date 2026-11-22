@@ -276,7 +276,7 @@ class BackupConfigFragment : PreferenceFragment(),
                     items = names
                 ) { _, index ->
                     if (index in 0 until names.size) {
-                        listView.post {
+                        view?.post {
                             restoreWebDav(names[index])
                         }
                     }

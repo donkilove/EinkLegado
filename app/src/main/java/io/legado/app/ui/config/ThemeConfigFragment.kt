@@ -365,7 +365,10 @@ class ThemeConfigFragment : PreferenceFragment(),
 
     private fun upTheme(isNightTheme: Boolean) {
         if (AppConfig.isNightTheme == isNightTheme) {
-            listView.post {
+            // 用 view?.post 而不是 listView.post：切换主题会重建 Activity，
+            // Fragment 的 listView 可能已经随视图销毁变成 null，之前会抛
+            // NullPointerException: RecyclerView.post on a null object reference
+            view?.post {
                 ThemeConfig.applyTheme(requireContext())
                 recreateActivities()
             }
