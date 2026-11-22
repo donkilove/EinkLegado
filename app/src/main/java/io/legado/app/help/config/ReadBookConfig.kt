@@ -45,18 +45,19 @@ import io.legado.app.lib.theme.backgroundColor
 @Keep
 object ReadBookConfig {
     const val configFileName = "readConfig.json"
+
+    /**
+     * 历史遗留文件名：「共用布局」功能已删除，此常量仅用于兼容旧备份/同步包，
+     * 不再有新的内容写入。
+     */
     const val shareConfigFileName = "shareReadConfig.json"
     val configFilePath = FileUtils.getPath(appCtx.filesDir, configFileName)
     val shareConfigFilePath = FileUtils.getPath(appCtx.filesDir, shareConfigFileName)
     val configList: ArrayList<Config> = arrayListOf()
-    lateinit var shareConfig: Config
     var durConfig
         get() = getConfig(styleSelect)
         set(value) {
             configList[styleSelect] = value
-            if (shareLayout) {
-                shareConfig = value
-            }
         }
 
     var isComic: Boolean = false
@@ -68,7 +69,7 @@ object ReadBookConfig {
 
     init {
         initConfigs()
-        initShareConfig()
+        migrateShareConfig()
     }
 
     @Synchronized
@@ -96,18 +97,30 @@ object ReadBookConfig {
         }
     }
 
-    fun initShareConfig() {
+    /**
+     * 一次性迁移：此前「共用布局」开关打开时，排版参数存在 shareReadConfig.json 里，
+     * 而不是 configList[styleSelect]。该功能已删除（样式槽位也不再可切换），
+     * 这里把历史内容并入当前槽位，避免用户的字号、边距等设置看起来丢失，然后清掉旧文件。
+     */
+    private fun migrateShareConfig() {
         val configFile = File(shareConfigFilePath)
-        var c: Config? = null
-        if (configFile.exists()) {
-            try {
-                val json = configFile.readText()
-                c = GSON.fromJsonObject<Config>(json).getOrThrow()
-            } catch (e: Exception) {
-                e.printOnDebug()
-            }
+        if (!appCtx.getPrefBoolean(PreferKey.shareLayout)) {
+            configFile.delete()
+            return
         }
-        shareConfig = c ?: configList.getOrNull(5) ?: Config()
+        if (!configFile.exists()) return
+        runCatching {
+            val c = GSON.fromJsonObject<Config>(configFile.readText()).getOrThrow()
+            configList[styleSelect] = c
+            GSON.toJson(configList).let {
+                FileUtils.delete(configFilePath)
+                FileUtils.createFileIfNotExist(configFilePath).writeText(it)
+            }
+        }.onFailure {
+            it.printOnDebug()
+        }
+        configFile.delete()
+        appCtx.putPrefBoolean(PreferKey.shareLayout, false)
     }
 
     fun upBg(width: Int, height: Int) {
@@ -132,10 +145,6 @@ object ReadBookConfig {
                 GSON.toJson(configList).let {
                     FileUtils.delete(configFilePath)
                     FileUtils.createFileIfNotExist(configFilePath).writeText(it)
-                }
-                GSON.toJson(shareConfig).let {
-                    FileUtils.delete(shareConfigFilePath)
-                    FileUtils.createFileIfNotExist(shareConfigFilePath).writeText(it)
                 }
             }
         }
@@ -229,13 +238,6 @@ object ReadBookConfig {
                 appCtx.putPrefInt(PreferKey.comicStyleSelect, value)
             }
         }
-    var shareLayout = appCtx.getPrefBoolean(PreferKey.shareLayout)
-        set(value) {
-            field = value
-            if (appCtx.getPrefBoolean(PreferKey.shareLayout) != value) {
-                appCtx.putPrefBoolean(PreferKey.shareLayout, value)
-            }
-        }
 
     /**
      * 两端对齐
@@ -251,7 +253,8 @@ object ReadBookConfig {
     var hideNavigationBar = appCtx.getPrefBoolean(PreferKey.hideNavigationBar)
     var useZhLayout = appCtx.getPrefBoolean(PreferKey.useZhLayout)
 
-    val config get() = if (shareLayout) shareConfig else durConfig
+    /** 排版配置。样式槽位已不再可切换，此前按「共用布局」分流的逻辑随之删除。 */
+    val config get() = durConfig
 
     var bgAlpha: Int
         get() = config.bgAlpha
@@ -429,43 +432,7 @@ object ReadBookConfig {
         }
 
     fun getExportConfig(): Config {
-        val exportConfig = durConfig.copy()
-        if (shareLayout) {
-            exportConfig.textFont = shareConfig.textFont
-            exportConfig.textBold = shareConfig.textBold
-            exportConfig.textSize = shareConfig.textSize
-            exportConfig.letterSpacing = shareConfig.letterSpacing
-            exportConfig.lineSpacingExtra = shareConfig.lineSpacingExtra
-            exportConfig.paragraphSpacing = shareConfig.paragraphSpacing
-            exportConfig.titleMode = shareConfig.titleMode
-            exportConfig.titleSize = shareConfig.titleSize
-            exportConfig.titleTopSpacing = shareConfig.titleTopSpacing
-            exportConfig.titleBottomSpacing = shareConfig.titleBottomSpacing
-            exportConfig.paddingBottom = shareConfig.paddingBottom
-            exportConfig.paddingLeft = shareConfig.paddingLeft
-            exportConfig.paddingRight = shareConfig.paddingRight
-            exportConfig.paddingTop = shareConfig.paddingTop
-            exportConfig.headerPaddingBottom = shareConfig.headerPaddingBottom
-            exportConfig.headerPaddingLeft = shareConfig.headerPaddingLeft
-            exportConfig.headerPaddingRight = shareConfig.headerPaddingRight
-            exportConfig.headerPaddingTop = shareConfig.headerPaddingTop
-            exportConfig.footerPaddingBottom = shareConfig.footerPaddingBottom
-            exportConfig.footerPaddingLeft = shareConfig.footerPaddingLeft
-            exportConfig.footerPaddingRight = shareConfig.footerPaddingRight
-            exportConfig.footerPaddingTop = shareConfig.footerPaddingTop
-            exportConfig.showHeaderLine = shareConfig.showHeaderLine
-            exportConfig.showFooterLine = shareConfig.showFooterLine
-            exportConfig.tipHeaderLeft = shareConfig.tipHeaderLeft
-            exportConfig.tipHeaderMiddle = shareConfig.tipHeaderMiddle
-            exportConfig.tipHeaderRight = shareConfig.tipHeaderRight
-            exportConfig.tipFooterLeft = shareConfig.tipFooterLeft
-            exportConfig.tipFooterMiddle = shareConfig.tipFooterMiddle
-            exportConfig.tipFooterRight = shareConfig.tipFooterRight
-            exportConfig.tipColor = shareConfig.tipColor
-            exportConfig.headerMode = shareConfig.headerMode
-            exportConfig.footerMode = shareConfig.footerMode
-        }
-        return exportConfig
+        return durConfig.copy()
     }
 
     fun import(byteArray: ByteArray): Config {

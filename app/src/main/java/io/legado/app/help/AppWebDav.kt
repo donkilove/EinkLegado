@@ -472,8 +472,7 @@ object AppWebDav {
             }.getOrNull().orEmpty().associateBy { it.displayName }
             var overwritten = false
             listOf(
-                ReadBookConfig.configFileName to ReadBookConfig.configFilePath,
-                ReadBookConfig.shareConfigFileName to ReadBookConfig.shareConfigFilePath
+                ReadBookConfig.configFileName to ReadBookConfig.configFilePath
             ).forEach { (name, path) ->
                 val localFile = File(path)
                 val remote = remoteFiles[name]
@@ -492,7 +491,6 @@ object AppWebDav {
             }
             if (overwritten) {
                 ReadBookConfig.initConfigs()
-                ReadBookConfig.initShareConfig()
                 postEvent(EventBus.RECREATE, "")
             }
             overwritten
