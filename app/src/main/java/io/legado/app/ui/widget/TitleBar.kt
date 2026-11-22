@@ -22,6 +22,7 @@ import io.legado.app.R
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.elevation
 import io.legado.app.lib.theme.primaryColor
+import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.lib.theme.transparentNavBar
 import io.legado.app.utils.activity
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
@@ -279,12 +280,12 @@ class TitleBar @JvmOverloads constructor(
     }
 
     /**
-     * 墨水屏：接管 Toolbar 的溢出菜单，去掉展开/淡出动画。
+     * 墨水屏：接管 Toolbar 的溢出菜单。
      *
-     * Toolbar 的溢出菜单由 ActionMenuPresenter 内部创建，PopupWindow 的动画样式
-     * 既不受主题 windowAnimationStyle 控制，也无法通过 popupAnimationStyle 影响。
-     * 这里替换掉溢出按钮的点击行为，改用自己构造的 PopupMenu，
-     * 并直接给它的内部 PopupWindow 设 animationStyle=0。
+     * 实测结论：这个展开动画由系统的窗口过渡实现，受「开发者选项-动画时长缩放」控制，
+     * 把它关到 0 后菜单才真正瞬现。也就是说主题里的 windowAnimationStyle /
+     * popupAnimationStyle、以及反射改 PopupWindow 的 animationStyle 都碰不到它。
+     * 因此这里不再使用任何弹出窗口，改成在页面内叠加一层普通 View 来显示菜单。
      */
     private fun setupEInkOverflow() {
         if (!AppConfig.isEInkMode) return
@@ -297,44 +298,79 @@ class TitleBar @JvmOverloads constructor(
                 buttonField.isAccessible = true
                 val overflowButton = buttonField.get(presenter) as? View ?: return@post
                 overflowButton.setOnClickListener {
-                    showEInkMenu(it)
+                    showEInkMenu()
                 }
             }
         }
     }
 
-    private fun showEInkMenu(anchor: View) {
-        val popup = androidx.appcompat.widget.PopupMenu(context, anchor)
-        toolbar.menu.children.forEachIndexed { index, item ->
-            val newItem = popup.menu.add(0, item.itemId, index, item.title)
-            newItem.setIcon(item.icon)
-            newItem.isVisible = item.isVisible
-            newItem.isEnabled = item.isEnabled
+    private fun showEInkMenu() {
+        val act = activity ?: return
+        val root = act.findViewById<android.view.ViewGroup>(android.R.id.content) ?: return
+        if (root.findViewWithTag<View>(EINK_MENU_TAG) != null) return
+        val density = resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+
+        val card = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_popup_menu)
+            setPadding(0, dp(4), 0, dp(4))
         }
-        // 关掉内部 PopupWindow 的动画：既清 animationStyle，也清 enter/exit transition
-        runCatching {
-            val helperField = androidx.appcompat.widget.PopupMenu::class.java
-                .getDeclaredField("mPopup")
-            helperField.isAccessible = true
-            val helper = helperField.get(popup) ?: return@runCatching
-            val innerPopup = helper.javaClass.getMethod("getPopup").invoke(helper)
-                ?: return@runCatching
-            val windowField = innerPopup.javaClass.getDeclaredField("mPopup")
-            windowField.isAccessible = true
-            val window = windowField.get(innerPopup)
-                as? androidx.appcompat.widget.MenuPopupWindow ?: return@runCatching
-            window.setAnimationStyle(0)
-            window.setEnterTransition(null)
-            window.setExitTransition(null)
-            android.util.Log.d("EInkMenu", "已关闭菜单动画: ${window.javaClass.simpleName}")
-        }.onFailure {
-            android.util.Log.w("EInkMenu", "关闭菜单动画失败: $it")
+        toolbar.menu.children.filter { it.isVisible }.forEach { item ->
+            val row = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(16), dp(12), dp(28), dp(12))
+                isClickable = true
+                setOnClickListener {
+                    root.removeView(root.findViewWithTag<View>(EINK_MENU_TAG))
+                    toolbar.menu.performIdentifierAction(item.itemId, 0)
+                }
+            }
+            item.icon?.let { icon ->
+                val iv = androidx.appcompat.widget.AppCompatImageView(context).apply {
+                    setImageDrawable(icon)
+                    imageTintList = ColorStateList.valueOf(context.primaryTextColor)
+                }
+                row.addView(
+                    iv,
+                    android.widget.LinearLayout.LayoutParams(dp(22), dp(22)).apply {
+                        marginEnd = dp(14)
+                    }
+                )
+            }
+            row.addView(android.widget.TextView(context).apply {
+                text = item.title
+                setTextColor(context.primaryTextColor)
+                textSize = 16f
+            })
+            card.addView(row)
         }
-        popup.setOnMenuItemClickListener { item ->
-            toolbar.menu.performIdentifierAction(item.itemId, 0)
-            true
+
+        val overlay = android.widget.FrameLayout(context).apply {
+            tag = EINK_MENU_TAG
+            setBackgroundColor(0x22000000)
+            isClickable = true
+            setOnClickListener { root.removeView(this) }
         }
-        popup.show()
+        // 菜单贴右上角，位于标题栏下方
+        val topOffset = dp(52)
+        overlay.addView(
+            card,
+            android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                topMargin = topOffset
+                marginEnd = dp(8)
+            }
+        )
+        root.addView(overlay)
+    }
+
+    private companion object {
+        const val EINK_MENU_TAG = "eink_menu_overlay"
     }
 
 }
