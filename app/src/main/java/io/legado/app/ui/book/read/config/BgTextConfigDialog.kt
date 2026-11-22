@@ -12,10 +12,7 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
-import androidx.appcompat.widget.TooltipCompat
-import androidx.core.graphics.toColorInt
 import androidx.core.view.isGone
-import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.constant.AppLog
@@ -76,12 +73,6 @@ import io.legado.app.utils.setSelectionSafely
 import kotlinx.coroutines.launch
 
 class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
-
-    companion object {
-        const val TEXT_COLOR = 121
-        const val BG_COLOR = 122
-        const val TEXT_ACCENT_COLOR = 123
-    }
 
     private val binding by viewBinding(DialogReadBgTextBinding::bind)
     private val configFileName = "readConfig.zip"
@@ -250,36 +241,6 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
         binding.swDarkStatusIcon.setOnCheckedChangeListener { _, isChecked ->
             setCurStatusIconDark(isChecked)
             (activity as? ReadBookActivity)?.upSystemUiVisibility()
-        }
-        binding.tvTextColor.setOnClickListener {
-            ColorPickerDialog.newBuilder()
-                .setColor(curTextColor())
-                .setShowAlphaSlider(false)
-                .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
-                .setDialogId(TEXT_COLOR)
-                .show(requireActivity())
-        }
-        binding.tvTextAccentColor.setOnClickListener {
-            ColorPickerDialog.newBuilder()
-                .setColor(curTextAccentColor())
-                .setShowAlphaSlider(false)
-                .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
-                .setDialogId(TEXT_ACCENT_COLOR)
-                .show(requireActivity())
-        }
-        binding.tvBgColor.setOnClickListener {
-            val bgColor =
-                if (curBgType() == 0) curBgStr().toColorInt()
-                else "#015A86".toColorInt()
-            ColorPickerDialog.newBuilder()
-                .setColor(bgColor)
-                .setShowAlphaSlider(false)
-                .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
-                .setDialogId(BG_COLOR)
-                .show(requireActivity())
-        }
-        binding.tvBgColor.apply {
-            TooltipCompat.setTooltipText(this, text)
         }
         binding.ivImport.setOnClickListener {
             selectImportDoc.launch {

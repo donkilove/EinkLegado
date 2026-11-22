@@ -795,6 +795,13 @@
     <string name="save_day_theme_summary">Save day theme config</string>
     <string name="save_night_theme_summary">Save night theme config</string>
     <string name="theme_list">Theme list</string>
+    <!-- 主题设置页的三个二级入口 -->
+    <string name="theme_screen_app">Appearance</string>
+    <string name="theme_screen_app_s">Icon, launch screen, font size</string>
+    <string name="theme_screen_day">Day theme</string>
+    <string name="theme_screen_day_s">Primary, background, background image</string>
+    <string name="theme_screen_night">Night theme</string>
+    <string name="theme_screen_night_s">Primary, background, background image</string>
     <string name="theme_list_summary">Save, Import, Share theme</string>
     <string name="select_theme">Switch default theme</string>
     <string name="sort_by_lastUpdateTime">Sort by update time</string>

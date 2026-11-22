@@ -33,6 +33,10 @@ import io.legado.app.utils.resizeAndRecycle
 import splitties.init.appCtx
 import java.io.File
 import androidx.core.graphics.drawable.toDrawable
+import io.legado.app.help.config.ThemeConfig
+import io.legado.app.lib.theme.getPrimaryTextColor
+import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.backgroundColor
 
 /**
  * 阅读界面配置
@@ -594,103 +598,27 @@ object ReadBookConfig {
         var footerMode: Int = 0
     ) {
 
-        @Transient
-        private var textColorIntEInk = -1
-
-        @Transient
-        private var textColorIntNight = -1
-
-        @Transient
-        private var textColorInt = -1
-
-        @Transient
-        private var initColorInt = false
-
-        private fun initColorInt() {
-            textColorIntEInk = textColorEInk.toColorInt()
-            textColorIntNight = textColorNight.toColorInt()
-            textColorInt = textColor.toColorInt()
-            initColorInt = true
-        }
-
-        @Transient
-        private var textAccentColorIntEInk = -1
-
-        @Transient
-        private var textAccentColorIntNight = -1
-
-        @Transient
-        private var textAccentColorInt = -1
-
-        @Transient
-        private var initAccentColorInt = false
-
-        private fun initAccentColorInt() {
-            textAccentColorIntEInk = textAccentColorEInk.toColorInt()
-            textAccentColorIntNight = textAccentColorNight.toColorInt()
-            textAccentColorInt = textAccentColor.toColorInt()
-            initAccentColorInt = true
-        }
-
-        fun setCurTextColor(color: Int) {
-            when {
-                AppConfig.isEInkMode -> {
-                    textColorEInk = "#${color.hexString}"
-                    textColorIntEInk = color
-                }
-
-                AppConfig.isNightTheme -> {
-                    textColorNight = "#${color.hexString}"
-                    textColorIntNight = color
-                }
-
-                else -> {
-                    textColor = "#${color.hexString}"
-                    textColorInt = color
-                }
-            }
-        }
-
+        /**
+         * 正文颜色。
+         *
+         * 墨水屏：不再支持在阅读界面单独设置，统一跟随主题。
+         * 关键是要跟「背景色」配对：背景本身也可能被主题改成深色，
+         * 如果文字色只看白天/夜间开关，就会出现浅底浅字（实测白屏）。
+         * 所以这里按背景的明暗反推正文色。
+         */
         fun curTextColor(): Int {
-            if (!initColorInt) {
-                initColorInt()
-            }
-            return when {
-                AppConfig.isEInkMode -> textColorIntEInk
-                AppConfig.isNightTheme -> textColorIntNight
-                else -> textColorInt
-            }
+            // 注意 getPrimaryTextColor(dark) 的参数语义是「用深色文字」：
+            // dark=true 取到 #DE000000（黑），dark=false 取到 #FFFFFFFF（白）。
+            // 所以背景是浅色时正好传 true。
+            val bg = runCatching { curBgColorInt() }.getOrDefault(bgStrEInk.toColorInt())
+            return appCtx.getPrimaryTextColor(io.legado.app.utils.ColorUtils.isColorLight(bg))
         }
 
-        fun setCurTextAccentColor(color: Int) {
-            when {
-                AppConfig.isEInkMode -> {
-                    textAccentColorEInk = "#${color.hexString}"
-                    textAccentColorIntEInk = color
-                }
-
-                AppConfig.isNightTheme -> {
-                    textAccentColorNight = "#${color.hexString}"
-                    textAccentColorIntNight = color
-                }
-
-                else -> {
-                    textAccentColor = "#${color.hexString}"
-                    textAccentColorInt = color
-                }
-            }
-        }
-
-        fun curTextAccentColor(): Int {
-            if (!initAccentColorInt) {
-                initAccentColorInt()
-            }
-            return when {
-                AppConfig.isEInkMode -> textAccentColorIntEInk
-                AppConfig.isNightTheme -> textAccentColorIntNight
-                else -> textAccentColorInt
-            }
-        }
+        /** 强调色（章节标题、链接等）。墨水屏：统一跟随主题强调色，不再单独设置。 */
+        fun curTextAccentColor(): Int =
+            runCatching {
+                ThemeConfig.getDurConfig(appCtx).accentColor.toColorInt()
+            }.getOrDefault(appCtx.accentColor)
 
         fun setCurStatusIconDark(isDark: Boolean) {
             when {
@@ -749,11 +677,19 @@ object ReadBookConfig {
         }
 
         fun curBgStr(): String {
-            return when {
-                AppConfig.isEInkMode -> bgStrEInk
-                AppConfig.isNightTheme -> bgStrNight
-                else -> bgStr
-            }
+            // 墨水屏：背景色统一跟随主题，不再单独设置。
+            // 注意不能用 R.color.background——它只跟随系统的夜间模式，
+            // 与 App 自己的「夜间主题」开关无关。
+            return "#${curBgColorInt().hexString}"
+        }
+
+        /**
+         * 当前主题的背景色（Int）。取不到时回落到原来的墨水屏背景色。
+         */
+        fun curBgColorInt(): Int {
+            return runCatching {
+                ThemeConfig.getDurConfig(appCtx).backgroundColor.toColorInt()
+            }.getOrDefault(bgStrEInk.toColorInt())
         }
 
         fun curBgType(): Int {
@@ -850,15 +786,9 @@ object ReadBookConfig {
             "textColor" to textColor,
             "textColorNight" to textColorNight,
             "textColorEInk" to textColorEInk,
-            "textColorInt" to textColorInt,
-            "textColorIntNight" to textColorIntNight,
-            "textColorIntEInk" to textColorIntEInk,
             "textAccentColor" to textAccentColor,
             "textAccentColorNight" to textAccentColorNight,
             "textAccentColorEInk" to textAccentColorEInk,
-            "textAccentColorInt" to textAccentColorInt,
-            "textAccentColorIntNight" to textAccentColorIntNight,
-            "textAccentColorIntEInk" to textAccentColorIntEInk,
             "pageAnim" to pageAnim,
             "pageAnimEInk" to pageAnimEInk,
             "textFont" to textFont,

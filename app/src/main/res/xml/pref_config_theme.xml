@@ -1,71 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  墨水屏：本页拆成三个二级入口（软件设置 / 白天主题 / 夜间主题），
+  避免一页里几十项需要长距离滚动。各子项 key 保持不变，
+  ThemeConfigFragment 的点击处理无需改动。
+-->
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:divider="@color/transparent"
+    app:allowDividerBelow="false">
 
-    <io.legado.app.lib.prefs.IconListPreference
-        android:defaultValue="ic_launcher"
-        android:entries="@array/icon_names"
-        android:entryValues="@array/icons"
-        android:key="launcherIcon"
-        android:summary="@string/change_icon_summary"
-        android:title="@string/change_icon"
-        app:iconSpaceReserved="false"
-        app:icons="@array/icons" />
+    <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
+        android:icon="@drawable/ic_cfg_theme"
+        android:key="themeAppScreen"
+        android:summary="@string/theme_screen_app_s"
+        android:title="@string/theme_screen_app"
+        app:iconSpaceReserved="false">
 
-    <io.legado.app.lib.prefs.Preference
-        android:key="welcomeStyle"
-        android:title="@string/welcome_style"
-        android:summary="@string/welcome_style_summary" />
+        <io.legado.app.lib.prefs.IconListPreference
+            android:defaultValue="ic_launcher"
+            android:entries="@array/icon_names"
+            android:entryValues="@array/icons"
+            android:key="launcherIcon"
+            android:summary="@string/change_icon_summary"
+            android:title="@string/change_icon"
+            app:iconSpaceReserved="false"
+            app:icons="@array/icons" />
 
-    <io.legado.app.lib.prefs.SwitchPreference
-        android:defaultValue="true"
-        android:key="transparentStatusBar"
-        android:summary="@string/status_bar_immersion"
-        android:title="@string/immersion_status_bar"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:key="welcomeStyle"
+            android:title="@string/welcome_style"
+            android:summary="@string/welcome_style_summary" />
 
-    <io.legado.app.lib.prefs.SwitchPreference
-        android:defaultValue="true"
-        android:key="immNavigationBar"
-        android:summary="@string/imm_navigation_bar_s"
-        android:title="@string/imm_navigation_bar"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.SwitchPreference
+            android:defaultValue="true"
+            android:key="transparentStatusBar"
+            android:summary="@string/status_bar_immersion"
+            android:title="@string/immersion_status_bar"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:key="barElevation"
-        android:summary="@string/bar_elevation_s"
-        android:title="@string/bar_elevation"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.SwitchPreference
+            android:defaultValue="true"
+            android:key="immNavigationBar"
+            android:summary="@string/imm_navigation_bar_s"
+            android:title="@string/imm_navigation_bar"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:key="fontScale"
-        android:summary="@string/font_scale_summary"
-        android:title="@string/font_scale"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:key="barElevation"
+            android:summary="@string/bar_elevation_s"
+            android:title="@string/bar_elevation"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:key="coverConfig"
-        android:title="@string/cover_config"
-        android:summary="@string/cover_config_summary"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:key="fontScale"
+            android:summary="@string/font_scale_summary"
+            android:title="@string/font_scale"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.Preference
-        android:key="themeList"
-        android:summary="@string/theme_list_summary"
-        android:title="@string/theme_list"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false" />
+        <io.legado.app.lib.prefs.Preference
+            android:key="coverConfig"
+            android:title="@string/cover_config"
+            android:summary="@string/cover_config_summary"
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false" />
 
-    <io.legado.app.lib.prefs.PreferenceCategory
-        android:key="dayThemeCategory"
-        android:title="@string/day"
-        app:allowDividerAbove="true"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false"
-        app:layout="@layout/view_preference_category">
+        <io.legado.app.lib.prefs.Preference
+            android:key="themeList"
+            android:summary="@string/theme_list_summary"
+            android:title="@string/theme_list"
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceScreen>
+
+    <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
+        android:icon="@drawable/ic_cfg_theme"
+        android:key="themeDayScreen"
+        android:summary="@string/theme_screen_day_s"
+        android:title="@string/theme_screen_day"
+        app:iconSpaceReserved="false">
 
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_brown_500"
@@ -120,15 +137,15 @@
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />
 
-    </io.legado.app.lib.prefs.PreferenceCategory>
+    </androidx.preference.PreferenceScreen>
 
-    <io.legado.app.lib.prefs.PreferenceCategory
-        android:key="nightThemeCategory"
-        android:title="@string/night"
-        app:allowDividerAbove="true"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false"
-        app:layout="@layout/view_preference_category">
+    <androidx.preference.PreferenceScreen
+        android:layout="@layout/view_preference_screen"
+        android:icon="@drawable/ic_cfg_theme"
+        android:key="themeNightScreen"
+        android:summary="@string/theme_screen_night_s"
+        android:title="@string/theme_screen_night"
+        app:iconSpaceReserved="false">
 
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_blue_grey_600"
@@ -181,6 +198,6 @@
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />
 
-    </io.legado.app.lib.prefs.PreferenceCategory>
+    </androidx.preference.PreferenceScreen>
 
 </androidx.preference.PreferenceScreen>

@@ -792,6 +792,13 @@
     <string name="save_day_theme_summary">保存白天主题配置以供调用和分享</string>
     <string name="save_night_theme_summary">保存夜间主题配置以供调用和分享</string>
     <string name="theme_list">主题列表</string>
+    <!-- 主题设置页的三个二级入口 -->
+    <string name="theme_screen_app">软件设置</string>
+    <string name="theme_screen_app_s">图标、启动界面、字体大小等</string>
+    <string name="theme_screen_day">白天主题</string>
+    <string name="theme_screen_day_s">主色、背景色、背景图片</string>
+    <string name="theme_screen_night">夜间主题</string>
+    <string name="theme_screen_night_s">主色、背景色、背景图片</string>
     <string name="theme_list_summary">使用、保存、导入或分享主题</string>
     <string name="select_theme">切换默认主题</string>
     <string name="sort_by_lastUpdateTime">更新时间排序</string>

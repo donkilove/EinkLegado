@@ -13,6 +13,8 @@ import android.widget.SeekBar
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceScreen
 import io.legado.app.R
 import io.legado.app.base.AppContextWrapper
 import io.legado.app.constant.AppConst
@@ -59,6 +61,7 @@ import java.io.FileOutputStream
 @Suppress("SameParameterValue")
 class ThemeConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener,
+    PreferenceFragmentCompat.OnPreferenceStartScreenCallback,
     MenuProvider {
 
     private val requestCodeBgLight = 121
@@ -78,9 +81,13 @@ class ThemeConfigFragment : PreferenceFragment(),
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.pref_config_theme)
+        // 墨水屏：本页拆成「软件设置 / 白天主题 / 夜间主题」三个二级入口，
+        // 进入子页时只加载该子屏幕下的项，因此必须带 rootKey
+        setPreferencesFromResource(R.xml.pref_config_theme, rootKey)
         if (Build.VERSION.SDK_INT < 26) {
-            preferenceScreen.removePreferenceRecursively(PreferKey.launcherIcon)
+            findPreference<Preference>(PreferKey.launcherIcon)?.let {
+                preferenceScreen.removePreference(it)
+            }
         }
         upPreferenceSummary(PreferKey.bgImage, getPrefString(PreferKey.bgImage))
         upPreferenceSummary(PreferKey.bgImageN, getPrefString(PreferKey.bgImageN))
@@ -106,6 +113,25 @@ class ThemeConfigFragment : PreferenceFragment(),
                 }
             }
         }
+    }
+
+    /**
+     * 进入某个二级设置页：按 rootKey 重建一个同类型的 Fragment 并压入返回栈。
+     */
+    override fun onPreferenceStartScreen(
+        caller: PreferenceFragmentCompat,
+        pref: PreferenceScreen
+    ): Boolean {
+        val fragment = ThemeConfigFragment().apply {
+            arguments = Bundle().apply {
+                putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.configFrameLayout, fragment)
+            .addToBackStack(null)
+            .commit()
+        return true
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
