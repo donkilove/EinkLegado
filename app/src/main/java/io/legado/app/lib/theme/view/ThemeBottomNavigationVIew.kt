@@ -18,6 +18,7 @@ import io.legado.app.ui.widget.text.BadgeView
 import io.legado.app.utils.ColorUtils
 import androidx.core.graphics.drawable.toDrawable
 import io.legado.app.lib.theme.elevation
+import android.content.res.ColorStateList
 
 class ThemeBottomNavigationVIew(context: Context, attrs: AttributeSet) :
     BottomNavigationView(context, attrs) {
@@ -27,8 +28,13 @@ class ThemeBottomNavigationVIew(context: Context, attrs: AttributeSet) :
         val bgColor = context.bottomBackground
         if (transparentNavBar) {
             setBackgroundColor(Color.TRANSPARENT)
+            backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
         } else {
             setBackgroundColor(bgColor)
+            // BottomNavigationView 是 Material 组件，它的背景实际由 backgroundTint 决定，
+            // 只调 setBackgroundColor 会被 Material 的 tint 覆盖掉，
+            // 夜间主题下表现为底栏依旧是浅色。两者都设才生效。
+            backgroundTintList = ColorStateList.valueOf(bgColor)
             elevation = context.elevation
         }
         val textIsDark = ColorUtils.isColorLight(bgColor)

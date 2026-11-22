@@ -183,6 +183,9 @@ class TitleBar @JvmOverloads constructor(
             }
 
             if (AppConfig.isEInkMode) {
+                // 墨水屏：背景用 bg_eink_border_bottom（主题背景色 + 1dp 分隔线）。
+                // 该 drawable 的背景色已改为 ?android:attr/colorBackground，
+                // 会跟随夜间模式，不再写死成白色。
                 setBackgroundResource(R.drawable.bg_eink_border_bottom)
             } else if (!opaque && context.transparentNavBar) {
                 setBackgroundColor(Color.TRANSPARENT)

@@ -2,6 +2,25 @@
 
     <style name="Spinner" parent="android:Theme.Holo" />
 
+    <!--
+      墨水屏主题在夜间的版本。
+      同名样式在 values-night 里会整体替换 values 的定义，所以这里要完整重写一遍。
+
+      与白天版的差别只有 parent：夜间改用 AppTheme.Dark，从而拿到
+      AppTheme.AppBarOverlay.Dark 这个深色 actionBar 覆盖。此前 EInk 固定继承
+      AppTheme.Light，夜间主题下标题栏已经变深，但 TabLayout / Toolbar 里的文字
+      仍是深色（?attr/actionBarStyle 给的），出现深底深字看不见。
+    -->
+    <style name="AppTheme.EInk" parent="AppTheme.Dark">
+        <item name="android:colorControlHighlight">@android:color/transparent</item>
+        <item name="android:selectableItemBackground">@drawable/bg_eink_selectable_item</item>
+        <item name="android:selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
+        <item name="selectableItemBackground">@drawable/bg_eink_selectable_item</item>
+        <item name="selectableItemBackgroundBorderless">@drawable/bg_eink_selectable_item</item>
+        <item name="android:windowAnimationStyle">@style/Style.NoAnimation</item>
+        <item name="android:popupAnimationStyle">@style/Style.NoAnimation</item>
+    </style>
+
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark">
         <item name="overlapAnchor">false</item>
         <item name="colorAccent">@color/md_grey_100</item>

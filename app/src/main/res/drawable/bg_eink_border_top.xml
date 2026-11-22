@@ -10,7 +10,7 @@
     <item android:top="1dp">
         <shape>
             <!--    背景颜色    -->
-            <solid android:color="@color/white" />
+            <solid android:color="?android:attr/colorBackground" />
         </shape>
     </item>
 </layer-list>
