@@ -40,7 +40,6 @@ import io.legado.app.ui.association.ImportReplaceRuleDialog
 import io.legado.app.ui.association.ImportRssSourceDialog
 import io.legado.app.ui.main.bookshelf.BaseBookshelfFragment
 import io.legado.app.ui.main.bookshelf.style1.BookshelfFragment1
-import io.legado.app.ui.main.bookshelf.style2.BookshelfFragment2
 import io.legado.app.ui.main.explore.ExploreFragment
 import io.legado.app.ui.main.my.MyFragment
 import io.legado.app.ui.main.rss.RssFragment
@@ -83,7 +82,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     override val viewModel by viewModels<MainViewModel>()
     private val idBookshelf = 0
     private val idBookshelf1 = 11
-    private val idBookshelf2 = 12
     private val idExplore = 1
     private val idRss = 2
     private val idMy = 3
@@ -133,11 +131,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             } else if (pagePosition != 0) {
                 binding.viewPagerMain.currentItem = 0
                 return@addCallback
-            }
-            (fragmentMap[getFragmentId(0)] as? BookshelfFragment2)?.let {
-                if (it.back()) {
-                    return@addCallback
-                }
             }
             if (System.currentTimeMillis() - exitTime > EXIT_INTERVAL) {
                 toastOnUi(R.string.double_click_exit)
@@ -487,10 +480,9 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
 
     private fun getFragmentId(position: Int): Int {
         val id = realPositions[position]
-        if (id == idBookshelf) {
-            return if (AppConfig.bookGroupStyle == 1) idBookshelf2 else idBookshelf1
-        }
-        return id
+        // 书架在 realPositions 里以占位值 idBookshelf 存放，这里映射到实际 Fragment id。
+        // 墨水屏版本书架固定为 style1（标签分组 + 列表视图），不再有 style2 分支。
+        return if (id == idBookshelf) idBookshelf1 else id
     }
 
     private inner class PageChangeCallback : ViewPager.SimpleOnPageChangeListener() {
@@ -523,7 +515,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                 ?: return POSITION_NONE
             val fragmentId = getId(position)
             if ((fragmentId == idBookshelf1 && any is BookshelfFragment1)
-                || (fragmentId == idBookshelf2 && any is BookshelfFragment2)
                 || (fragmentId == idExplore && any is ExploreFragment)
                 || (fragmentId == idRss && any is RssFragment)
                 || (fragmentId == idMy && any is MyFragment)
@@ -536,7 +527,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         override fun getItem(position: Int): Fragment {
             return when (getId(position)) {
                 idBookshelf1 -> BookshelfFragment1(position)
-                idBookshelf2 -> BookshelfFragment2(position)
                 idExplore -> ExploreFragment(position)
                 idRss -> RssFragment(position)
                 else -> MyFragment(position)

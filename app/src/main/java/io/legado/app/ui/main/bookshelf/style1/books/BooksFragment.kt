@@ -10,7 +10,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy
@@ -69,19 +68,8 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
 
     private val binding by viewBinding(FragmentBooksBinding::bind)
     private val activityViewModel by activityViewModels<MainViewModel>()
-    private val bookshelfLayout by lazy { AppConfig.bookshelfLayout }
     private val booksAdapter: BaseBooksAdapter<*> by lazy {
-        when (bookshelfLayout) {
-            0 -> {
-                BooksAdapterList(requireContext(), this, this, viewLifecycleOwner.lifecycle)
-            }
-            1 -> {
-                BooksAdapterList2(requireContext(), this, this, viewLifecycleOwner.lifecycle)
-            }
-            else -> {
-                BooksAdapterGrid(requireContext(), this)
-            }
-        }
+        BooksAdapterList(requireContext(), this, this, viewLifecycleOwner.lifecycle)
     }
     private var booksFlowJob: Job? = null
     var position = 0
@@ -96,18 +84,16 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     private val bookshelfMargin by lazy { AppConfig.bookshelfMargin }
     private var itemCount = 0
 
-    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理；网格模式按列数对齐 */
+    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理。书架固定列表视图，单列。 */
     private val pager by lazy {
         EinkPager<io.legado.app.data.entities.Book>(
             binding.rvBookshelf,
             binding.pageBar,
-            "本",
-            if (bookshelfLayout >= 2) bookshelfLayout else 1
+            "本"
         ).apply {
             onItemsChanged = { items -> booksAdapter.setItems(items) }
         }
     }
-    private var totalRows = 0
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
         arguments?.let {
@@ -146,13 +132,8 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 }
             }
         }
-        if (bookshelfLayout >= 2) {
-            binding.rvBookshelf.layoutManager = GridLayoutManager(context, bookshelfLayout)
-            binding.rvBookshelf.setRecycledViewPool(activityViewModel.booksGridRecycledViewPool)
-        } else {
-            binding.rvBookshelf.layoutManager = LinearLayoutManager(context)
-            binding.rvBookshelf.setRecycledViewPool(activityViewModel.booksListRecycledViewPool)
-        }
+        binding.rvBookshelf.layoutManager = LinearLayoutManager(context)
+        binding.rvBookshelf.setRecycledViewPool(activityViewModel.booksListRecycledViewPool)
         booksAdapter.stateRestorationPolicy = StateRestorationPolicy.PREVENT_WHEN_EMPTY
         binding.rvBookshelf.adapter = booksAdapter
         // 墨水屏：数据集变化时不做淡入淡出，否则翻页会看到整页内容先变灰再刷新
@@ -189,31 +170,15 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 state: RecyclerView.State
             ) {
                 val position = parent.getChildAdapterPosition(view)
-                if (bookshelfLayout >= 2) {
-                    val spanCount = bookshelfLayout
-                    val rowIndex = position / spanCount
-                    when (rowIndex) {
-                        0 -> { //第一行加额外上边距
-                            outRect.set(bookshelfMargin, bookshelfMargin + 24, bookshelfMargin, bookshelfMargin)
-                        }
-                        totalRows - 1 -> { //最后一行加额外下边距
-                            outRect.set(bookshelfMargin, bookshelfMargin, bookshelfMargin, bookshelfMargin + 24)
-                        }
-                        else -> {
-                            outRect.set(bookshelfMargin, bookshelfMargin, bookshelfMargin, bookshelfMargin)
-                        }
+                when (position) {
+                    0 -> {
+                        outRect.set(0, bookshelfMargin + 24, 0, bookshelfMargin)
                     }
-                } else {
-                    when (position) {
-                        0 -> {
-                            outRect.set(0, bookshelfMargin + 24, 0, bookshelfMargin)
-                        }
-                        itemCount - 1 -> {
-                            outRect.set(0, bookshelfMargin, 0, bookshelfMargin + 24)
-                        }
-                        else -> {
-                            outRect.set(0, bookshelfMargin, 0, bookshelfMargin)
-                        }
+                    itemCount - 1 -> {
+                        outRect.set(0, bookshelfMargin, 0, bookshelfMargin + 24)
+                    }
+                    else -> {
+                        outRect.set(0, bookshelfMargin, 0, bookshelfMargin)
                     }
                 }
             }
@@ -279,10 +244,6 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 AppLog.put("书架更新出错", it)
             }.conflate().flowOn(Dispatchers.Default).collect { list ->
                 itemCount = list.size
-                val spanCount = bookshelfLayout
-                if (spanCount >= 2) {
-                    totalRows = if (itemCount % spanCount == 0) itemCount / spanCount else itemCount / spanCount + 1
-                }
                 binding.tvEmptyMsg.isGone = itemCount > 0
                 binding.refreshLayout.isEnabled = enableRefresh && itemCount > 0
                 pager.setAll(list)
@@ -293,7 +254,7 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
 
     private fun startLastUpdateTimeJob() {
         upLastUpdateTimeJob?.cancel()
-        if (!AppConfig.showLastUpdateTime || bookshelfLayout >= 2) {
+        if (!AppConfig.showLastUpdateTime) {
             return
         }
         upLastUpdateTimeJob = viewLifecycleOwner.lifecycleScope.launch {

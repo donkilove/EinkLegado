@@ -61,9 +61,6 @@ class MainViewModel(application: Application) : BaseViewModel(application) {
     val booksListRecycledViewPool = RecycledViewPool().apply {
         setMaxRecycledViews(0, 30)
     }
-    val booksGridRecycledViewPool = RecycledViewPool().apply {
-        setMaxRecycledViews(0, 100)
-    }
     var callback: CallBack? = null
     fun setActivityCallback(callback: CallBack) {
         this.callback = callback

@@ -6,8 +6,9 @@
 |---|---|---|---|
 | T-3 | 单元测试覆盖面仍然很窄 | 已有 `PaginatorTest`(22)、`BookProgressBundleTest`(16)、`SyncFingerprintTest`(9)、`AlphanumComparatorTest`(17)，共 64 个新用例；仓库 845 个主源文件里多数纯逻辑类仍无测试 | 按 `docs/specs/done/engineering-debt.md` 的模式继续补齐零 Android 依赖的类 |
 | T-4 | `UserDataSync` 的合并流程无端到端测试 | 单测已覆盖其指纹部分（`SyncFingerprintTest`）与纯合并语义（`BookProgressBundleTest`），但「读云端 → 比对指纹 → 选分支 → 写回」整条链路仍需 `appDb` + 网络，无测试 | 把分支决策抽成返回枚举的纯函数后可测；`UserDataSync.replaceLocal` 需 Robolectric |
-| T-6 | 书架网格视图已是死代码，未清理 | `AppConfig.bookshelfLayout` 的 getter 固定返回 `0`，因此 `BooksFragment`、`BookshelfFragment2`、`BooksAdapterList` 中所有 `bookshelfLayout >= 2` 分支永不可达，`BooksAdapterGrid` / `BooksAdapterList2` 不再被实例化 | 清理网格分支与两个适配器；改动面较大且涉及 UI，需单独确认 |
 | T-8 | 旧版同步指纹升级后无自动清理 | 旧版 `sync_state.json` 存 32 位 hashCode 指纹，新版为 `v2:<sha256>`。升级当次走「本地为准上传」的保守分支（已记日志），但旧值不会被主动清除，需等本次同步成功后由 `SyncState.save` 覆盖 | 观察一个版本；若日志频繁出现「检测到旧版指纹」，再考虑显式迁移 |
+| T-9 | `AppConfig.bookGroupStyle` / `bookshelfLayout` 两个 getter 恒为 0 但保留 | 依赖它们的不可达代码已于 2026-11-23 清理，但 `PreferKey` 与 `BackupConfig` 仍引用其 key。保留是为了旧备份能正常恢复 | 评估能否删除属性而在 `BackupConfig` 中单独保留 key；需先确认旧备份恢复路径 |
+| T-10 | 书架删书后页码收敛未真机验证 | `Paginator` 的页边界与页码收敛有 22 个单测覆盖，但「真机上删书后页数是否收缩、当前页是否越界」未实测 | 在真机上删掉末页书籍，确认页码从 3 页收到 2 页且不越界 |
 
 ## 已完成但曾登记于此的事项
 
@@ -16,6 +17,7 @@
 | T-1 | `kotlin.build.report.dir` 写死绝对路径 | 2026-11-23 | 调查发现该属性已被 Kotlin 2.3.10 **废弃**，设置它只产生警告且不生效（报告固定落 `build/reports/kotlin-build`）。已删除该行，警告消失 |
 | T-2 | 构建环境前置条件未固化 | 2026-11-23 | 写入 `README.md` 新增的「Build-构建环境」一节：JDK 17、`GRADLE_USER_HOME` 同盘符，含报错原文与命令 |
 | T-5 | `fingerprint` 用 32 位 `hashCode()` | 2026-11-23 | 新增 `SyncFingerprint`，改用 SHA-256 并加 `v2:` 前缀；旧值可被 `isLegacy` 识别，升级当次走「本地为准」保守分支 |
+| T-6 | 书架网格视图与 style2 为死代码 | 2026-11-23 | 已清理。删除 13 个文件（6 源码 + 7 布局），详见 `docs/specs/done/bookshelf-deadcode.md`；真机验证通过 |
 | T-7 | 文档门禁未在 CI 中运行 | 2026-11-23 | 用户决定不使用 CI。本地钩子已启用，并在 README 门禁一节补充「新克隆必须手动跑 install-hooks.ps1」 |
 
 编号取「已用最大号 + 1」，扫描来源：本文件、`docs/specs/done/README.md`。
