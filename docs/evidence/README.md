@@ -16,3 +16,10 @@
 | [t6-shelf-page2back.png](t6-shelf-page2back.png) | bookshelf-deadcode | 真机右滑返回第 2 页 |
 | [t6-shelf-reuse.png](t6-shelf-reuse.png) | bookshelf-deadcode | 真机切回书架仍停在第 2 页（Fragment 复用） |
 | [t6-my-page.png](t6-my-page.png) | bookshelf-deadcode | 真机「我的」页 5 项正常 |
+| [backlog-cleanup-2-check.txt](backlog-cleanup-2-check.txt) | backlog-cleanup-2（依据 TODO.md T-9、T-10） | 删书页码收敛真机验证与 AppConfig getter 调查原始输出 |
+| [backlog-cleanup-2-verify.md](backlog-cleanup-2-verify.md) | backlog-cleanup-2（依据 TODO.md T-9、T-10） | 事项与验证结果对照、T-9 不删的理由 |
+| [t10-1-before-24books.png](t10-1-before-24books.png) | backlog-cleanup-2 | 删书前：24 本 5 页 |
+| [t10-2-lastpage5of5.png](t10-2-lastpage5of5.png) | backlog-cleanup-2 | 删书前：第 5 页（末页）4 本 |
+| [t10-5-delconfirm.png](t10-5-delconfirm.png) | backlog-cleanup-2 | 删书确认对话框 |
+| [t10-3-afterdelete-converged.png](t10-3-afterdelete-converged.png) | backlog-cleanup-2 | 删书后：自动回到第 1 页，显示共 14 本 3 页 |
+| [t10-4-lastpage-ok.png](t10-4-lastpage-ok.png) | backlog-cleanup-2 | 删书后末页 4 本完整可见 |

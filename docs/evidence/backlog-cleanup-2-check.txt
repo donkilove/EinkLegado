@@ -1,0 +1,106 @@
+== backlog-cleanup-2 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+真机：WWZHIBUKSKCM5LGA（adb 连接）
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+
+依据：TODO.md 的 T-9、T-10
+用户决定：先做 1（T-10）和 2（T-9）
+
+--------------------------------------------------
+[1] T-10 删书后页码收敛 · 真机验证
+--------------------------------------------------
+方法：构造 24 本书 → 翻到末页 → 用应用自带删书功能 → 观察页码变化
+
+数据准备：设备书架原为 12 本（上一轮 T-6 遗留），追加 12 本「收敛测试01~12」共 24 本。
+  追加方式：导出 legado.db → Python 写 books 表 → 推回设备。
+  （books 表 33 列，group 是 SQL 关键字需加双引号）
+
+过程与观察：
+
+  ① 启动后          显示「第 1 / 5 页（共 24 本）」
+                    截图 t10-1-before-24books.png
+
+  ② 左滑 4 次        第 5 页（末页）显示 4 本：收敛测试09~12
+                    底部「第 5 / 5 页（共 24 本）」
+                    截图 t10-2-lastpage5of5.png
+
+  ③ 长按书籍         进入「书籍信息」页，底部有「删除书籍」
+     点删除           弹出「提醒 / 是否确认删除？ 否 | 是」
+                    截图 t10-5-delconfirm.png
+
+  ④ 点「是」         **自动跳回第 1 页**，显示「第 1 / 3 页（共 14 本）」
+                    未停留在越界的第 5 页，无空白页
+                    截图 t10-3-afterdelete-converged.png
+
+  ⑤ 翻到末页核对     第 3 页显示 4 本：测试书籍12 + 收敛测试01~03
+                    末项完整可见，底部「第 3 / 3 页（共 14 本）」
+                    截图 t10-4-lastpage-ok.png
+
+结论：14 本 = 5 + 5 + 4，页数正确。Paginator 的页码收敛在真实删除路径下生效，
+      删除末页书籍后当前页码被正确钳制到有效范围，未出现越界空页。
+
+两次无效尝试（不计入结果，记录以备回溯）：
+
+  a) 直接改数据库文件但不重启应用
+     界面仍显示旧数据「第 4 / 4 页（共 19 本）」。
+     原因：Room 数据流不会因外部改库触发通知。
+     判定：预期行为，非缺陷。
+
+  b) 在库已被外部替换、内存未同步时点「删除书籍」
+     提示「book is null」。
+     原因：内存中的 Book 对象与库不一致。
+     判定：测试手段造成，非应用缺陷；重启后数据一致即恢复正常。
+
+--------------------------------------------------
+[2] T-9 调查：AppConfig 两个恒为 0 的 getter
+--------------------------------------------------
+目标：判断 bookGroupStyle / bookshelfLayout 两个属性能否删除。
+
+检索结果：
+
+  AppConfig.bookshelfLayout  读取       0 处
+  AppConfig.bookGroupStyle   读取       0 处
+  两者 setter 调用                       0 处
+
+  PreferKey.bookshelfLayout  引用       3 处，全部在 BackupConfig.kt
+    BackupConfig.kt:34   ignoreKeys 数组
+    BackupConfig.kt:117  keyIsNotIgnore 判断
+    BackupConfig.kt:133  ignoreBookshelfLayout getter
+  PreferKey.bookGroupStyle   引用       1 处，在 AppConfig.kt 自身 setter 内
+
+  字符串字面量 "bookshelfLayout" / "bookGroupStyle"
+                              仅 PreferKey.kt:17 / :46 的定义处，无散落硬编码
+
+关键判定：
+  BackupConfig 引用的是 PreferKey.bookshelfLayout（String 常量），
+  与 AppConfig.bookshelfLayout（Int 属性）是两个不同的符号。
+
+  因此「删除 AppConfig 属性会让旧备份恢复失败」这一前提**不成立**——
+  我此前在 TODO T-9 中的描述有误，据此纠正。
+
+结论：建议保持现状，不删。
+
+理由：
+  1. 删除不影响 BackupConfig 的忽略逻辑（它只依赖 PreferKey 常量）。
+  2. 保留成本接近零：两个属性共 12 行。
+  3. 真正的价值是语义表达——getter 固定返回 0 是「墨水屏专属、书架布局固定」
+     这一设计决策的显式痕迹。删掉后代码里再无此约定，未来改书架的人不会知道。
+  4. 若要清理，更好的做法是保留但补足注释，而非删除。
+
+处置：T-9 从「待办型事项」降级为「记录型事项」，
+      TODO 中修正其错误前提并说明为何不删。
+
+--------------------------------------------------
+[3] 改动范围
+--------------------------------------------------
+生产代码：0 处改动
+文档：TODO.md（修正 T-9 描述、T-10 移入已完成）、
+      docs/evidence/README.md（登记本次证据）
+新增证据：本文件、backlog-cleanup-2-verify.md、5 张截图
+
+--------------------------------------------------
+[4] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+结果：见 README.md 末次门禁输出
