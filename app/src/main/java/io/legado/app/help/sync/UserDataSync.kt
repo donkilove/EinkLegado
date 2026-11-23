@@ -4,7 +4,6 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.Bookmark
-import io.legado.app.utils.GSON
 
 /**
  * 用户数据同步快照：书架分组、书签、书源。
@@ -53,10 +52,11 @@ object UserDataSync {
     )
 
     /**
-     * 数据指纹：用于判断本地自上次同步后是否改动过
+     * 数据指纹：用于判断本地自上次同步后是否改动过。
+     *
+     * 实现在 [SyncFingerprint]，此处保留方法名以兼容既有调用点。
      */
-    fun fingerprint(data: SyncData): String =
-        GSON.toJson(data.normalized()).hashCode().toString()
+    fun fingerprint(data: SyncData): String = SyncFingerprint.of(data)
 
     /**
      * 用云端数据整体覆盖本地：既补上云端新增，也删除云端已删的条目

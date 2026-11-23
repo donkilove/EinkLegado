@@ -1,0 +1,137 @@
+== 遗留项处理 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+JDK：Microsoft OpenJDK 17.0.21.1
+GRADLE_USER_HOME=D:\gradle-home
+
+依据：TODO.md 的 T-1 ~ T-7
+用户决定：不使用 CI；T-3 继续做；T-6 需核实（用户记忆为网格书架已删除）
+
+--------------------------------------------------
+[1] T-1 调查：构建报告属性已废弃
+--------------------------------------------------
+现象：gradle.properties 配的是
+        kotlin.build.report.dir=D:/EinkLegado/build/reports/kotlin
+      但构建实际输出到 build/reports/kotlin-build，两者不一致。
+
+实测：gradlew help -Pkotlin.build.report.dir=build/reports/TESTPROBE
+输出：
+  w: Deprecated Gradle Property 'kotlin.build.report.dir' Used
+  The `kotlin.build.report.dir` deprecated property is used in your build.
+  Kotlin build report is written to file:///D:/EinkLegado/build/reports/kotlin-build/...
+
+结论：该属性已被 Kotlin 2.3.10 废弃，赋值被忽略。原配置既写死绝对路径，
+      又完全不生效，且每次构建都刷一条废弃警告。
+      因此正确处理不是「改成相对路径」，而是**删除**。
+
+修复：gradle.properties 删除 kotlin.build.report.dir 一行，保留
+      kotlin.build.report.output=file，并加注释说明为何不要再加回来。
+
+验证：gradlew help → 废弃警告消失，报告仍正常生成。
+      BUILD SUCCESSFUL
+
+--------------------------------------------------
+[2] T-2 构建环境文档化
+--------------------------------------------------
+按仓库文档纪律，构建说明不属于四类文档，故不新增 .md，
+改写进既有 README.md（属声明中的例外）。
+
+新增章节「Build-构建环境」，记录：
+  1. JDK 17 硬性要求（jvmToolchain(17)），含报错原文与 winget 安装命令
+  2. GRADLE_USER_HOME 必须与项目同盘符（Glide KSP 缺陷），含报错原文与设置命令
+  3. 日常命令（测试 / 构建）
+  4. kotlin.build.report.dir 已被废弃，不要加回
+
+--------------------------------------------------
+[3] T-6 核实：网格书架确已死代码
+--------------------------------------------------
+用户提示「网格书架昨天就删掉了」，核实结果：属实，但删的是入口不是代码。
+
+证据：app/src/main/java/io/legado/app/help/config/AppConfig.kt:239-244
+        // 墨水屏专属：固定为列表视图（0），不再提供紧凑列表与网格
+        var bookshelfLayout: Int
+            get() = 0
+            set(value) { appCtx.putPrefInt(PreferKey.bookshelfLayout, 0) }
+
+       getter 恒为 0，因此下列 `bookshelfLayout >= 2` 分支永不可达：
+         ui/main/bookshelf/style1/books/BooksFragment.kt:74,105,149,192,282,296
+         ui/main/bookshelf/style2/BookshelfFragment2.kt:63,93,112,148,213
+         ui/main/bookshelf/style2/BooksAdapterList.kt:28
+
+结论：T-6 原描述「网格分页未真机验证」不准确——网格路径根本无法触发，
+      不是「未验证」而是「不可达」。真机验证无意义。
+      改为待清理项（现 TODO T-6）。
+
+--------------------------------------------------
+[4] T-5 指纹换 SHA-256（TDD）
+--------------------------------------------------
+Red：新增 SyncFingerprintTest 后先跑，编译期失败（类不存在），
+     8 处 Unresolved reference 'SyncFingerprint'。
+
+实现：新增 app/src/main/java/io/legado/app/help/sync/SyncFingerprint.kt
+      格式 v2:<64 位十六进制>，含 of() / isLegacy()
+      UserDataSync.fingerprint 改为委托，调用方不变
+
+Green 过程中的一次真实失败：
+  SyncFingerprintTest > 空数据与非空数据指纹不同 FAILED
+  原因：测试写错——SyncData() 的默认 version 就是 2，与 SyncData(version=2) 完全相同。
+  修正：改用 version=1 构造差异。另一条同类问题一并修正。
+  未改生产代码。
+
+升级兼容设计：
+  旧指纹（纯数字）与新指纹必然不等 → 升级当次落入
+  「两边都改动 → 本地为准上传」分支（AppWebDav.kt:418-447 的 else 分支），
+  该分支自带「本地书源为空时不上传」保护。这是最保守走向：
+  不用无法判断的新旧关系去覆盖任一端。
+  AppWebDav.syncUserData 增加 isLegacy 检测用于留日志，不改变分支结果。
+
+曾一度写错：把 lastHash 赋成 localHash 会命中「本地未改动」分支，
+反而用云端覆盖本地。已纠正为仅记日志。
+
+--------------------------------------------------
+[5] T-3 继续补测：AlphanumComparator
+--------------------------------------------------
+选型：app/src/main/java/io/legado/app/utils/AlphanumComparator.kt
+      零 import、零 Android 依赖，负责章节名自然排序
+      （第2章必须排在第10章之前，退化会导致目录顺序全乱）。
+
+新增 AlphanumComparatorTest 17 个用例：
+  契约（0 / 反对称）、数字按数值、多位数、位数不同、位数相同、
+  纯文字字典序、文字相同数字不同、多段数字、前缀、空串、
+  幂等、相等元素相邻、单数字、前导零。
+
+--------------------------------------------------
+[6] Green：全量测试
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest
+结果：BUILD SUCCESSFUL in 57s
+
+用例统计（app/build/test-results/testAppDebugUnitTest/*.xml）：
+  io.legado.app.data.entities.BookProgressBundleTest   16  0 失败
+  io.legado.app.example.ExampleUnitTest                 1  0 失败
+  io.legado.app.help.sync.SyncFingerprintTest            9  0 失败   ← 本次新增
+  io.legado.app.JsTest                                   7  0 失败
+  io.legado.app.utils.AlphanumComparatorTest            17  0 失败   ← 本次新增
+  io.legado.app.utils.PaginatorTest                     22  0 失败
+  ------------------------------------------------------------------
+  合计                                                  72  0 失败  0 跳过
+
+编译验证：gradlew :app:compileAppDebugKotlin → BUILD SUCCESSFUL in 10s
+
+--------------------------------------------------
+[7] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：
+  声明解析：类 4 个，例外 6 条，编号来源 2 个
+  I1 归类完备 / I2 索引与实体双向一致 / I3 编号唯一
+  文档门禁通过：检查 .md 48 个，文件 1936 个
+退出码：0
+
+--------------------------------------------------
+[8] 未处理项
+--------------------------------------------------
+T-3  长期工作，本轮新增 2 个类，其余纯逻辑类未覆盖
+T-4  UserDataSync 端到端流程仍需 appDb + 网络，未测
+T-6  网格死代码未清理（涉及 UI，需单独确认范围）
+T-8  旧版指纹无显式迁移，等本次同步成功后由 SyncState.save 自然覆盖

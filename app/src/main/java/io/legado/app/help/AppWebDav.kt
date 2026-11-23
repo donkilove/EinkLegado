@@ -15,6 +15,7 @@ import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
 import io.legado.app.help.sync.PendingProgressQueue
 import io.legado.app.help.sync.SyncData
+import io.legado.app.help.sync.SyncFingerprint
 import io.legado.app.help.sync.SyncState
 import io.legado.app.help.sync.UserDataSync
 import io.legado.app.utils.postEvent
@@ -399,6 +400,13 @@ object AppWebDav {
             val local = UserDataSync.export()
             val localHash = UserDataSync.fingerprint(local)
             val lastHash = SyncState.get()
+            // 升级兼容：旧版存的是 32 位 hashCode 指纹，与新版 SHA-256 必然不等。
+            // 因此本次会自然落到「两边都改动」分支——本地优先上传，且受书源空保护。
+            // 这是升级当次最保守的走向：不用无法判断的新旧关系去覆盖任一端。
+            // 此判断只用于留日志，不改变分支结果。
+            if (SyncFingerprint.isLegacy(lastHash)) {
+                AppLog.put("syncUserData 检测到旧版指纹，本次按「本地为准」处理")
+            }
 
             val remote = kotlin.runCatching {
                 val bytes = WebDav(syncDataUrl, authorization).download()

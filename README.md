@@ -119,6 +119,62 @@ https://www.yuque.com/legado/wiki/community
     <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
 </a>
 
+# Build-构建环境 [![](https://img.shields.io/badge/-Build-F5F5F5.svg)](#Build-构建环境-)
+
+本地构建本仓库有两个前置条件，缺任意一个都会失败，且报错信息不会直指根因。
+
+**1. JDK 17**
+
+`app/build.gradle` 与 `modules/*/build.gradle` 均声明 `jvmToolchain(17)`，只装了 JDK 21/11 的机器会失败：
+
+```
+Cannot find a Java installation ... matching: {languageVersion=17}
+```
+
+安装（Windows）：
+
+```powershell
+winget install --id Microsoft.OpenJDK.17
+```
+
+指向方式二选一，**推荐环境变量**，不要写进仓库文件：
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot"
+```
+
+**2. `GRADLE_USER_HOME` 必须与项目同盘符**
+
+Glide 的 KSP 处理器不支持跨盘符路径，Gradle 缓存在 C 盘而项目在 D 盘时会在 `kspAppDebugKotlin` 崩溃：
+
+```
+e: [ksp] java.lang.IllegalArgumentException: this and base files have different roots:
+   C:\Users\...\.gradle\caches\...\glide-svg-4.0.2-api.jar!\... and D:\EinkLegado\app.
+```
+
+解决：把缓存迁到与项目相同的盘符。
+
+```powershell
+$env:GRADLE_USER_HOME = "D:\gradle-home"
+```
+
+首次会重新下载 Gradle 发行版与全部依赖，之后恢复正常。这是环境层面的规避，非项目缺陷；升级 Glide/KSP 后可能不再需要。
+
+**日常命令**
+
+```powershell
+$env:JAVA_HOME       = "C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot"
+$env:GRADLE_USER_HOME = "D:\gradle-home"
+.\gradlew.bat :app:testAppDebugUnitTest   # 单元测试，约 1 分钟
+.\gradlew.bat assembleAppDebug            # 构建 debug 包
+```
+
+**Kotlin 构建报告**固定输出到 `build/reports/kotlin-build/`。属性 `kotlin.build.report.dir` 已被 Kotlin 2.3.10 废弃，设置它只会产生「Deprecated Gradle Property」警告且不生效，不要加回 `gradle.properties`。
+
+<a href="#readme">
+    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
+</a>
+
 # Docs-文档约定 [![](https://img.shields.io/badge/-Docs-F5F5F5.svg)](#Docs-文档约定-)
 
 本仓库只允许四类文档，其余 `.md` 只能作为上游既有文档或随产品发布的工件存在。新文档先归类，四类都装不下就不新增，改写进既有文档。
@@ -148,5 +204,5 @@ https://www.yuque.com/legado/wiki/community
 **门禁**
 
 - 校验入口：`tools/check-docs.ps1`，校验三条不变式：归类完备、索引与实体双向一致、编号唯一。
-- 克隆后第一步启用提交钩子：`powershell -File tools/install-hooks.ps1`（幂等，可 `-Check` 只报告、可 `-Uninstall`）。
+- **克隆后第一步启用提交钩子**：`powershell -File tools/install-hooks.ps1`（幂等，可 `-Check` 只报告、可 `-Uninstall`）。`core.hooksPath` 属于仓库本地配置，不随仓库分发，**新克隆默认不生效**，必须手动跑一次。
 - 逃生门：`git commit --no-verify` 可显式跳过，但会留痕于 `git log`。
