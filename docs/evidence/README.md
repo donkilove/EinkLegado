@@ -5,4 +5,6 @@
 | 证据文件 | 对应规格 | 内容 |
 |---|---|---|
 | [eink-only-check.txt](eink-only-check.txt) | eink-only | 构建门禁、残留引用核查与文档门禁的原始输出 |
-| [eink-only.verify.md](eink-only.verify.md) | eink-only | 验收标准与验证结果对照 |
+| [eink-only.verify.md](eink-only.verify.md) | eink-only | 验收标准与验证结果对照（含阶段 4–7） |
+| [engineering-debt-check.txt](engineering-debt-check.txt) | engineering-debt | 环境补齐、Red/Green 测试输出与文档门禁的原始输出 |
+| [engineering-debt.verify.md](engineering-debt.verify.md) | engineering-debt | 验收标准与验证结果对照 |

@@ -1,0 +1,136 @@
+== engineering-debt 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+JDK：Microsoft OpenJDK 17.0.21.1（本次为跑通测试新装，见 [0]）
+GRADLE_USER_HOME=D:\gradle-home（规避 KSP 跨盘符缺陷，见 [2]）
+
+--------------------------------------------------
+[0] 环境补齐：安装 JDK 17
+--------------------------------------------------
+原因：项目 app/build.gradle 要求 jvmToolchain(17)，本机原只有 JDK 21 与 11。
+      gradlew tasks 直接失败：
+        Cannot find a Java installation ... matching: {languageVersion=17}
+
+处理：winget install --id Microsoft.OpenJDK.17 --silent
+      Successfully installed 17.0.21.102
+      C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot\bin\java.exe -version
+      → openjdk version "17.0.21.1" 2026-11-17 LTS
+
+调用时以环境变量临时指定，未修改 gradle.properties 与系统 JAVA_HOME：
+      $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot"
+
+--------------------------------------------------
+[1] 确认单元测试任务名
+--------------------------------------------------
+命令：gradlew tasks --all
+输出（节选）：
+  app:testAppDebugUnitTest - Run unit tests for the appDebug build.
+与规格 `docs/specs/engineering-debt.md` 中写的一致（productFlavors 只有 app）。
+
+--------------------------------------------------
+[2] 首次运行失败：KSP 跨盘符缺陷（环境问题，非代码问题）
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --tests "io.legado.app.utils.PaginatorTest" ...
+结果：FAILED
+  > Task :app:kspAppDebugKotlin FAILED
+  e: [ksp] java.lang.IllegalArgumentException: this and base files have different roots:
+     C:\Users\Administrator\.gradle\caches\8.14.4\transforms\...\glide-svg-4.0.2-api.jar!\...
+     and D:\EinkLegado\app.
+
+即 eink-only 规格「测试方案」中记载的坑在本机复现：Gradle 缓存在 C 盘、项目在 D 盘，
+Glide 的 KSP 处理器崩溃。
+
+处理：GRADLE_USER_HOME=D:\gradle-home（与 docs/evidence/eink-only-check.txt 记载一致）。
+      首次运行会下载并解压 Gradle 8.14.4 到该目录，之后正常。
+
+--------------------------------------------------
+[3] Red：失败先行
+--------------------------------------------------
+Red 有两层，分别记录。
+
+（3a）编译期 Red——测试文件先于环境就绪存在，且第一次真实运行时即有失败用例：
+  命令：gradlew :app:testAppDebugUnitTest --tests '*PaginatorTest' --tests '*BookProgressBundleTest'
+  结果：
+    37 tests completed, 1 failed
+    PaginatorTest > 页数变少时当前页码自动收敛 FAILED
+      java.lang.AssertionError at PaginatorTest.kt:140
+    BUILD FAILED in 6m 10s
+
+  这是测试对生产代码的**真实断言失败**，原因是我最初对 Paginator 语义的推断有误：
+  以为 commitPageSize 修改的是第 0 页，实际它作用于**当前页**（Paginator.kt:76-86，
+  内部使用 `measuredSizes[page]`）。因此原断言期望页码收敛到 1，实际不成立。
+
+（3b）修正后的处理：
+  按真实语义重写为两条断言：
+    - `commitPageSize 作用于当前页而不是首页`
+    - `回填后页码始终落在有效范围内`
+  **未修改任何生产代码**（`app/src/main/**` 零改动，符合规格非目标）。
+  这是「测试纠正了对代码的误解」，而非「代码有 bug」——若真是代码 bug，
+  按规格「假设与风险」约定应记入 TODO.md 而不是直接修。
+
+--------------------------------------------------
+[4] Green：通过
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --rerun-tasks \
+        --tests "io.legado.app.utils.PaginatorTest" \
+        --tests "io.legado.app.data.entities.BookProgressBundleTest"
+结果：BUILD SUCCESSFUL in 57s
+
+用例统计（读 app/build/test-results/testAppDebugUnitTest/*.xml）：
+  io.legado.app.data.entities.BookProgressBundleTest   16 通过  0 失败  0.004s
+  io.legado.app.utils.PaginatorTest                    22 通过  0 失败  0.007s
+  ----------------------------------------------------------------
+  本次新增合计                                         38 通过  0 失败
+
+全量同任务（含仓库既有测试）：
+  io.legado.app.ExampleUnitTest                         1 通过  0 失败
+  io.legado.app.JsTest                                  7 通过  0 失败
+  io.legado.app.utils.PaginatorTest                    22 通过  0 失败
+  io.legado.app.data.entities.BookProgressBundleTest   16 通过  0 失败
+  ----------------------------------------------------------------
+  合计                                                 46 通过  0 失败  0 跳过
+
+--------------------------------------------------
+[5] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：
+  声明解析：类 4 个，例外 6 条，编号来源 2 个
+  I1 归类完备
+  I2 索引与实体双向一致
+  I3 编号唯一
+  文档门禁通过：检查 .md 47 个，文件 1929 个
+退出码：0
+
+说明：本次新增 3 个 .md（TODO.md、docs/specs/engineering-debt.md、本文件），
+      前两者已按规则登记（TODO 无索引；规格已登记进 docs/specs/README.md）。
+
+--------------------------------------------------
+[6] 提交钩子启用
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/install-hooks.ps1
+输出：
+  已启用提交钩子：core.hooksPath = .githooks
+  试跑一次文档门禁……
+  文档门禁通过：检查 .md 48 个，文件 1933 个
+  门禁当前通过。
+退出码：0
+
+复核：pwsh -NoProfile -File tools/install-hooks.ps1 -Check
+  钩子已启用：core.hooksPath = .githooks
+退出码：0
+
+说明：写入的是仓库本地 git config，不改动全局配置，不影响其他克隆。
+      逃生门：git commit --no-verify；撤销：install-hooks.ps1 -Uninstall。
+      风险：此后若门禁不通过，提交会被拒绝——这是预期行为。
+
+--------------------------------------------------
+[7] 未覆盖说明
+--------------------------------------------------
+以下项按规格「非目标」明确排除，未测试也未改动生产代码：
+  UserDataSync          依赖 appDb（Room + appCtx），需 Robolectric
+  PendingProgressQueue  依赖 appCtx.filesDir
+  SyncState             依赖 appCtx.filesDir
+  BookProgressBundle.applyTo(book: Book)   依赖 Book（Room/Parcelable/appDb/AppConfig）
+  isAheadOf(BookProgress, Book)            同上
+已记入 TODO.md（T-4）。
