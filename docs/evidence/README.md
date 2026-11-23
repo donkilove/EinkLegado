@@ -29,3 +29,5 @@
 | [dao-testable-verify.md](dao-testable-verify.md) | dao-testable（依据 TODO.md T-4） | 事项与验证结果对照、未覆盖项与残余风险 |
 | [p1-emu1.png](p1-emu1.png) | dao-testable | 模拟器冷启动：隐私协议页 |
 | [p1-emu2.png](p1-emu2.png) | dao-testable | 模拟器冷启动：书架页（无崩溃） |
+| [p2-unit-tests-check.txt](p2-unit-tests-check.txt) | p2-unit-tests（依据 TODO.md T-3） | 候选甄别、选错目标的经过、发现的越界缺陷与修复、143 用例输出 |
+| [p2-unit-tests-verify.md](p2-unit-tests-verify.md) | p2-unit-tests（依据 TODO.md T-3） | 事项与验证结果对照、缺陷与行为变更记录 |

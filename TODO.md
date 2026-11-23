@@ -4,7 +4,7 @@
 
 | 编号 | 事项 | 背景 | 下一步 |
 |---|---|---|---|
-| T-3 | 单元测试覆盖面仍然很窄 | 已有 `PaginatorTest`(22)、`BookProgressBundleTest`(16)、`SyncFingerprintTest`(9)、`AlphanumComparatorTest`(17)、`SyncDecisionTest`(17)、`SyncPlanTest`(17)、`UserDataSyncDaoTest`(14)，共 112 个新用例；仓库 842 个主源文件里多数纯逻辑类仍无测试 | 按 `docs/specs/done/engineering-debt.md` 的模式继续补齐零 Android 依赖的类 |
+| T-3 | 单元测试覆盖面仍然很窄 | 已有 143 个用例（本轮新增 `RuleAnalyzerSplitRuleTest` 23 个），但仓库 842 个主源文件里多数逻辑仍无测试。已确认 `innerRule` 为零调用点的死 API 未再投入；`ContentHelp.reSegment`（630 行启发式正文重排）因缺乏「何为正确分段」的判定标准而未测 | 优先补有明确对错标准、且有真实调用点的类；`reSegment` 若要测需先与用户定义验收标准 |
 | T-8 | 旧版同步指纹升级后无自动清理 | 旧版 `sync_state.json` 存 32 位 hashCode 指纹，新版为 `v2:<sha256>`。升级当次走「本地为准上传」的保守分支（已记日志），但旧值不会被主动清除，需等本次同步成功后由 `SyncState.save` 覆盖 | 观察一个版本；若日志频繁出现「检测到旧版指纹」，再考虑显式迁移 |
 
 ## 已知约定（不是待办，改动这些代码前先读）

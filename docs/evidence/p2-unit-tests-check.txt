@@ -1,0 +1,144 @@
+== 单测补强（P2）验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+
+依据：TODO.md 的 T-3（单元测试覆盖窄）
+
+--------------------------------------------------
+[1] 候选甄别：先确认哪些类真的值得测
+--------------------------------------------------
+扫描条件：零 Android import、行数 > 50 的 .kt 文件。
+
+初选结果（按行数降序）：
+  ReadBook.kt        1083 行, 33 个 io.legado import
+  ReadManga.kt        641 行, 26 个 io.legado import
+  ContentHelp.kt      630 行,  0 个 io.legado import   ← 纯
+  WebBook.kt          514 行, 18 个 io.legado import
+  RuleAnalyzer.kt     378 行,  0 个 io.legado import   ← 纯
+  ...
+
+重点考察 ContentHelp 与 RuleAnalyzer：
+  ContentHelp.reSegment   纯字符串函数，无副作用，有真实调用
+                          （ContentProcessor.kt:136，阅读主链路）
+  RuleAnalyzer            规则引擎词法切分，被 5 个 Analyze* 类大量使用
+
+--------------------------------------------------
+[2] 第一次选错目标（记录以备回溯）
+--------------------------------------------------
+最初为 RuleAnalyzer.innerRule 写了 18 个测试，运行后 5 个失败：
+  - 4 个 StringIndexOutOfBoundsException
+  - 1 个 ComparisonFailure（null 被拼成字符串 "null"）
+
+排查后发现两件事：
+  a) innerRule 的代码模式重载对调用方参数有隐含要求
+     （startStep 默认 1，需与 inner 的形态匹配），我的用法不对；
+  b) **全仓检索确认 innerRule 没有任何调用点**——它是未被使用的 API。
+
+判定：为一个没有调用点的方法写 18 个测试，即使全绿也不保护任何真实路径。
+处理：删除该测试文件，改测真正被大量调用的 splitRule。
+
+全仓调用点证据：
+  AnalyzeByJSoup.kt:208   RuleAnalyzer(ruleStr).trim().splitRule("@")
+  AnalyzeByXPath.kt       同上模式
+  AnalyzeByJsonPath.kt    同上模式（code=true）
+  AnalyzeUrl.kt:191       同上模式
+
+--------------------------------------------------
+[3] 改测 RuleAnalyzer.splitRule（真正在用的 API）
+--------------------------------------------------
+新增 app/src/test/java/io/legado/app/model/analyzeRule/RuleAnalyzerSplitRuleTest.kt
+
+覆盖点：
+  基本切分    无分隔符 / 两级 / 三级 / 末尾分隔符 / 首部分隔符被 trim
+  括号保护    方括号内 @ 不切分 / 圆括号内不切分 / 嵌套括号 / 括号后正常切分
+  自定义分隔符 单字符 % / 多字符 :: / 竖线 |
+  边界        空串 / 全是分隔符 / 空白包围 / 尾部空格保留
+  契约        拼接可还原 / 元素数对应
+
+--------------------------------------------------
+[4] 发现并修复一个真实缺陷
+--------------------------------------------------
+现象：3 个用例抛 StringIndexOutOfBoundsException
+  空串输入          → String index out of range: 0
+  纯空白输入        → String index out of range: 3
+  单个分隔符 "@"    → String index out of range: 1
+
+定位：RuleAnalyzer.trim()（原第 15-22 行）
+  fun trim() {
+      if (queue[pos] == '@' || queue[pos] < '!') {
+          pos++
+          while (queue[pos] == '@' || queue[pos] < '!') pos++
+          ...
+      }
+  }
+  两处越界：
+    a) 空串时 queue[pos] 直接越界；
+    b) 整串都是 @ 或空白时，while 循环会把 pos 推到 length 之外再取 queue[pos]。
+
+影响：任何把空串或纯空白传给 RuleAnalyzer 的调用方都会崩溃。
+      书源规则里空规则并不罕见（用户没填某一级规则、模板渲染出空值）。
+
+修复：
+  fun trim() {
+      if (pos >= queue.length) return
+      if (queue[pos] == '@' || queue[pos] < '!') {
+          pos++
+          while (pos < queue.length && (queue[pos] == '@' || queue[pos] < '!')) pos++
+          ...
+      }
+  }
+
+说明：这是**行为变更**（原来崩溃，现在安全返回）。
+      按用户授权「允许顺带修 bug」执行，并在此记录。
+
+--------------------------------------------------
+[5] 一次断言写错（非代码缺陷）
+--------------------------------------------------
+修复越界后又有一个失败：
+  `纯分隔符被 trim 全部跳过返回空列表`
+  expected 空列表，实际返回 [""]
+
+用临时探针跑了 9 组边界输入，确认实际行为：
+  INPUT=[]        -> size=1 parts=[[]]
+  INPUT=[ ]       -> size=1 parts=[[]]
+  INPUT=[@]       -> size=1 parts=[[]]
+  INPUT=[@@@]     -> size=1 parts=[[]]
+  INPUT=[  @  ]   -> size=1 parts=[[]]
+  INPUT=[a@]      -> size=2 parts=[[a], []]
+  INPUT=[@a]      -> size=1 parts=[[a]]
+  INPUT=[  a  ]   -> size=1 parts=[[a  ]]
+
+判定：**我的断言写错**（以为是空列表，实际是单元素空串），代码行为自洽。
+处理：修正断言，并补充 3 条边界用例把这个行为钉住。
+      探针测试用完即删，不保留在仓库。
+
+--------------------------------------------------
+[6] Green：全量测试
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --rerun-tasks
+结果：BUILD SUCCESSFUL in 1m 9s
+
+用例统计：
+  io.legado.app.data.entities.BookProgressBundleTest          16  0 失败
+  io.legado.app.ExampleUnitTest                                1  0 失败
+  io.legado.app.help.sync.SyncDecisionTest                    17  0 失败
+  io.legado.app.help.sync.SyncFingerprintTest                  9  0 失败
+  io.legado.app.help.sync.SyncPlanTest                        17  0 失败
+  io.legado.app.help.sync.UserDataSyncDaoTest                 14  0 失败
+  io.legado.app.JsTest                                         7  0 失败
+  io.legado.app.model.analyzeRule.RuleAnalyzerSplitRuleTest   23  0 失败  ← 本次新增
+  io.legado.app.utils.AlphanumComparatorTest                  17  0 失败
+  io.legado.app.utils.PaginatorTest                           22  0 失败
+  --------------------------------------------------------------------
+  合计                                                       143  0 失败 0 跳过
+
+--------------------------------------------------
+[7] 未覆盖
+--------------------------------------------------
+- splitRule 的括号保护只测了常见形态（方括号、圆括号、一层嵌套）。
+  真实规则里可能有多层混合嵌套，未穷举。
+- RuleAnalyzer 的其它方法（consumeToAny、chompRuleBalanced 等）为 private，未直接测。
+- ContentHelp.reSegment（630 行正文重排）本次未测：它没有明确的对错标准，
+  主要是启发式规则，写测试容易变成「把现有行为原样固化」而抓不到真问题。
+  若要测，需要先与用户确认「什么样的分段才算正确」。
