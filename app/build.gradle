@@ -153,6 +153,12 @@ android {
     lint {
         checkDependencies = true
     }
+    // Robolectric 需要 Android 资源才能正确初始化 Context 与 Room
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
     tasks.withType(JavaCompile).tap {
         configureEach {
             //options.compilerArgs << "-Xlint:unchecked"
@@ -169,6 +175,9 @@ dependencies {
     //coreLibraryDesugaring('com.android.tools:desugar_jdk_libs_nio:2.0.4')
     coreLibraryDesugaring(libs.desugar)
     testImplementation(libs.junit)
+    // Robolectric：让 JVM 单测能加载 Android 类，用于测 Room 的 DAO 写入层
+    testImplementation(libs.robolectric)
+    testImplementation(libs.room.testing)
     androidTestImplementation(libs.bundles.androidTest)
     //kotlin
     //noinspection GradleDependency,DifferentStdlibGradleVersion

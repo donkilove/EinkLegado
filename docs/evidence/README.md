@@ -25,3 +25,7 @@
 | [t10-4-lastpage-ok.png](t10-4-lastpage-ok.png) | backlog-cleanup-2 | 删书后末页 4 本完整可见 |
 | [sync-testable-check.txt](sync-testable-check.txt) | sync-testable | 实体探针、Red/Green 测试、真机三场景同步与数据核对原始输出 |
 | [sync-testable-verify.md](sync-testable-verify.md) | sync-testable | 验收标准与验证结果对照、缺陷记录 |
+| [dao-testable-check.txt](dao-testable-check.txt) | dao-testable（依据 TODO.md T-4） | 模拟器搭建、appDb 可注入化、Robolectric 环境障碍与 120 用例输出 |
+| [dao-testable-verify.md](dao-testable-verify.md) | dao-testable（依据 TODO.md T-4） | 事项与验证结果对照、未覆盖项与残余风险 |
+| [p1-emu1.png](p1-emu1.png) | dao-testable | 模拟器冷启动：隐私协议页 |
+| [p1-emu2.png](p1-emu2.png) | dao-testable | 模拟器冷启动：书架页（无崩溃） |

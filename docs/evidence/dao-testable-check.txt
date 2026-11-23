@@ -1,0 +1,154 @@
+== dao-testable 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+验证设备：无头模拟器 emulator-5554（android-35 google_apis x86_64）
+
+依据：TODO.md 的 T-4（DAO 写入层无测试）
+
+--------------------------------------------------
+[1] 环境搭建：无头模拟器
+--------------------------------------------------
+用户提供的真机已取走，改用无头模拟器。
+
+安装：
+  sdkmanager "emulator" "platform-tools"
+  sdkmanager "system-images;android-35;google_apis;x86_64"
+
+创建 AVD：
+  avdmanager create avd -n eink_test -k "system-images;android-35;google_apis;x86_64" -d pixel_5
+
+启动（无窗口）：
+  emulator -avd eink_test -no-window -no-audio -no-snapshot -gpu swiftshader_indirect
+
+结果：sys.boot_completed = 1，adb devices 显示 emulator-5554 device
+
+--------------------------------------------------
+[2] 前置调研：appDb 的可注入性
+--------------------------------------------------
+现状：val appDb by lazy { Room.databaseBuilder(appCtx, ...).build() }
+
+引用面统计：827 处，分布在 154 个文件。
+结论：不能直接把 appDb 参数化，否则 827 处调用点全要改。
+
+方案：把实现搬到 DbProvider，保留 `val appDb: AppDatabase get() = DbProvider.db`。
+      访问器名字不变 → **827 处调用点零改动**，diff 集中在 AppDatabase.kt。
+
+--------------------------------------------------
+[3] 实现改动
+--------------------------------------------------
+AppDatabase.kt：
+  - 新增 object DbProvider：持有 defaultDb（lazy）与 overridden（测试注入）
+    - db: AppDatabase  —— overridden ?: defaultDb
+    - override(database) / reset()  —— 均标注 @VisibleForTesting
+  - val appDb: AppDatabase get() = DbProvider.db   —— 保留原访问器
+  - 新增 abstract class TestableCallback : RoomDatabase.Callback()
+    - 内含 @VisibleForTesting val skipSeedData: Boolean
+    - onOpen 开头 `if (skipSeedData) return`
+
+  为什么需要 TestableCallback：
+    Kotlin 对 `object : Callback() { var x }` 会把类型推断成匿名类型，
+    成员在外部不可见，测试写不出 AppDatabase.dbCallback.skipSeedData。
+    显式继承命名类即可暴露。
+    （首次实现时踩了这个坑，编译报 Unresolved reference 'skipSeedData'。）
+
+app/build.gradle：
+  - testImplementation(libs.robolectric)      // org.robolectric:robolectric:4.14.1
+  - testImplementation(libs.room.testing)     // 复用已有的 room-testing 版本 2.7.1
+  - testOptions { unitTests { includeAndroidResources = true } }
+
+gradle/libs.versions.toml：
+  - robolectric = { module = "org.robolectric:robolectric", version = "4.14.1" }
+
+app/src/test/java/io/legado/app/testing/TestApplication.kt：
+  - 空壳 Application，仅供 Robolectric 使用
+
+--------------------------------------------------
+[4] 环境障碍与处理（三次失败）
+--------------------------------------------------
+障碍 1：Robolectric 运行时下载极慢
+  现象：首次运行 testAppDebugUnitTest 卡在配置阶段超过 30 分钟无输出。
+  排查：gradlew :app:help 与 :app:dependencies 均 10~20s 正常，排除配置问题。
+  定位：Robolectric 首次运行需下载 android-all-instrumented（约 156MB），
+        官方 Maven 实测约 30 KB/s，需一小时以上。
+  处理：手动预下载到 ~/.m2/repository/org/robolectric/android-all-instrumented/
+        13-robolectric-9030017-i7/（SDK 33 对应版本）。
+        改用阿里云镜像 https://maven.aliyun.com/repository/public，
+        实测 23 秒完成，文件 155.7 MB，解压校验 66508 个条目完整。
+
+障碍 2：skipSeedData 无法解析
+  现象：e: Unresolved reference 'skipSeedData'
+  原因：匿名 object 的类型推断问题（见 [3]）
+  处理：抽出 TestableCallback 基类
+
+障碍 3：Robolectric 下应用初始化崩溃
+  现象：ExceptionInInitializerError at App.kt:296
+        Caused by: IllegalStateException at AppCtx.kt:40
+  原因：Robolectric 默认使用清单里声明的 io.legado.app.App，
+        其 onCreate 会做 CrashHandler、网络监听、协程、通知渠道、Cronet 等初始化，
+        其中依赖 splitties 的 appCtx，在单测环境不可用。
+  处理：@Config(application = TestApplication::class)，用空壳 Application。
+        不引入新的测试依赖（未用 androidx.test.core 的 ApplicationProvider，
+        改用 Robolectric 自带的 RuntimeEnvironment.getApplication()）。
+
+--------------------------------------------------
+[5] 新增测试：UserDataSyncDaoTest（14 个用例）
+--------------------------------------------------
+文件：app/src/test/java/io/legado/app/help/sync/UserDataSyncDaoTest.kt
+方式：@RunWith(RobolectricTestRunner::class)
+      @Config(sdk = [33], application = TestApplication::class)
+      每个用例前 Room.inMemoryDatabaseBuilder + DbProvider.override(db)
+      每个用例后 DbProvider.reset() + skipSeedData=false + db.close()
+
+覆盖点：
+  分组    新增 / 删除 / 同时增删 / 被删组确实消失（getByID 为 null）
+  书签    新增 / 删除 / 四元组去重时不重复插入
+  书源    新增 / 删除 / 云端为空时不删本地 / 云端为空时其他数据仍处理
+  无副作用 计划为空时不动任何数据 / 两端都空时无动作
+  计数    result 计数反映实际变化条目数（分项与 total）
+  共 14 个
+
+--------------------------------------------------
+[6] Green
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --rerun-tasks
+结果：BUILD SUCCESSFUL
+
+用例统计：
+  io.legado.app.data.entities.BookProgressBundleTest   16  0 失败
+  io.legado.app.ExampleUnitTest                         1  0 失败
+  io.legado.app.help.sync.SyncDecisionTest             17  0 失败
+  io.legado.app.help.sync.SyncFingerprintTest           9  0 失败
+  io.legado.app.help.sync.SyncPlanTest                 17  0 失败
+  io.legado.app.help.sync.UserDataSyncDaoTest          14  0 失败   ← 本次新增
+  io.legado.app.JsTest                                  7  0 失败
+  io.legado.app.utils.AlphanumComparatorTest           17  0 失败
+  io.legado.app.utils.PaginatorTest                    22  0 失败
+  ------------------------------------------------------------------
+  合计                                                120  0 失败 0 跳过
+
+UserDataSyncDaoTest 单独耗时 4.784s（Robolectric 初始化后每个用例很快）。
+
+--------------------------------------------------
+[7] 构建与启动验证
+--------------------------------------------------
+命令：gradlew assembleAppDebug
+结果：BUILD SUCCESSFUL in 1m 10s
+产物：legado_app_3.26.112317.apk = 31.51 MB（与改造前一致）
+
+模拟器安装：adb -s emulator-5554 install -r → Success
+启动：am start MainActivity
+结果：正常显示隐私协议 → 同意 → 书架空状态页面
+      logcat -b crash 过滤 io.legado 无输出
+
+结论：DbProvider 改造未破坏生产路径，应用可正常冷启动。
+      模拟器界面为英文（系统语言），非缺陷。
+
+--------------------------------------------------
+[8] 未覆盖
+--------------------------------------------------
+- 真实设备未验证：用户真机已取走，本次仅在模拟器上确认启动正常。
+  同步功能本身需要 WebDAV 服务，模拟器未配置账号，未触发 syncUserData。
+- AppDatabase 的 89 版本迁移未测：本次用内存库直接建表，不走迁移路径。
+- onOpen 种数据逻辑未测：测试刻意关掉了它（skipSeedData=true）。
+  生产路径下它的行为未变（默认 false），但也没有测试覆盖。

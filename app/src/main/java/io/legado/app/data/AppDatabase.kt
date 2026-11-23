@@ -57,14 +57,66 @@ import org.intellij.lang.annotations.Language
 import splitties.init.appCtx
 import java.util.Locale
 
-val appDb by lazy {
-    Room.databaseBuilder(appCtx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
-        .fallbackToDestructiveMigrationFrom(false, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-        .addMigrations(*DatabaseMigrations.migrations)
-        .allowMainThreadQueries()
-        .addCallback(AppDatabase.dbCallback)
-        .build()
+/**
+ * [AppDatabase.dbCallback] 的基类。
+ *
+ * 存在的唯一理由是让 [skipSeedData] 在外部可见：
+ * Kotlin 的 `object : Callback() { var x }` 会被推断成匿名类型，成员无法从外部访问，
+ * 测试就没法关掉种数据。显式继承一个命名类可以解决这一点。
+ */
+abstract class TestableCallback : RoomDatabase.Callback() {
+
+    /**
+     * 测试钩子：为 true 时跳过 `onOpen` 里的内置分组、书源等种数据。
+     *
+     * 生产环境永远为 false。测试用它拿到一个干净的库，
+     * 断言「同步写入了什么」时不必排除这些预置行。
+     */
+    @androidx.annotation.VisibleForTesting
+    @Volatile
+    var skipSeedData: Boolean = false
 }
+
+/**
+ * 数据库实例的持有者，仅为**测试可注入性**而存在。
+ *
+ * 生产环境的用法不变：`appDb` 仍是全局唯一访问点，`DbProvider.db` 首次访问时
+ * 用 [appCtx] 构建。测试可调用 [override] 换成内存库、[reset] 还原。
+ *
+ * 保留 `val appDb` 这个访问器（而不是把 827 处调用点改成 `DbProvider.db`），
+ * 是为了让生产代码零改动、diff 最小。
+ */
+object DbProvider {
+
+    @Volatile
+    private var overridden: AppDatabase? = null
+
+    val db: AppDatabase
+        get() = overridden ?: defaultDb
+
+    private val defaultDb: AppDatabase by lazy {
+        Room.databaseBuilder(appCtx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
+            .fallbackToDestructiveMigrationFrom(false, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+            .addMigrations(*DatabaseMigrations.migrations)
+            .allowMainThreadQueries()
+            .addCallback(AppDatabase.dbCallback)
+            .build()
+    }
+
+    /** 仅供测试：替换为内存库等 */
+    @androidx.annotation.VisibleForTesting
+    fun override(database: AppDatabase?) {
+        overridden = database
+    }
+
+    /** 仅供测试：还原为生产实例 */
+    @androidx.annotation.VisibleForTesting
+    fun reset() {
+        overridden = null
+    }
+}
+
+val appDb: AppDatabase get() = DbProvider.db
 
 @Database(
     version = 89,
@@ -156,7 +208,11 @@ abstract class AppDatabase : RoomDatabase() {
         const val BOOK_SOURCE_TABLE_NAME = "book_sources"
         const val RSS_SOURCE_TABLE_NAME = "rssSources"
 
-        val dbCallback = object : Callback() {
+        /**
+         * 数据库回调。显式声明为命名接口类型（而不是让 Kotlin 推断成匿名类型），
+         * 否则 [skipSeedData] 之类的成员在外部不可见，测试也访问不到。
+         */
+        val dbCallback: TestableCallback = object : TestableCallback() {
 
             override fun onCreate(db: SupportSQLiteDatabase) {
                 // 只在 API 级别 23 (Marshmallow) 及以上版本尝试设置区域设置
@@ -175,6 +231,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
             override fun onOpen(db: SupportSQLiteDatabase) {
+                if (skipSeedData) return
                 @Language("sql")
                 val insertBookGroupAllSql = """
                     insert into book_groups(groupId, groupName, 'order', show) 
