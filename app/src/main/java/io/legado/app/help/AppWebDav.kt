@@ -15,6 +15,7 @@ import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
 import io.legado.app.help.sync.PendingProgressQueue
 import io.legado.app.help.sync.SyncData
+import io.legado.app.help.sync.SyncDecision
 import io.legado.app.help.sync.SyncFingerprint
 import io.legado.app.help.sync.SyncState
 import io.legado.app.help.sync.UserDataSync
@@ -390,8 +391,10 @@ object AppWebDav {
 
     /**
      * 同步书架分组、书签、书源。
-     * 策略为「只增不删」：先并入云端有而本地没有的条目，再把本地全量回写云端。
-     * @return 本次从云端新增到本地的条目数
+     *
+     * 合并语义是「最后修改者胜」：靠 [SyncState] 记录的指纹判断哪一端自上次同步后改动过，
+     * 由改动过的一端覆盖另一端。决策逻辑在 [SyncDecision.decide]（纯函数，可单测），
+     * 此处只负责取数据、下载、以及按决策执行。
      */
     suspend fun syncUserData(): UserDataSync.Result {
         if (!NetworkUtils.isAvailable()) return UserDataSync.Result()
@@ -400,10 +403,9 @@ object AppWebDav {
             val local = UserDataSync.export()
             val localHash = UserDataSync.fingerprint(local)
             val lastHash = SyncState.get()
-            // 升级兼容：旧版存的是 32 位 hashCode 指纹，与新版 SHA-256 必然不等。
-            // 因此本次会自然落到「两边都改动」分支——本地优先上传，且受书源空保护。
-            // 这是升级当次最保守的走向：不用无法判断的新旧关系去覆盖任一端。
-            // 此判断只用于留日志，不改变分支结果。
+            // 升级兼容：旧版存的是 32 位 hashCode 指纹，与新版 SHA-256 必然不等，
+            // 因此会自然落到「两边都改动」分支——本地优先上传，且受书源空保护。
+            // 这是升级当次最保守的走向。此判断只用于留日志，不改变决策结果。
             if (SyncFingerprint.isLegacy(lastHash)) {
                 AppLog.put("syncUserData 检测到旧版指纹，本次按「本地为准」处理")
             }
@@ -414,43 +416,41 @@ object AppWebDav {
                 if (json.isJson()) GSON.fromJsonObject<SyncData>(json).getOrNull() else null
             }.getOrNull()
 
-            // 云端还没有数据：上传本地
-            if (remote == null) {
-                uploadSyncData(local, authorization)
-                SyncState.save(localHash)
-                AppLog.put("syncUserData 云端无数据，已上传本地")
-                return@runCatching UserDataSync.Result()
-            }
+            val remoteHash = remote?.let { UserDataSync.fingerprint(it) } ?: ""
+            when (val decision = SyncDecision.decide(localHash, remoteHash, lastHash, local, remote)) {
+                SyncDecision.UploadLocal -> {
+                    uploadSyncData(local, authorization)
+                    SyncState.save(localHash)
+                    AppLog.put("syncUserData 云端无数据，已上传本地")
+                    UserDataSync.Result()
+                }
 
-            val remoteHash = UserDataSync.fingerprint(remote)
-            when {
-                // 本地自上次同步后没改动：以云端为准整体替换本地，删除得以传播
-                localHash == lastHash -> {
-                    val changed = UserDataSync.replaceLocal(remote)
+                SyncDecision.ReplaceLocal -> {
+                    val changed = UserDataSync.replaceLocal(remote!!)
                     SyncState.save(remoteHash)
                     AppLog.put(
                         "syncUserData 云端为准：分组 ${changed.groups} 书签 ${changed.bookmarks} 书源 ${changed.sources}"
                     )
                     changed
                 }
-                // 云端没动、本地动了：上传本地，删除得以传播到云端
-                remoteHash == lastHash -> {
+
+                SyncDecision.UploadLocalLocalWins -> {
                     uploadSyncData(local, authorization)
                     SyncState.save(localHash)
                     AppLog.put("syncUserData 本地为准：已上传")
                     UserDataSync.Result()
                 }
-                // 两边都动过：本地优先；但本地书源为空时不上传，避免冲掉云端书源
-                else -> {
-                    if (local.sources.isEmpty() && remote.sources.isNotEmpty()) {
-                        AppLog.put("syncUserData 本地书源为空，跳过上传以保护云端书源")
-                        UserDataSync.Result()
-                    } else {
-                        uploadSyncData(local, authorization)
-                        SyncState.save(localHash)
-                        AppLog.put("syncUserData 两边均有改动，以本地为准上传")
-                        UserDataSync.Result()
-                    }
+
+                SyncDecision.UploadLocalBothChanged -> {
+                    uploadSyncData(local, authorization)
+                    SyncState.save(localHash)
+                    AppLog.put("syncUserData 两边均有改动，以本地为准上传")
+                    UserDataSync.Result()
+                }
+
+                SyncDecision.SkipToProtectSources -> {
+                    AppLog.put("syncUserData 本地书源为空，跳过上传以保护云端书源")
+                    UserDataSync.Result()
                 }
             }
         }.onFailure {

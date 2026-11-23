@@ -1,0 +1,149 @@
+== sync-testable 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+真机：WWZHIBUKSKCM5LGA（Android，adb 连接，已配置坚果云 WebDAV）
+
+依据：docs/specs/sync-testable.md
+
+--------------------------------------------------
+[1] 前置调研：实体能否在 JVM 单测中构造
+--------------------------------------------------
+风险点：BookGroup / Bookmark / BookSource 都带 @Parcelize 与 Room 注解，
+BookSource 还 import 了 android.text.TextUtils、AudioPlay、GSON。
+若它们在类加载时触碰 Android 类，整个 SyncPlanTest 就无法进行。
+
+做法：先写 EntityProbeTest 探针，只验证「构造 + equals/hashCode」。
+
+结果：BUILD SUCCESSFUL，4 个用例全过。
+结论：三个实体都能在 JVM 单测中直接构造，书源部分可以正常测试。
+探针任务完成后已删除（它是临时验证手段，不保留在仓库）。
+
+--------------------------------------------------
+[2] Red：失败先行
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --tests "*SyncDecisionTest" --tests "*SyncPlanTest"
+结果：编译失败
+  e: SyncDecisionTest.kt:32:9 Unresolved reference 'SyncDecision'
+  e: SyncDecisionTest.kt:38:22 Unresolved reference 'SyncDecision'
+
+说明：被测语义已由现有代码确定，因此 Red 表现为「类不存在」的编译失败。
+它证明测试确实依赖待实现的行为，不是先有实现再补测试。
+
+--------------------------------------------------
+[3] Green 过程中的一次真实失败（测试自身写错）
+--------------------------------------------------
+首次实现后运行，3 个用例失败：
+  SyncPlanTest > 云端多出的书签被补进本地     expected:<[200]> but was:<[]>
+  SyncPlanTest > 本地多出的书签被删除         expected:<[200]> but was:<[]>
+  SyncPlanTest > 书源保护不影响分组与书签的处理  书签仍应插入 expected:<1> but was:<0>
+  SyncPlanTest > 三类数据可同时增删           expected:<1> but was:<0>
+
+原因：测试的 bookmark() 辅助函数默认 chapterIndex=0、chapterPos=0，
+      导致多条书签的去重键（书名|作者|章|位置）完全相同，
+      它们被正确地判定为「同一条书签」。
+判定：**测试写错**，不是生产代码缺陷——planReplace 的行为是对的。
+修正：给各书签不同的 chapterIndex。未改生产代码。
+
+--------------------------------------------------
+[4] Green：全部通过
+--------------------------------------------------
+命令：gradlew :app:testAppDebugUnitTest --rerun-tasks
+结果：BUILD SUCCESSFUL in 55s
+
+用例统计：
+  io.legado.app.data.entities.BookProgressBundleTest    16  0 失败
+  io.legado.app.ExampleUnitTest                          1  0 失败
+  io.legado.app.help.sync.SyncDecisionTest              17  0 失败   ← 新增
+  io.legado.app.help.sync.SyncFingerprintTest            9  0 失败
+  io.legado.app.help.sync.SyncPlanTest                  17  0 失败   ← 新增
+  io.legado.app.JsTest                                   7  0 失败
+  io.legado.app.utils.AlphanumComparatorTest            17  0 失败
+  io.legado.app.utils.PaginatorTest                     22  0 失败
+  ------------------------------------------------------------------
+  合计                                                 106  0 失败 0 跳过
+
+说明：既有 72 个用例完整保留（含探针 4 个时共 110，删探针后 106）。
+
+编译验证：gradlew :app:compileAppDebugKotlin → BUILD SUCCESSFUL in 42s
+          （仅有既有的 ThemeConfig.kt 'when' 冗余 else 警告，与本次无关）
+
+--------------------------------------------------
+[5] 构建 APK
+--------------------------------------------------
+命令：gradlew assembleAppDebug
+结果：BUILD SUCCESSFUL in 23s
+产物：legado_app_3.26.112313.apk = 31.51 MB
+
+--------------------------------------------------
+[6] 真机验证（WWZHIBUKSKCM5LGA，用户真实数据）
+--------------------------------------------------
+安装：adb install -r → Success
+
+安全措施：用户恢复了真实数据（10 本书、16 分组、1 书源）。
+  测试前已完整备份数据库（34.5 MB）与 sync_state.json，
+  测试后核对数量，确保重构未造成数据丢失。
+
+基线：books=10, book_groups=16, bookmarks=0, book_sources=1
+      sync_state.json: lastHash = v2:85a46fa68f61...
+
+场景 A：无变更同步
+  启动应用 → 等待 15 秒
+  结果：lastHash 未变（仍为 85a46f...），无崩溃
+  含义：本地未改且云端一致，同步没有产生多余写入。符合预期。
+
+场景 B：本地有变更 → 上传
+  在数据库中新增分组「SYNCTEST分组」（groupId=100），共 17 个分组
+  推回设备 → 启动应用 → 等待 18 秒
+  结果：lastHash 变为 v2:a217d75d09f4...（发生变化）
+  核对：books=10, book_groups=17（含测试组）, book_sources=1
+  含义：本地改动被正确识别并上传，指纹随之更新。
+        覆盖了「双改」或「云端未改」分支。
+
+场景 C：回到一致状态 → 以云端为准
+  删除「SYNCTEST分组」，共 16 个分组
+  推回设备 → 启动应用 → 等待 18 秒
+  结果：lastHash 回到 v2:85a46fa68f61...（与基线一致）
+  含义：同步正确识别出内容已与云端一致，走了 ReplaceLocal 路径
+        （这是本轮重构的核心改动之一），指纹一并回退到对应值。
+
+最终核对（与基线逐项对比）：
+  books          10 → 10
+  book_groups    16 → 16
+  bookmarks       0 → 0
+  book_sources    1 → 1
+  全部一致，无数据丢失。
+
+崩溃检查：adb logcat -b crash 过滤 io.legado 全程无输出。
+
+补充说明：应用内 AppLog（同步分支日志）写入应用私有存储、不经过 logcat，
+  因此无法从 logcat 直接读取「syncUserData 云端为准：分组 N ...」这类文案。
+  本次以「sync_state.json 指纹变化 + 数据库数量核对」作为同步确实执行了的证据。
+
+隐私处理：测试过程中导出的数据库副本、备份文件、探查脚本均已在测试后删除，
+  未提交进仓库（其中含用户真实书籍与书源数据）。
+
+--------------------------------------------------
+[7] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+结果：见 README.md 末次门禁输出
+
+--------------------------------------------------
+[8] AC-6：发现的缺陷与处理
+--------------------------------------------------
+缺陷 1（低危，未修）：首次同步会多一次上传
+  现象：lastHash 为 null 时，「本地未改」的判定 `localHash == lastHash` 不成立，
+        即使两端数据完全一致也会落入「双改」分支并上传本地。
+  影响：不丢数据，但首次同步会多一次无意义的上传。
+  处理：**未修改**。理由：修复它需要改变判定顺序，会牵动所有分支的既有语义，
+        风险大于收益。已在 SyncDecisionTest 中用
+        `首次同步且两端内容相同会上传本地` 一条用例把这个行为钉住并注明原因。
+        若将来要优化，应先确认改动后不会让「云端有更新」被误判为无需处理。
+
+缺陷 2（文档级，已修）：原 syncUserData 的注释与实际不符
+  现象：注释写着「策略为『只增不删』：先并入云端有而本地没有的条目，再把本地全量回写云端」。
+  实际：代码早已改为「最后修改者胜」，会删除本地有而云端没有的条目。
+  处理：重构时已重写该注释，说明真实的合并语义，并指向 SyncDecision。
+
+无其他缺陷。

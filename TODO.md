@@ -5,7 +5,7 @@
 | 编号 | 事项 | 背景 | 下一步 |
 |---|---|---|---|
 | T-3 | 单元测试覆盖面仍然很窄 | 已有 `PaginatorTest`(22)、`BookProgressBundleTest`(16)、`SyncFingerprintTest`(9)、`AlphanumComparatorTest`(17)，共 64 个新用例；仓库 845 个主源文件里多数纯逻辑类仍无测试 | 按 `docs/specs/done/engineering-debt.md` 的模式继续补齐零 Android 依赖的类 |
-| T-4 | `UserDataSync` 的合并流程无端到端测试 | 单测已覆盖其指纹部分（`SyncFingerprintTest`）与纯合并语义（`BookProgressBundleTest`），但「读云端 → 比对指纹 → 选分支 → 写回」整条链路仍需 `appDb` + 网络，无测试 | 把分支决策抽成返回枚举的纯函数后可测；`UserDataSync.replaceLocal` 需 Robolectric |
+| T-4 | 同步的 DAO 写入层无测试 | 决策（`SyncDecisionTest` 17 用例）与差异计算（`SyncPlanTest` 17 用例）已覆盖；但 `SyncPlan` 如何落到 `appDb` 仍只靠真机验证。障碍：`appDb` 是顶层 lazy 全局单例、`onOpen` 每次预种 6–7 个内置分组、库已到 89 版本，Robolectric 每个测试都要付建库成本且断言要处理脏数据 | 需要独立任务：先解决 `appDb` 的可注入性（或提供测试专用的内存库构造），再引入 Robolectric 测 DAO 写入 |
 | T-8 | 旧版同步指纹升级后无自动清理 | 旧版 `sync_state.json` 存 32 位 hashCode 指纹，新版为 `v2:<sha256>`。升级当次走「本地为准上传」的保守分支（已记日志），但旧值不会被主动清除，需等本次同步成功后由 `SyncState.save` 覆盖 | 观察一个版本；若日志频繁出现「检测到旧版指纹」，再考虑显式迁移 |
 
 ## 已知约定（不是待办，改动这些代码前先读）

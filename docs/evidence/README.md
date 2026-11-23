@@ -23,3 +23,5 @@
 | [t10-5-delconfirm.png](t10-5-delconfirm.png) | backlog-cleanup-2 | 删书确认对话框 |
 | [t10-3-afterdelete-converged.png](t10-3-afterdelete-converged.png) | backlog-cleanup-2 | 删书后：自动回到第 1 页，显示共 14 本 3 页 |
 | [t10-4-lastpage-ok.png](t10-4-lastpage-ok.png) | backlog-cleanup-2 | 删书后末页 4 本完整可见 |
+| [sync-testable-check.txt](sync-testable-check.txt) | sync-testable | 实体探针、Red/Green 测试、真机三场景同步与数据核对原始输出 |
+| [sync-testable-verify.md](sync-testable-verify.md) | sync-testable | 验收标准与验证结果对照、缺陷记录 |
