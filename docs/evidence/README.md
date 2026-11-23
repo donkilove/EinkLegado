@@ -31,3 +31,5 @@
 | [p1-emu2.png](p1-emu2.png) | dao-testable | 模拟器冷启动：书架页（无崩溃） |
 | [p2-unit-tests-check.txt](p2-unit-tests-check.txt) | p2-unit-tests（依据 TODO.md T-3） | 候选甄别、选错目标的经过、发现的越界缺陷与修复、143 用例输出 |
 | [p2-unit-tests-verify.md](p2-unit-tests-verify.md) | p2-unit-tests（依据 TODO.md T-3） | 事项与验证结果对照、缺陷与行为变更记录 |
+| [p3-deadcode-check.txt](p3-deadcode-check.txt) | p3-deadcode（TODO.md T-11） | isEInkMode 78 处引用的分类、isNightTheme 追踪、可清理范围 |
+| [p3-deadcode-verify.md](p3-deadcode-verify.md) | p3-deadcode（TODO.md T-11） | 调查结论：不清理，及将来若清理的正确顺序 |

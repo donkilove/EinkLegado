@@ -1,0 +1,157 @@
+== P3 调查：「已取消范围」里的代码是否已成死代码 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-23
+性质：只读调查，未改动任何代码
+
+依据：docs/specs/done/eink-only.md 的「变更记录」中提到：
+  「主题虽不做『收敛』（浅色/深色的代码分支与 style 全部保留），
+    但已按用户要求固定为 EInk 且移除切换入口。」
+
+要回答的问题：这些保留的浅色/深色分支，现在到底是死代码还是活代码？
+
+--------------------------------------------------
+[1] isEInkMode 的引用面
+--------------------------------------------------
+AppConfig.kt:38   val isEInkMode = true   // 常量，无 setter
+
+引用总数：78 处，分布在 37 个文件。
+
+按性质分类：
+
+A 类：EInk 与「非 EInk」的行为分叉（**仍然有效**）
+  典型形态：`if (AppConfig.isEInkMode) { 不做动画 } else { 做动画 }`
+  由于 isEInkMode 恒为 true，运行时永远走 EInk 支。
+  但这不等于「死代码」——它是**当前生效的实现**，删掉 EInk 支会破坏功能，
+  删掉 else 支会失去「将来可回退」的能力（规格明确保留这个退路）。
+
+  代表：
+    ReadMenu.kt        75,78,81,84  动画资源选择
+    MangaMenu.kt      103,105,142,157  菜单背景透明度与动画
+    SearchMenu.kt      37,38        菜单动画
+    RotateLoading.kt  143,182,206   加载图标是否旋转
+    FastScroller.kt   427,514       滚动条动画时长
+    SmoothCheckBox.kt 109,307       复选框动画
+    ConstraintModify.kt 12,37,54    布局过渡
+    AnimationExtensions.kt 11       动画工具
+    Snackbars.kt       14           提示条动画
+    ExplosionView.kt   99           爆炸动画
+    TitleBar.kt       185,294       标题栏动画
+    BaseActivity.kt   118,205       转场动画
+    BaseDialogFragment.kt 45,84     对话框动画
+    AndroidAlertBuilder.kt 146,160  弹窗过渡
+    PageDelegate.kt    47           翻页动画
+    BookCover.kt      195           封面淡入
+    AutoPager.kt       22-127       自动翻页（EInk 下禁用）
+    DiffRecyclerAdapter.kt 179 / RecyclerAdapter.kt 441  列表项动画
+    ReadBookConfig.kt 592-664       阅读配置的 EInk 变体
+    ThemeBottomNavigationVIew.kt 48
+    TextLine.kt       175
+    ReadMangaActivity.kt 166
+    BooksFragment.kt  275
+    ExploreFragment.kt 236
+    HistoryKeyAdapter.kt 46
+    MainActivity.kt   244,304,311
+    BookInfoActivity.kt 698
+    LocalConfig.kt     50
+    BasePrefDialogFragment.kt 18 / EditTextPreferenceDialog.kt 45 /
+      ListPreferenceDialog.kt 49 / MultiSelectPreferenceDialog.kt 51
+    App.kt            296
+    SearchResult.kt    34,71,101    HTML 模板选择
+
+B 类：分支本身已无意义（**可清理，但收益极小**）
+  AppConfig.kt:371  `get() = if (isEInkMode) 0 else appCtx.getPrefInt(...)`
+  —— 恒返回 0，else 分支永不执行。
+  但它是单行表达式，可读性上没有负担，删掉反而让人不理解为什么固定为 0。
+
+C 类：真正的死路径（**值得关注**）
+  ThemeConfig.kt:59-63
+    fun getTheme() = when {
+        AppConfig.isEInkMode -> Theme.EInk     // 恒命中
+        AppConfig.isNightTheme -> Theme.Dark   // 永不命中
+        else -> Theme.Light                    // 永不命中
+    }
+  → Theme.Dark 与 Theme.Light 永远不会被 getTheme() 返回。
+
+--------------------------------------------------
+[2] 「Theme.Dark/Light 永不返回」意味着什么
+--------------------------------------------------
+这是本轮调查的关键发现，但**不能简单等同于死代码**。
+
+继续追查 isNightTheme（整套深浅渲染机制）：
+
+  AppConfig.kt:161-176   var isNightTheme，setter 可写入 themeMode "1"/"2"
+  ReadBookActivity.kt:1187  `AppConfig.isNightTheme = !AppConfig.isNightTheme`  ← 阅读菜单日夜切换按钮
+  ThemeConfigFragment.kt:142,158  主题设置页仍在读写
+  ReadBookConfig.kt:593-665   按 isNightTheme 选 darkStatusIconNight / bgTypeNight
+  BookCover.kt:65-66         按 isNightTheme 选封面
+  WebViewPool.kt:54          按 isNightTheme 决定网页是否变暗
+  PreferenceCategory.kt:35   按 isNightTheme 选分隔线颜色
+  ViewExtensions.kt:90,97    按 isNightTheme 选文字色
+  FilePickerDialog.kt:210,211
+  ThemeConfig.kt:83,238-464  主题配置档案按 isNightTheme 分区
+
+  结论：**isNightTheme 是一套仍然活跃的机制**。
+        它控制「墨水屏下的深色渲染」（黑底白字），与 Theme.Light/Dark 是两回事。
+        用户仍可通过阅读菜单的日夜按钮切换。
+
+  而 Theme.Dark / Theme.Light 这两个**主题样式分支**（setTheme(R.style.AppTheme_*)）
+  确实永远不会被选中，因为它们只由 getTheme() 返回。
+
+--------------------------------------------------
+[3] 死代码的实际范围
+--------------------------------------------------
+若清理「Theme.Light/Dark 主题样式分支」，需要改动：
+
+  ThemeConfig.kt:59-63      getTheme() 简化为直接返回 Theme.EInk
+  BaseActivity.kt:191-201   setTheme 的 when 分支（Dark/Light/Transparent）
+    :239-241                toolBarTheme 判断
+  ThemeConfig.kt:108-130    bgImage / bgImageBlurring 的 Light/Dark 分支
+  WelcomeActivity.kt:59     Theme.Dark 分支
+  MenuExtensions.kt:109,110 Theme.Dark/Light 文字色
+  BookInfoActivity.kt:116   toolBarTheme = Theme.Dark  ← 注意：这是显式传参，不是 getTheme()
+
+  棘手点：BookInfoActivity:116 直接传 `toolBarTheme = Theme.Dark`，
+  说明有代码绕过 getTheme() 直接用 Theme.Dark。
+  删枚举值会破坏它；不删枚举值只删 getTheme 分支，清理不彻底。
+
+--------------------------------------------------
+[4] 结论与建议
+--------------------------------------------------
+问题：这些分支是死代码吗？
+答：**部分是，但「死代码」这个标签在这里有误导性**。
+
+  1. 78 处 isEInkMode 引用中，绝大多数（A 类）是**当前生效的实现**，
+     不是死代码。它们是「EInk 分支」，运行时确实在走。
+     把它们误认为死代码而删除，会直接破坏功能。
+
+  2. 真正不可达的是 **Theme.Light / Theme.Dark 这两个主题样式分支**。
+     但清理它们：
+       - 收益很小：只涉及约 6 个文件的十几行
+       - 风险不小：BookInfoActivity 直接用 Theme.Dark；枚举值不能删；
+         getTheme() 简化后，将来若要回退到「可切换主题」需重新铺开
+       - 与规格决策冲突：eink-only.md 明确记录「保留分支，回退成本极低」
+
+  3. isNightTheme（深色渲染）**完全不是死代码**，仍在被阅读菜单与设置页使用。
+
+建议：**不清理**。
+
+理由：
+  - 规格已明确决策「保留分支作为回退退路」，删掉等于推翻该决策
+  - 清理收益（十几行）与风险（回退能力、BookInfoActivity 的隐式依赖）不匹配
+  - 与之前清理 style2 书架的性质不同：style2 是**整包不可达**且无回退价值；
+    这里的分支是**规格明确要保留的退路**
+
+若将来确实要清理，正确顺序是：
+  1. 先把 AppConfig.isEInkMode 从 `val = true` 改成可配置的真实开关
+  2. 确认产品上不再需要浅色/深色主题
+  3. 再统一删除，并同步更新 eink-only 规格的决策记录
+
+--------------------------------------------------
+[5] 与 TODO T-9 的关系
+--------------------------------------------------
+T-9 记录的是 AppConfig.bookGroupStyle / bookshelfLayout 两个恒为 0 的 getter，
+与本轮调查的 isEInkMode 是同类现象（常量化的配置项）。
+
+两者都建议**保留而非删除**，理由一致：
+它们把「这是墨水屏专属、某项能力被固定」这一设计决策写在代码里，
+删除会让后续维护者失去上下文。

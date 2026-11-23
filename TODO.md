@@ -12,6 +12,7 @@
 | 编号 | 约定 | 现状与理由 |
 |---|---|---|
 | T-9 | `AppConfig.bookGroupStyle` / `bookshelfLayout` 两个 getter 恒返回 `0` | 2026-11-23 调查确认：两者**无任何读取方**，其 setter 也无人调用，属事实上的只读约定。`BackupConfig` 引用的是 `PreferKey` 常量，与这两个属性无关，因此删除**不会**影响旧备份恢复——此前 TODO 中的该说法有误，已纠正。**仍建议保留**：getter 固定返回 0 是「墨水屏专属，书架布局固定」这一设计决策在代码中的显式痕迹，删除会让后续改书架的人无从得知该约定。若将来真要清理，正确做法是补足注释或改写为常量，而非直接删除。详见 `docs/evidence/backlog-cleanup-2-verify.md` |
+| T-11 | `Theme.Light` / `Theme.Dark` 主题样式分支永不返回 | `ThemeConfig.getTheme()` 因 `isEInkMode` 恒为 true 而固定返回 `Theme.EInk`。**但这是规格明确保留的回退退路**，且 `BookInfoActivity:116` 显式传 `toolBarTheme = Theme.Dark` 绕过了 `getTheme()`，删分支会破坏它。注意：78 处 `isEInkMode` 引用绝大多数是**当前生效的 EInk 实现**不是死代码；`isNightTheme`（深色渲染）完全活跃，阅读菜单日夜按钮仍在用。详见 `docs/evidence/p3-deadcode-verify.md` | 若要清理须按顺序：①先把 `isEInkMode` 改成真实可配置开关 ②确认产品不再需要浅色/深色主题 ③再统一删除并更新 eink-only 决策记录。跳过①直接删会得到「既不能切主题、代码里又没痕迹」的半成品 |
 
 ## 已完成但曾登记于此的事项
 
