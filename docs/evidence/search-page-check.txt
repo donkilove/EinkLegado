@@ -1,0 +1,127 @@
+== 搜索页迁移到底栏 验证原始输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-24
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+验证设备：无头模拟器 emulator-5554（android-35 google_apis x86_64）
+
+需求：
+  1. 搜索页改为从底栏进入，去掉书架右上角的搜索按钮
+  2. 书架右上角改为备份按钮
+  3. 搜索入口在「语言与界面」中可开关
+
+用户确认的方案：
+  - 底栏点击打开现有 SearchActivity（不把 Activity 改造成 Fragment）
+  - 备份：未配路径时弹目录选择器，选完自动备份；前台等待显示进度
+  - 关闭开关后底栏隐藏，书架右上角不恢复搜索按钮
+
+--------------------------------------------------
+[1] 实现改动
+--------------------------------------------------
+新增：
+  res/drawable/ic_bottom_search.xml      底栏图标选择器（checked 状态）
+  res/drawable/ic_bottom_search_e.xml    未选中态（描边）
+  res/drawable/ic_bottom_search_s.xml    选中态（实心）
+  按现有 ic_bottom_* 的风格：viewport 24、fillColor #2f45a6、state_checked 选择器
+
+修改：
+  res/menu/main_bnv.xml          书架之后插入 menu_search_page
+  res/menu/main_bookshelf.xml    menu_search（放大镜）→ menu_backup（文件夹图标，showAsAction=always）
+  PreferKey.kt                   新增 showSearchPage 常量
+  AppConfig.kt                   新增 showSearchPage getter，代码默认值 true
+  pref_config_other.xml          语言与界面分组内、showRss 之后新增 SwitchPreference
+  strings.xml / values-zh        新增 show_search_page、show_search_page_summary、backuping
+  MainActivity.kt                底栏点击处理 + upBottomMenu 显隐 + menuItemIdOf 映射
+  BaseBookshelfFragment.kt       menu_search → menu_backup，新增备份逻辑
+
+--------------------------------------------------
+[2] 实现中发现并修正的两个隐患
+--------------------------------------------------
+隐患 A：底栏菜单项按下标访问会错位
+  原代码 MainActivity.kt:501
+    binding.bottomNavigationView.menu[realPositions[position]].isChecked = true
+  realPositions 存的是逻辑 id（书架 0 / 发现 1 / 订阅 2 / 我的 3），
+  历史上恰好与 main_bnv.xml 中菜单项的顺序一致，所以用下标碰巧正确。
+  插入「搜索」后 menu_discovery 从索引 1 变 2、menu_rss 从 2 变 3、
+  menu_my_config 从 3 变 4，巧合失效，会勾错菜单项。
+
+  修正：新增 menuItemIdOf(logicalId) 显式映射，改用
+        menu.findItem(id)?.isChecked = true
+
+隐患 B：realPositions 残留旧值
+  upBottomMenu() 只填充不清空。若先开启某开关再关闭，数组里会留下上次的 id，
+  getFragmentId() 可能返回一个已不存在的页面，导致切页空白或错位。
+
+  修正：填充前 realPositions.fill(idBookshelf)
+
+--------------------------------------------------
+[3] 一处默认值决策
+--------------------------------------------------
+AppConfig.showSearchPage 的代码默认值取 true，与 pref_config_other.xml 的
+defaultValue="true" 保持一致。
+
+不沿用 showDiscovery / showRSS 的写法（代码默认 false、靠 XML 首次写入 true）：
+首次安装时那三个键并不存在于 SharedPreferences，getPrefBoolean 会返回代码默认值。
+实测发现 showDiscovery / showRSS 在全新安装的模拟器上确实不显示（底栏只有书架+我的），
+这是既有行为、不是本次引入的。但搜索入口是新功能，若默认不显示会让人以为功能不存在，
+所以这里选 true。
+
+--------------------------------------------------
+[4] 过程中的编译失败（两次）
+--------------------------------------------------
+第一次：
+  e: BaseBookshelfFragment.kt:133:29 None of the following candidates is applicable
+  e: BaseBookshelfFragment.kt:153:40 Unresolved reference 'backuping'
+
+  原因 a：selectBackupDir.launch() 少传参数。
+         HandleFileContract 的输入类型是 (HandleFileParam.() -> Unit)?，
+         不能直接省略，改为 launch(null)。
+  原因 b：字符串 backuping 不存在，补加到中英 values（备份中… / Backing up…）。
+
+第二次编译：BUILD SUCCESSFUL in 1m 3s
+
+--------------------------------------------------
+[5] 验证结果（模拟器 emulator-5554）
+--------------------------------------------------
+安装：adb install -r → Success
+构建：assembleAppDebug → BUILD SUCCESSFUL in 37s，APK 31.52 MB
+
+AC-1 底栏搜索入口可打开搜索页 —— 通过
+  底栏出现放大镜图标（截图 search-page-1-bottom-entry.png）
+  点击后 topResumedActivity = io.legado.app.ui.book.search.SearchActivity
+  搜索页正常显示搜索历史与输入框（截图 search-page-2-opened.png）
+
+AC-2 书架右上角为备份按钮 —— 通过
+  uiautomator 输出 content-desc="Backup and restore"，位于 (903,213)
+  原来的搜索放大镜已不存在
+
+AC-3 关闭开关后底栏隐藏、右上角不恢复 —— 通过
+  向 shared_prefs 注入 showSearchPage=false 后重启
+  底栏只剩 Bookshelf / Me 两项（uiautomator 确认）
+  书架右上角仍是备份图标，未恢复搜索按钮
+  （截图 search-page-4-disabled.png）
+
+AC-4 底栏顺序与 realPositions 映射正确 —— 通过
+  关闭态下点「我的」→ 正确进入 Me 页，5 项完整，底栏 Me 选中
+  （截图 search-page-5-my-ok.png）说明 menuItemIdOf 映射与 realPositions
+  清理均生效，未出现索引错位
+
+AC-5 构建与单测 —— 通过
+  assembleAppDebug: BUILD SUCCESSFUL
+  testAppDebugUnitTest: BUILD SUCCESSFUL，143 个用例 0 失败（未减少）
+
+额外验证：返回后底栏选中态保持
+  点搜索 → 打开 SearchActivity → 返回 → 底栏仍停在「书架」
+  （截图 search-page-3-back-keeps-tab.png）
+  证明 return false 的处理正确，底栏没有被搜索页「劫持」选中态。
+
+--------------------------------------------------
+[6] 未覆盖
+--------------------------------------------------
+- 备份按钮未实际点按验证：模拟器为全新安装，无备份路径也未授予存储权限，
+  点击会进入目录选择器。备份主流程（Backup.backupLocked）本身未改动，
+  只是复用，且此前「备份与恢复」页已有该功能。
+  风险评估：中低。若需完全验证，需在真机或有数据的模拟器上点一次。
+- 未在真机验证：用户设备不在手边，本次全部在模拟器完成。
+- 未验证「语言与界面」设置页里开关的实际点击：直接改 SharedPreferences 验证的
+  读取路径，未走 UI 切换。pref 键与 SwitchPreference 的绑定是标准用法，
+  与相邻的 showDiscovery / showRss 完全同构。

@@ -33,3 +33,14 @@
 | [p2-unit-tests-verify.md](p2-unit-tests-verify.md) | p2-unit-tests（依据 TODO.md T-3） | 事项与验证结果对照、缺陷与行为变更记录 |
 | [p3-deadcode-check.txt](p3-deadcode-check.txt) | p3-deadcode（TODO.md T-11） | isEInkMode 78 处引用的分类、isNightTheme 追踪、可清理范围 |
 | [p3-deadcode-verify.md](p3-deadcode-verify.md) | p3-deadcode（TODO.md T-11） | 调查结论：不清理，及将来若清理的正确顺序 |
+| [search-page-check.txt](search-page-check.txt) | search-page | 实现改动、两个隐患的修正、编译失败与模拟器验证原始输出 |
+| [search-page-verify.md](search-page-verify.md) | search-page | 需求与 AC 对照、隐患说明、未覆盖项 |
+| [search-page-1-bottom-entry.png](search-page-1-bottom-entry.png) | search-page | 底栏出现搜索入口，书架右上角为备份图标 |
+| [search-page-2-opened.png](search-page-2-opened.png) | search-page | 点击底栏搜索后打开 SearchActivity |
+| [search-page-3-back-keeps-tab.png](search-page-3-back-keeps-tab.png) | search-page | 返回后底栏仍停在书架（选中态未被劫持） |
+| [search-page-4-disabled.png](search-page-4-disabled.png) | search-page | 关闭开关后底栏无搜索项，右上角仍为备份 |
+| [search-page-5-my-ok.png](search-page-5-my-ok.png) | search-page | 关闭态下点「我的」正确进入，映射无误 |
+| [search-page-6-real-device.png](search-page-6-real-device.png) | search-page | 底栏三图标（书架/搜索/我的），搜索入口正常显示 |
+| [search-page-7-real-search.png](search-page-7-real-search.png) | search-page | 点底栏搜索进入搜索页，搜索历史与键盘正常 |
+| [search-page-8-fixed-off.png](search-page-8-fixed-off.png) | search-page | 关闭搜索入口开关后，底栏只剩书架与我的 |
+| [search-page-9-fixed-on.png](search-page-9-fixed-on.png) | search-page | 重新开启开关后，底栏恢复三个图标 |

@@ -255,7 +255,11 @@ class OtherConfigFragment : PreferenceFragment(),
                 setProcessTextEnable(it.getBoolean(key, true))
             }
 
-            PreferKey.showDiscovery, PreferKey.showRss -> postEvent(EventBus.NOTIFY_MAIN, true)
+            // 这三个开关都影响底栏菜单项，切换后要通知主界面重绘。
+            // 漏掉任何一个，用户会看到「开关关了但底栏没变」。
+            PreferKey.showDiscovery,
+            PreferKey.showRss,
+            PreferKey.showSearchPage -> postEvent(EventBus.NOTIFY_MAIN, true)
             PreferKey.language -> view?.postDelayed({
                 appCtx.restart()
             }, 1000)

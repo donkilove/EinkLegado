@@ -38,6 +38,7 @@ import io.legado.app.ui.about.CrashLogsDialog
 import io.legado.app.ui.association.ImportBookSourceDialog
 import io.legado.app.ui.association.ImportReplaceRuleDialog
 import io.legado.app.ui.association.ImportRssSourceDialog
+import io.legado.app.ui.book.search.SearchActivity
 import io.legado.app.ui.main.bookshelf.BaseBookshelfFragment
 import io.legado.app.ui.main.bookshelf.style1.BookshelfFragment1
 import io.legado.app.ui.main.explore.ExploreFragment
@@ -51,6 +52,7 @@ import io.legado.app.utils.observeEvent
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
 import io.legado.app.utils.showDialogFragment
+import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
@@ -181,6 +183,13 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         when (item.itemId) {
             R.id.menu_bookshelf ->
                 viewPagerMain.setCurrentItem(0, false)
+
+            // 搜索页是独立 Activity，不参与 ViewPager。返回 false 让底栏保持原选中项，
+            // 否则点完搜索再回来，底栏会停在一个并不存在的「搜索页」上。
+            R.id.menu_search_page -> {
+                startActivity<SearchActivity>()
+                return false
+            }
 
             R.id.menu_discovery ->
                 viewPagerMain.setCurrentItem(realPositions.indexOf(idExplore), false)
@@ -444,10 +453,15 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     private fun upBottomMenu() {
         val showDiscovery = AppConfig.showDiscovery
         val showRss = AppConfig.showRSS
+        val showSearch = AppConfig.showSearchPage
         binding.bottomNavigationView.menu.let { menu ->
             menu.findItem(R.id.menu_discovery).isVisible = showDiscovery
             menu.findItem(R.id.menu_rss).isVisible = showRss
+            menu.findItem(R.id.menu_search_page).isVisible = showSearch
         }
+        // 重新填充前先清空：开关关闭后若留下旧值，getFragmentId() 会返回一个
+        // 已经不存在的页面 id，导致切页空白或错位。
+        realPositions.fill(idBookshelf)
         var index = 0
         if (showDiscovery) {
             index++
@@ -485,11 +499,32 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         return if (id == idBookshelf) idBookshelf1 else id
     }
 
+    /**
+     * 逻辑 id → 底栏菜单项 id。
+     *
+     * 不能再用 `menu[realPositions[position]]` 那种下标写法：`realPositions` 存的是逻辑 id，
+     * 历史上恰好与底栏菜单项顺序相同才碰巧能用。底栏加入「搜索」入口后这个前提失效。
+     * 注意「搜索」不在 [realPositions] 里——它是独立 Activity，不参与 ViewPager，
+     * 因此不会有任何 position 映射到它。
+     */
+    private fun menuItemIdOf(logicalId: Int): Int? = when (logicalId) {
+        idBookshelf -> R.id.menu_bookshelf
+        idExplore -> R.id.menu_discovery
+        idRss -> R.id.menu_rss
+        idMy -> R.id.menu_my_config
+        else -> null
+    }
+
     private inner class PageChangeCallback : ViewPager.SimpleOnPageChangeListener() {
 
         override fun onPageSelected(position: Int) {
             pagePosition = position
-            binding.bottomNavigationView.menu[realPositions[position]].isChecked = true
+            // 按 itemId 找菜单项，不要按数组下标——realPositions 里存的是逻辑 id
+            // （书架 0 / 发现 1 / 订阅 2 / 我的 3），它们只是**历史上**恰好与菜单项顺序一致。
+            // 底栏插入「搜索」后这个巧合就不成立了，用下标会勾错项。
+            menuItemIdOf(realPositions[position])?.let {
+                binding.bottomNavigationView.menu.findItem(it)?.isChecked = true
+            }
             // 墨水屏专属：进入「我的」时回到根页，避免滞留在二级设置页
             if (realPositions[position] == idMy) {
                 (fragmentMap[idMy] as? MyFragment)?.resetToRoot()

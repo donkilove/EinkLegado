@@ -9,8 +9,10 @@ import androidx.core.view.indices
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
 import io.legado.app.base.VMBaseFragment
+import io.legado.app.constant.AppLog
 import io.legado.app.constant.EventBus
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
@@ -19,6 +21,7 @@ import io.legado.app.databinding.DialogBookshelfConfigBinding
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.help.DirectLinkUpload
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.storage.Backup
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.ui.about.AppLogDialog
 import io.legado.app.ui.book.cache.CacheActivity
@@ -34,12 +37,17 @@ import io.legado.app.ui.widget.dialog.WaitDialog
 import io.legado.app.utils.checkByIndex
 import io.legado.app.utils.getCheckedIndex
 import io.legado.app.utils.isAbsUrl
+import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.readText
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 
 abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfViewModel>(layoutId),
     MainFragmentInterface {
@@ -79,6 +87,7 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
     abstract val books: List<Book>
     abstract var onlyUpdateRead: Boolean
     private var groupsLiveData: LiveData<List<BookGroup>>? = null
+    private var backupJob: Job? = null
     private val waitDialog by lazy {
         WaitDialog(requireContext()).apply {
             setOnCancelListener {
@@ -97,7 +106,7 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
         super.onCompatOptionsItemSelected(item)
         when (item.itemId) {
             R.id.menu_remote -> startActivity<RemoteBookActivity>()
-            R.id.menu_search -> startActivity<SearchActivity>()
+            R.id.menu_backup -> backupFromBookshelf()
             R.id.menu_update_toc -> activityViewModel.upToc(books, onlyUpdateRead)
             R.id.menu_bookshelf_layout -> configBookshelf()
             R.id.menu_group_manage -> showDialogFragment<GroupManageDialog>()
@@ -108,6 +117,55 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
 
             R.id.menu_download -> startActivity<CacheActivity> {
                 putExtra("groupId", groupId)
+            }
+        }
+    }
+
+    /**
+     * 书架右上角的备份入口。
+     *
+     * 与「备份与恢复」页的备份按钮行为一致：已配置路径则直接备份；
+     * 未配置（或不可写）则拉起目录选择器，选完自动开始备份。
+     */
+    private fun backupFromBookshelf() {
+        val path = AppConfig.backupPath
+        if (path.isNullOrEmpty()) {
+            selectBackupDir.launch(null)
+        } else {
+            backupTo(path)
+        }
+    }
+
+    private val selectBackupDir = registerForActivityResult(HandleFileContract()) { result ->
+        result.uri?.let { uri ->
+            val path = if (uri.isContentScheme()) uri.toString() else uri.path
+            if (!path.isNullOrEmpty()) {
+                AppConfig.backupPath = path
+                backupTo(path)
+            }
+        }
+    }
+
+    private fun backupTo(path: String) {
+        // 前台等待 + 可取消：备份涉及全库读写，进度不可见会让用户以为卡死
+        backupJob?.cancel()
+        waitDialog.apply {
+            setText(getString(R.string.backuping))
+            setOnCancelListener { backupJob?.cancel() }
+            show()
+        }
+        backupJob = viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Backup.backupLocked(requireContext(), path)
+                waitDialog.dismiss()
+                requireContext().toastOnUi(R.string.backup_success)
+            } catch (e: Throwable) {
+                ensureActive()
+                waitDialog.dismiss()
+                AppLog.put("备份出错\n${e.localizedMessage}", e)
+                requireContext().toastOnUi(
+                    requireContext().getString(R.string.backup_fail, e.localizedMessage)
+                )
             }
         }
     }

@@ -295,6 +295,20 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
     val showRSS: Boolean
         get() = appCtx.getPrefBoolean(PreferKey.showRss, false)
 
+    /**
+     * 底栏是否显示「搜索」入口。
+     *
+     * 搜索页是独立 Activity，不参与主界面 ViewPager，
+     * 点击后仅启动 [io.legado.app.ui.book.search.SearchActivity]，不切换底栏选中态。
+     *
+     * 代码默认值取 true（与 pref_config_other.xml 的 defaultValue 一致）。
+     * 注意 showDiscovery / showRSS 的代码默认值是 false，靠 XML 首次写入 true；
+     * 这里不沿用那个写法——搜索入口是新功能，若用户在设置页从未被写入前就启动，
+     * 默认不显示会让人以为功能不存在。
+     */
+    val showSearchPage: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.showSearchPage, true)
+
     val autoRefreshBook: Boolean
         get() = appCtx.getPrefBoolean(PreferKey.autoRefresh)
 

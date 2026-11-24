@@ -5,9 +5,9 @@
     tools:ignore="AlwaysShowAction">
 
     <item
-        android:id="@+id/menu_search"
-        android:icon="@drawable/ic_search"
-        android:title="@string/search"
+        android:id="@+id/menu_backup"
+        android:icon="@drawable/ic_cfg_backup"
+        android:title="@string/backup_restore"
         app:showAsAction="always" />
 
     <item
