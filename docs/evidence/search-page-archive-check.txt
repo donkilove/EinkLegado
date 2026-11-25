@@ -1,0 +1,87 @@
+== search-page 补归档核查与门禁输出 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+
+背景：
+  提交 c50d9e021 实施「搜索页改底栏入口」时只提交了证据、未立规格文件，
+  docs/specs/done/README.md 编号停在 5，证据无对应归档规格。
+  本次补登记：新建归档规格 + 补索引 + 对齐证据口径，不改任何生产代码。
+
+--------------------------------------------------
+[1] 补归档改动清单
+--------------------------------------------------
+新增：
+  docs/specs/done/search-page.md                归档规格（编号 6）
+  docs/evidence/search-page-archive-check.txt   本文件
+
+修改：
+  docs/specs/done/README.md                     增补编号 6 一行
+  docs/evidence/README.md                       登记本文件
+  docs/evidence/search-page-check.txt           追加段 [7] 真机复核补记（原段未改）
+  docs/evidence/search-page-verify.md           头部补归档链接与状态、
+                                                AC 表补 AC-6/AC-7、
+                                                截图清单分模拟器/真机两组、
+                                                「未在真机验证」更正为真机已复核
+
+未改动：
+  app/src/main/** 与 app/src/test/** 全部零改动（本机可核对 git status）
+
+--------------------------------------------------
+[2] 证据对齐依据（逐条核对原始证据与截图）
+--------------------------------------------------
+- search-page-check.txt 段 [5] 记录 AC-1~AC-5 的模拟器验证，与截图 1~5 一致
+  （1/2/3/4/5 均为 1080x2340，状态栏时间 7:32~7:35）。
+- 截图 6~9 为 1216x2640，状态栏时间 19:50~19:54，明显晚于模拟器轮次，
+  且 6 显示底栏三图标、7 显示搜索页、8 显示两图标、9 显示三图标，
+  与段 [6]「全部在模拟器完成、未上真机」的表述矛盾。
+  结论：真机复核确实发生过，但未写进原始输出，属记录缺失而非事实错误。
+  处理：不改写段 [5][6]，另立段 [7] 补记事实，并在 verify.md 里更正口径。
+- search-page-8-fixed-off.png 底栏只剩书架与我的，书架右上角为文件夹（备份）图标，
+  与 AC-3「关闭后右上角不恢复搜索按钮」一致。
+
+--------------------------------------------------
+[3] 构建与单测（本次复跑）
+--------------------------------------------------
+命令：JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.21.102-hotspot
+      GRADLE_USER_HOME=D:\gradle-home
+      ./gradlew.bat :app:testAppDebugUnitTest
+
+结果：BUILD SUCCESSFUL in 1m 4s
+      63 actionable tasks: 18 executed, 45 up-to-date
+
+用例统计（汇总 app/build/test-results/testAppDebugUnitTest/*.xml，共 10 个套件）：
+  tests=143  failures=0
+  套件明细：
+    ExampleUnitTest, JsTest, BookProgressBundleTest,
+    SyncDecisionTest, SyncFingerprintTest, SyncPlanTest, UserDataSyncDaoTest,
+    RuleAnalyzerSplitRuleTest, AlphanumComparatorTest, PaginatorTest
+  与规格 AC-5「不少于改动前的 143」一致。
+
+--------------------------------------------------
+[4] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：
+  声明解析：类 4 个，例外 6 条，编号来源 2 个
+  I1 归类完备
+  I2 索引与实体双向一致
+  I3 编号唯一
+
+  文档门禁通过：检查 .md 59 个，文件 1974 个
+  退出码：0
+
+对照补归档前：检查 .md 58 个，文件 1972 个
+  增量 = 新增规格 docs/specs/done/search-page.md（.md +1）
+       + 新增证据 docs/evidence/search-page-archive-check.txt（文件 +1）
+       + docs/evidence/README.md 已登记本文件（I2 通过，文件已是既有）
+三条不变式均通过：新规格已登记进 docs/specs/done/README.md（I2），
+编号 6 未与 1~5 重复（I3），新文件均落在已声明的四类落点内（I1）。
+
+--------------------------------------------------
+[5] 本次未验证 / 残余风险
+--------------------------------------------------
+- 未重新构建 APK（assembleAppDebug）：本次零生产代码改动，
+  143 个单测通过已足以证明代码未受影响，未额外花时间打包。
+- 未在设备上复跑 UI 用例：本次只改文档，无可执行行为变更。
+- 备份按钮仍未点按过：AC-2 的验证边界没有变化，已在规格「假设与风险」登记。

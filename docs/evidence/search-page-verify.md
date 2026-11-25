@@ -1,8 +1,9 @@
 # search-page 验证证据
 
 > 生成：2026-11-24 · 需求：搜索页改为底栏入口、书架右上角改备份、搜索入口可开关
-> 状态：完成（模拟器验证）
+> 状态：完成（模拟器 + 真机复核；2026-11-25 补归档时更正）
 > 原始输出：[search-page-check.txt](search-page-check.txt)
+> 归档规格：[docs/specs/done/search-page.md](../specs/done/search-page.md)
 
 ## 需求与实现
 
@@ -22,8 +23,12 @@
 | AC-3 关闭开关后底栏隐藏且右上角不恢复 | 注入 `showSearchPage=false` 后重启 | 通过：底栏只剩 Bookshelf/Me；右上角仍是备份图标 | 段 [5] |
 | AC-4 底栏顺序与映射正确 | 关闭态下点「我的」 | 通过：正确进入 Me 页，5 项完整，选中态正确 | 段 [5] |
 | AC-5 构建与既有单测 | `assembleAppDebug` / `testAppDebugUnitTest` | 通过：构建成功，143 用例 0 失败 | 段 [5] |
+| AC-6 文档门禁 | `pwsh -File tools/check-docs.ps1` | 通过：退出码 0（补归档时复跑） | [search-page-archive-check.txt](search-page-archive-check.txt) |
+| AC-7 真机复核 | 真机截图 4 张：三图标 → 进搜索页 → 关闭后两图标 → 重新开启恢复三图标 | 通过（真机可见） | 段 [7]、截图 `search-page-6`~`9` |
 
-截图：[底栏入口](search-page-1-bottom-entry.png) · [搜索页](search-page-2-opened.png) · [返回保持选中态](search-page-3-back-keeps-tab.png) · [关闭后](search-page-4-disabled.png) · [我的页正常](search-page-5-my-ok.png)
+模拟器截图（1080×2340）：[底栏入口](search-page-1-bottom-entry.png) · [搜索页](search-page-2-opened.png) · [返回保持选中态](search-page-3-back-keeps-tab.png) · [关闭后](search-page-4-disabled.png) · [我的页正常](search-page-5-my-ok.png)
+
+真机截图（1216×2640，2026-11-24 19:50–19:54）：[三图标底栏](search-page-6-real-device.png) · [真实设备搜索页](search-page-7-real-search.png) · [关闭后两图标](search-page-8-fixed-off.png) · [重新开启后三图标](search-page-9-fixed-on.png)
 
 ## 实现中发现并修正的两个隐患
 
@@ -73,7 +78,11 @@ binding.bottomNavigationView.menu[realPositions[position]].isChecked = true
 - **备份按钮未实际点按验证**：模拟器为全新安装，无备份路径也未授予存储权限，
   点击会进入目录选择器。备份主流程 `Backup.backupLocked()` 未改动、只是复用，
   且「备份与恢复」页此前已有该功能。**风险中低，但确实没点过。**
-- **未在真机验证**：用户设备不在手边，全部在模拟器完成。
+- **真机验证（补记更正）**：本文初稿写「用户设备不在手边，全部在模拟器完成」，
+  但此后确实在真机上完成了复核并留下 `search-page-6`~`9` 四张截图（1216×2640，
+  时间为 19:50–19:54，晚于模拟器轮次 7:32–7:35）。原表述已不准确，此处更正；
+  真机操作步骤未逐条记录，截图无法区分开关是点的设置页还是注入的。详见
+  `search-page-check.txt` 段 [7]。
 - **设置页开关未走 UI 切换**：直接改 SharedPreferences 验证读取路径。pref 键与
   `SwitchPreference` 的绑定与相邻的 `showDiscovery`/`showRss` 完全同构，未额外验证。
 - **底栏图标是新建的 vector**：按现有 `ic_bottom_*` 风格画的，视觉效果未与设计稿核对。
