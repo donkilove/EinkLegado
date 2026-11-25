@@ -129,13 +129,5 @@
         android:title="@string/web_dav_set"
         app:iconSpaceReserved="false" />
 
-    <!-- 备份与恢复 -->
-    <io.legado.app.lib.prefs.Preference
-        android:icon="@drawable/ic_cfg_backup"
-        android:key="backup_restore_setting"
-        android:summary="@string/backup_restore_s"
-        android:title="@string/backup_restore"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false" />
 
 </androidx.preference.PreferenceScreen>

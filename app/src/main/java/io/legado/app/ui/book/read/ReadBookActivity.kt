@@ -51,7 +51,6 @@ import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ReadTipConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.source.getSourceType
-import io.legado.app.help.storage.Backup
 import io.legado.app.lib.dialogs.SelectItem
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.dialogs.selector
@@ -383,9 +382,6 @@ class ReadBookActivity : BaseReadBookActivity(),
             } else {
                 ReadBook.uploadProgress()
             }
-        }
-        if (!BuildConfig.DEBUG) {
-            Backup.autoBack(this)
         }
         justInitData = false
         networkChangedListener.unRegister()
@@ -1650,7 +1646,6 @@ class ReadBookActivity : BaseReadBookActivity(),
                 AppWebDav.uploadBookProgress(it)
                 ensureActive()
                 it.update()
-                Backup.autoBack(this@ReadBookActivity)
             }
         }
     }
@@ -1707,9 +1702,6 @@ class ReadBookActivity : BaseReadBookActivity(),
         handler.removeCallbacksAndMessages(null) // 清理Handler消息
         if (!ReadBook.inBookshelf && !isChangingConfigurations) {
             viewModel.removeFromBookshelf(null)
-        }
-        if (!BuildConfig.DEBUG) {
-            Backup.autoBack(this)
         }
     }
 

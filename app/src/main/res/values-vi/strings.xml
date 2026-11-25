@@ -12,8 +12,6 @@
     <string name="menu_import_old">Nhập dữ liệu Legado cũ</string>
     <string name="webdav_cache_backup">Sao lưu sách đệm ngoại tuyến</string>
     <string name="webdav_cache_backup_s">Xuất ra bộ nhớ cục bộ và sao lưu vào thư mục exports trong thư mục Legado</string>
-    <string name="backup_path">Đường dẫn sao lưu</string>
-    <string name="select_backup_path">Vui lòng chọn đường dẫn sao lưu.</string>
     <string name="menu_import_old_version">Nhập dữ liệu phiên bản cũ</string>
     <string name="menu_import_github">Nhập dữ liệu từ Github</string>
     <string name="menu_replace_rule">Thay thế</string>
@@ -105,7 +103,6 @@
     <string name="ps_auto_refresh">Tự động cập nhật sách khi mở phần mềm</string>
     <string name="pt_auto_download">Tự động tải xuống</string>
     <string name="ps_auto_download">Tự động tải các chương mới nhất khi cập nhật sách</string>
-    <string name="backup_restore">Sao lưu và khôi phục</string>
     <string name="web_dav_set">Cài đặt WebDav</string>
     <string name="web_dav_set_import_old">Cài đặt WebDav/Nhập dữ liệu cũ</string>
     <string name="backup">Sao lưu</string>
@@ -118,8 +115,6 @@
     <string name="backup_message">Tệp sao lưu mới sẽ thay thế tệp cũ.\n Thư mục sao lưu: YueDu</string>
     <string name="restore_confirmation">Xác nhận khôi phục</string>
     <string name="restore_message">Khôi phục dữ liệu tủ sách sẽ ghi đè lên tủ sách hiện tại.</string>
-    <string name="backup_success">Sao lưu thành công</string>
-    <string name="backup_fail">Sao lưu thất bại\n%s</string>
     <string name="on_restore">Đang khôi phục</string>
     <string name="restore_success">Khôi phục thành công</string>
     <string name="restore_fail">Khôi phục thất bại</string>
@@ -730,8 +725,6 @@
     <string name="text_bottom_justify">Văn bản căn dưới</string>
     <string name="auto_page_speed">Tốc độ tự động cuộn</string>
     <string name="sort_by_url">Sắp xếp theo URL</string>
-    <string name="backup_summary">Sao lưu cục bộ và WebDav đồng thời</string>
-    <string name="restore_summary">Khôi phục từ WebDAV trước, nhấn giữ để khôi phục từ bản sao lưu cục bộ</string>
     <string name="import_old_summary">Chọn một thư mục sao lưu cũ</string>
     <string name="enabled">Đã bật</string>
     <string name="disabled">Đã tắt</string>
@@ -751,8 +744,6 @@
     <string name="contributors_summary">gedoor, Invinciblelee, Xwite, v.v. Kiểm tra trên github để biết chi tiết</string>
     <string name="clear_cache_summary">Xóa bộ đệm của sách và phông chữ đã tải xuống</string>
     <string name="default_cover">Bìa mặc định</string>
-    <string name="restore_ignore">Danh sách bỏ qua</string>
-    <string name="restore_ignore_summary">Bỏ qua một số nội dung khi khôi phục</string>
     <string name="read_config">Cài đặt giao diện đọc</string>
     <string name="group_name">Tên nhóm</string>
     <string name="note_content">Phần ghi chú</string>
@@ -1059,7 +1050,6 @@
     <string name="toggle_search_scope">Chuyển đổi</string>
     <string name="sure_clear_search_history">Bạn có chắc chắn muốn xóa tất cả lịch sử tìm kiếm không</string>
     <string name="no_anim_scroll_page">Vô hiệu hóa hoạt ảnh nhấp chuột cuộn</string>
-    <string name="webdav_device_name">Tên thiết bị</string>
     <string name="web_service_wake_lock">Khóa đánh thức dịch vụ web</string>
     <string name="web_service_wake_lock_summary">Khóa đánh thức được bật khi dịch vụ web được bật và một số điện thoại sẽ bị tắt khi khóa đánh thức được bật.</string>
     <string name="read_aloud_wake_lock">Khóa đánh thức dịch vụ đọc thành tiếng</string>
@@ -1077,7 +1067,6 @@
     <string name="same_title_removed">Xóa tiêu đề trùng lặp</string>
     <string name="update_book_fail">Cập nhật thất bại</string>
     <string name="notification_permission_rationale">Đọc cần gửi thông báo để hiển thị điều khiển đọc và tiến trình tải xuống</string>
-    <string name="webdav_after_local_restore_confirm">Nguồn sách webDav mới hơn nguồn cục bộ, có khôi phục không</string>
     <string name="c_whitelist">Danh sách trắng(contentWhitelist)</string>
     <string name="c_blacklist">Danh sách đen(contentBlacklist)</string>
     <string name="confirm">Xác nhận</string>
@@ -1112,8 +1101,6 @@
     <string name="select_update_source">Chọn nguồn cập nhật</string>
     <string name="set_local_password">Đặt mật khẩu cục bộ</string>
     <string name="set_local_password_summary">Mật khẩu cục bộ được sử dụng để mã hóa và giải mã thông tin nhạy cảm của bản sao lưu, nếu cần đồng bộ hóa giữa các thiết bị khác nhau, mật khẩu cục bộ phải nhất quán.</string>
-    <string name="only_latest_backup_t">Chỉ giữ bản sao lưu mới nhất</string>
-    <string name="only_latest_backup_s">Sao lưu cục bộ chỉ giữ tệp sao lưu mới nhất</string>
     <string name="webdav_application_authorization_error">Không thể ủy quyền ứng dụng WebDav</string>
     <string name="load_word_count">Tải số từ</string>
     <string name="replace_exclude_scope">Phạm vi loại trừ, tên sách tùy chọn hoặc URL nguồn sách</string>
@@ -1217,7 +1204,5 @@
     <string name="enable_manga_gray">Bật ảnh xám</string>
     <string name="play_mode">Chế độ phát</string>
     <string name="sure_cache_book">是否确认开始缓存？</string>
-    <string name="auto_check_new_backup_t">自动检查新备份</string>
-    <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
     <string name="sys_image_picker">系统图片选择器</string>
 </resources>

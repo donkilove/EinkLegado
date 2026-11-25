@@ -57,3 +57,7 @@
 | [webdav-sync-v3-switches.txt](webdav-sync-v3-switches.txt) | webdav-sync-v3（阶段 4） | 三个开关的设计、null/空列表闸门、回归与模拟器实测 |
 | [webdav-sync-v3-switches-1.png](webdav-sync-v3-switches-1.png) | webdav-sync-v3（阶段 4） | WebDav 设置第 1 页：同步阅读时长（默认开） |
 | [webdav-sync-v3-switches-2.png](webdav-sync-v3-switches-2.png) | webdav-sync-v3（阶段 4） | WebDav 设置第 2 页：自动上传（默认关）/ 按需下载（默认开） |
+| [webdav-sync-v3-remove.txt](webdav-sync-v3-remove.txt) | webdav-sync-v3（阶段 5） | 备份全套删除清单、连带引用修复、符号清零核查、模拟器实测 |
+| [webdav-sync-v3-remove-1-my.png](webdav-sync-v3-remove-1-my.png) | webdav-sync-v3（阶段 5） | 「我的」页已无备份与恢复入口 |
+| [webdav-sync-v3-remove-2-webdav.png](webdav-sync-v3-remove-2-webdav.png) | webdav-sync-v3（阶段 5） | WebDav 设置 9 项，设备名称已移除 |
+| [webdav-sync-v3-remove-3-shelf.png](webdav-sync-v3-remove-3-shelf.png) | webdav-sync-v3（阶段 5） | 书架工具栏备份图标已移除 |

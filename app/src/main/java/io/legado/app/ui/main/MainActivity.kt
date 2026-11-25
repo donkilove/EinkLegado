@@ -30,7 +30,6 @@ import io.legado.app.help.book.BookHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.help.coroutine.Coroutine
-import io.legado.app.help.storage.Backup
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.service.BaseReadAloudService
@@ -157,8 +156,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             //设置本地密码
             setLocalPassword()
             notifyAppCrash()
-            //备份同步
-            backupSync()
             //设置回调
             viewModel.setActivityCallback(this@MainActivity)
             //自动更新书源
@@ -369,28 +366,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         }
     }
 
-    /**
-     * 备份同步
-     */
-    private fun backupSync() {
-        if (!AppConfig.autoCheckNewBackup) {
-            return
-        }
-        lifecycleScope.launch {
-            val lastBackupFile =
-                withContext(IO) { AppWebDav.lastBackUp().getOrNull() } ?: return@launch
-            if (lastBackupFile.lastModify - LocalConfig.lastBackup > DateUtils.MINUTE_IN_MILLIS) {
-                LocalConfig.lastBackup = lastBackupFile.lastModify
-                alert(R.string.restore, R.string.webdav_after_local_restore_confirm) {
-                    cancelButton()
-                    okButton {
-                        viewModel.restoreWebDav(lastBackupFile.displayName)
-                    }
-                }
-            }
-        }
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         if (AppConfig.autoRefreshBook) {
@@ -402,9 +377,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         super.onDestroy()
         Coroutine.async {
             BookHelp.clearInvalidCache()
-        }
-        if (!BuildConfig.DEBUG) {
-            Backup.autoBack(this)
         }
     }
 

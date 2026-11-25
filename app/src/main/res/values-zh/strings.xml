@@ -12,8 +12,6 @@
     <string name="menu_import_old">导入阅读数据</string>
     <string name="webdav_cache_backup">离线缓存书籍备份</string>
     <string name="webdav_cache_backup_s">导出本地同时备份到 legado 文件夹下的 exports 目录</string>
-    <string name="backup_path">备份路径</string>
-    <string name="select_backup_path">请选择备份路径</string>
     <string name="menu_import_old_version">导入旧版数据</string>
     <string name="menu_import_github">导入 Github 数据</string>
     <string name="menu_replace_rule">净化替换</string>
@@ -111,7 +109,6 @@
     <string name="ps_auto_refresh">打开软件时自动更新书籍</string>
     <string name="pt_auto_download">自动下载最新章节</string>
     <string name="ps_auto_download">更新书籍时自动下载最新章节</string>
-    <string name="backup_restore">备份与恢复</string>
     <string name="web_dav_set">WebDav 设置</string>
     <string name="web_dav_set_import_old">WebDav 设置/导入旧版本数据</string>
     <string name="backup">备份</string>
@@ -124,9 +121,6 @@
     <string name="backup_message">新备份会替换原有备份。\n备份文件夹 YueDu</string>
     <string name="restore_confirmation">确认恢复吗？</string>
     <string name="restore_message">恢复书架会覆盖现有书架。</string>
-    <string name="backuping">备份中…</string>
-    <string name="backup_success">备份成功</string>
-    <string name="backup_fail">备份失败\n%s</string>
     <string name="on_restore">正在恢复</string>
     <string name="restore_success">恢复成功</string>
     <string name="restore_fail">恢复失败</string>
@@ -738,8 +732,6 @@
     <string name="text_bottom_justify">文字底部对齐</string>
     <string name="auto_page_speed">自动翻页速度</string>
     <string name="sort_by_url">地址排序</string>
-    <string name="backup_summary">本地和 WebDav 一起备份</string>
-    <string name="restore_summary">优先从 WebDav 恢复，长按从本地恢复</string>
     <string name="import_old_summary">选择旧版备份文件夹</string>
     <string name="enabled">已启用</string>
     <string name="disabled">已禁用</string>
@@ -759,8 +751,6 @@
     <string name="contributors_summary">gedoor、Invinciblelee 和 Xwite 等，详情请在 GitHub 中查看</string>
     <string name="clear_cache_summary">清除已下载书籍和字体缓存</string>
     <string name="default_cover">默认封面</string>
-    <string name="restore_ignore">恢复忽略列表</string>
-    <string name="restore_ignore_summary">恢复时忽略一些内容不恢复，方便不同手机配置不同</string>
     <string name="read_config">阅读界面设置</string>
     <string name="group_name">分组名称</string>
     <string name="note_content">备注内容</string>
@@ -1081,7 +1071,6 @@
     <string name="toggle_search_scope">切换</string>
     <string name="sure_clear_search_history">是否确认清除所有搜索历史记录</string>
     <string name="no_anim_scroll_page">禁用滚动点击动画</string>
-    <string name="webdav_device_name">设备名称</string>
     <string name="web_service_wake_lock">WebService唤醒锁</string>
     <string name="web_service_wake_lock_summary">开启web服务的时候启用唤醒锁,有些手机开启唤醒锁会被杀后台</string>
     <string name="read_aloud_wake_lock">朗读服务唤醒锁</string>
@@ -1099,7 +1088,6 @@
     <string name="same_title_removed">移除重复标题</string>
     <string name="update_book_fail">更新失败</string>
     <string name="notification_permission_rationale">阅读需要发送通知来显示朗读控制和下载进度</string>
-    <string name="webdav_after_local_restore_confirm">webDav书源比本地新,是否恢复</string>
     <string name="c_whitelist">白名单(contentWhitelist)</string>
     <string name="c_blacklist">黑名单(contentBlacklist)</string>
     <string name="confirm">确认</string>
@@ -1134,8 +1122,6 @@
     <string name="select_update_source">选中更新源</string>
     <string name="set_local_password">设置本地密码</string>
     <string name="set_local_password_summary">本地密码用来对备份的敏感信息加密和解密,如需在不同设备之间同步,本地密码需一致.</string>
-    <string name="only_latest_backup_t">仅保留最新备份</string>
-    <string name="only_latest_backup_s">本地备份仅保留最新备份文件</string>
     <string name="webdav_application_authorization_error">webDav应用验证失败</string>
     <string name="load_word_count">加载字数</string>
     <string name="replace_exclude_scope">排除范围，选填书名或者书源 URL</string>
@@ -1245,8 +1231,6 @@
     <string name="custom_hosts_summary">域名到IP的映射</string>
     <string name="show_bookname">显示书名</string>
     <string name="sure_cache_book">是否确认开始缓存？</string>
-    <string name="auto_check_new_backup_t">自动检查新备份</string>
-    <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
     <string name="sys_image_picker">系统图片选择器</string>
     <!-- 设置页二级入口 -->
     <string name="my_content">内容管理</string>
@@ -1278,7 +1262,6 @@
         <item>@string/bookshelf_px_5</item>
     </string-array>
     <string name="web_dav_set_s">WebDav 服务器与同步设置</string>
-    <string name="backup_restore_s">备份与恢复应用数据</string>
     <string name="sync_progress_done">已同步 %d 本书的阅读进度</string>
     <string name="book_trash">回收站</string>
     <string name="book_trash_s">删除的书保留 30 天，期间可恢复</string>

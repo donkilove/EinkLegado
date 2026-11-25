@@ -12,8 +12,6 @@
     <string name="menu_import_old">Importar dados ao Legado</string>
     <string name="webdav_cache_backup">Backup do cache dos livros para leitura off-line</string>
     <string name="webdav_cache_backup_s">Exportar localmente e fazer Backup à pasta de exportação</string>
-    <string name="backup_path">Backup para</string>
-    <string name="select_backup_path">Por favor, selecione uma pasta de Backup.</string>
     <string name="menu_import_old_version">Importar dados de Legado</string>
     <string name="menu_import_github">Importar dados de Github</string>
     <string name="menu_replace_rule">Substituição</string>
@@ -110,7 +108,6 @@
     <string name="ps_auto_refresh">Atualizar os livros automaticamente ao abrir o App</string>
     <string name="pt_auto_download">Download automático</string>
     <string name="ps_auto_download">Baixar automaticamente os últimos capítulos ao atualizar os livros</string>
-    <string name="backup_restore">Backup e restauração</string>
     <string name="web_dav_set">Configurações de WebDav</string>
     <string name="web_dav_set_import_old">Configurações/importação WebDav de dados Legado </string>
     <string name="backup">Fazer Backup</string>
@@ -123,8 +120,6 @@
     <string name="backup_message">Os novos arquivos de Backup substituirão os originais.\n Pasta de Backup: YueDu</string>
     <string name="restore_confirmation">Confirmação da Restauração</string>
     <string name="restore_message">A restauração dos dados da estante irá substituir a estante atual.</string>
-    <string name="backup_success">Backup bem sucedido</string>
-    <string name="backup_fail">O Backup falhou\n%s</string>
     <string name="on_restore">Restaurando</string>
     <string name="restore_success">Restauração bem sucedida</string>
     <string name="restore_fail">A restauração falhou</string>
@@ -733,8 +728,6 @@
     <string name="text_bottom_justify">Texto alinhado com parte inferior</string>
     <string name="auto_page_speed">Velocidade de rolagem automática</string>
     <string name="sort_by_url">Ordenar por URL</string>
-    <string name="backup_summary">Faça backup local e de WebDav simultaneamente</string>
-    <string name="restore_summary">Primeiro restaurar de WebDAV, ao clicar longo restaurar do local backup</string>
     <string name="import_old_summary">Selecione uma pasta Legado de Backup</string>
     <string name="enabled">Ativado</string>
     <string name="disabled">Desativado</string>
@@ -754,8 +747,6 @@
     <string name="contributors_summary">gedoor,Invinciblelee,Xwite etc. Para mais detalhes vá ao Github</string>
     <string name="clear_cache_summary">Limpar o cache dos livros e fontes baixados</string>
     <string name="default_cover">Capa padrão</string>
-    <string name="restore_ignore">Lista de ignorados</string>
-    <string name="restore_ignore_summary">Ignore alguns conteúdos durante restauração</string>
     <string name="read_config">Configuração da interface de leitura</string>
     <string name="group_name">Nome de grupo</string>
     <string name="note_content">Seção de observações</string>
@@ -1066,7 +1057,6 @@
     <string name="toggle_search_scope">切换</string>
     <string name="sure_clear_search_history">是否确认清除所有搜索历史记录</string>
     <string name="no_anim_scroll_page">禁用滚动点击动画</string>
-    <string name="webdav_device_name">设备名称</string>
     <string name="web_service_wake_lock">WebService唤醒锁</string>
     <string name="web_service_wake_lock_summary">开启web服务的时候启用唤醒锁,有些手机开启唤醒锁会被杀后台</string>
     <string name="read_aloud_wake_lock">朗读服务唤醒锁</string>
@@ -1084,7 +1074,6 @@
     <string name="same_title_removed">移除重复标题</string>
     <string name="update_book_fail">更新失败</string>
     <string name="notification_permission_rationale">阅读需要发送通知来显示朗读控制和下载进度</string>
-    <string name="webdav_after_local_restore_confirm">webDav书源比本地新,是否恢复</string>
     <string name="c_whitelist">白名单(contentWhitelist)</string>
     <string name="c_blacklist">黑名单(contentBlacklist)</string>
     <string name="confirm">确认</string>
@@ -1119,8 +1108,6 @@
     <string name="select_update_source">选中更新源</string>
     <string name="set_local_password">设置本地密码</string>
     <string name="set_local_password_summary">本地密码用来对备份的敏感信息加密和解密,如需在不同设备之间同步,本地密码需一致.</string>
-    <string name="only_latest_backup_t">仅保留最新备份</string>
-    <string name="only_latest_backup_s">本地备份仅保留最新备份文件</string>
     <string name="webdav_application_authorization_error">Fail to authorize WebDav application</string>
     <string name="load_word_count">Carregar os palavras do livro</string>
     <string name="replace_exclude_scope">排除范围，选填书名或者书源 URL</string>
@@ -1226,7 +1213,5 @@
     <string name="disable_horizontal_page_snap">禁用水平翻页效果</string>
     <string name="enable_manga_gray">开启图片灰色</string>
     <string name="sure_cache_book">是否确认开始缓存？</string>
-    <string name="auto_check_new_backup_t">自动检查新备份</string>
-    <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
     <string name="sys_image_picker">系统图片选择器</string>
 </resources>

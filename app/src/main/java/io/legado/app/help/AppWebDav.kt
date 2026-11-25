@@ -11,8 +11,6 @@ import io.legado.app.data.entities.BookProgressBundle
 import io.legado.app.data.entities.isAheadOf
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.storage.Backup
-import io.legado.app.help.storage.Restore
 import io.legado.app.help.sync.PendingProgressQueue
 import io.legado.app.help.sync.SyncData
 import io.legado.app.help.sync.SyncDecision
@@ -27,12 +25,10 @@ import io.legado.app.lib.webdav.WebDav
 import io.legado.app.lib.webdav.WebDavException
 import io.legado.app.lib.webdav.WebDavFile
 import io.legado.app.model.remote.RemoteBookWebDav
-import io.legado.app.utils.AlphanumComparator
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.GSON
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.UrlUtil
-import io.legado.app.utils.compress.ZipUtils
 import io.legado.app.utils.fromJsonObject
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.isJson
@@ -123,74 +119,6 @@ object AppWebDav {
             appCtx.removePref(PreferKey.webDavPassword)
             appCtx.toastOnUi(R.string.webdav_application_authorization_error)
             throw WebDavException(appCtx.getString(R.string.webdav_application_authorization_error))
-        }
-    }
-
-    @Throws(Exception::class)
-    suspend fun getBackupNames(): ArrayList<String> {
-        val names = arrayListOf<String>()
-        authorization?.let {
-            var files = WebDav(rootWebDavUrl, it).listFiles()
-            files = files.sortedWith { o1, o2 ->
-                AlphanumComparator.compare(o1.displayName, o2.displayName)
-            }.reversed()
-            files.forEach { webDav ->
-                val name = webDav.displayName
-                if (name.startsWith("backup")) {
-                    names.add(name)
-                }
-            }
-        } ?: throw NoStackTraceException("webDav没有配置")
-        return names
-    }
-
-    @Throws(WebDavException::class)
-    suspend fun restoreWebDav(name: String) {
-        authorization?.let {
-            val webDav = WebDav(rootWebDavUrl + name, it)
-            webDav.downloadTo(Backup.zipFilePath, true)
-            FileUtils.delete(Backup.backupPath)
-            ZipUtils.unZipToPath(File(Backup.zipFilePath), Backup.backupPath)
-            Restore.restoreLocked(Backup.backupPath)
-        }
-    }
-
-    suspend fun hasBackUp(backUpName: String): Boolean {
-        authorization?.let {
-            val url = "$rootWebDavUrl${backUpName}"
-            return WebDav(url, it).exists()
-        }
-        return false
-    }
-
-    suspend fun lastBackUp(): Result<WebDavFile?> {
-        return kotlin.runCatching {
-            authorization?.let {
-                var lastBackupFile: WebDavFile? = null
-                WebDav(rootWebDavUrl, it).listFiles().reversed().forEach { webDavFile ->
-                    if (webDavFile.displayName.startsWith("backup")) {
-                        if (lastBackupFile == null
-                            || webDavFile.lastModify > lastBackupFile.lastModify
-                        ) {
-                            lastBackupFile = webDavFile
-                        }
-                    }
-                }
-                lastBackupFile
-            }
-        }
-    }
-
-    /**
-     * webDav备份
-     * @param fileName 备份文件名
-     */
-    @Throws(Exception::class)
-    suspend fun backUpWebDav(fileName: String) {
-        if (!NetworkUtils.isAvailable()) return
-        authorization?.let {
-            val putUrl = "$rootWebDavUrl$fileName"
-            WebDav(putUrl, it).upload(Backup.zipFilePath)
         }
     }
 

@@ -1,0 +1,109 @@
+== webdav-sync-v3 阶段 5：删除备份 / 恢复全套 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+
+--------------------------------------------------
+[1] 删除清单
+--------------------------------------------------
+整文件删除（6 个）：
+  help/storage/Backup.kt
+  help/storage/Restore.kt
+  help/storage/BackupAES.kt
+  help/storage/BackupConfig.kt
+  ui/config/BackupConfigFragment.kt
+  res/xml/pref_config_backup.xml
+
+AppWebDav 删除的备份 API（5 个）：
+  getBackupNames / restoreWebDav / hasBackUp / lastBackUp / backUpWebDav
+
+调用点删除：
+  App.kt                    Backup.clearCache()
+  MainActivity              backupSync() 整函数 + 调用 + onDestroy 里的 autoBack
+  ReadBookActivity          autoBack ×3
+  ReadMangaActivity         autoBack ×1
+  BaseBookshelfFragment     backupFromBookshelf / selectBackupDir / backupTo / backupJob
+  MainViewModel             restoreWebDav
+  ConfigActivity / ConfigTag  BACKUP_CONFIG 路由与常量
+  MyFragment                backup_restore_setting 跳转
+  res/menu/main_bookshelf   menu_backup 菜单项
+  res/xml/pref_main         backup_restore_setting 入口
+
+设备名称（9 处代码 + 8 个语言文件）：
+  PreferKey.webDavDeviceName / AppConfig.webDavDeviceName
+  WebDavConfigFragment 三处引用
+  pref_config_web_dav.xml 的 EditTextPreference
+  values*/strings.xml 的 webdav_device_name
+
+备份专用偏好键：
+  PreferKey.onlyLatestBackup / autoCheckNewBackup 及各自 AppConfig getter
+
+死字符串（16 个 × 8 个语言文件，共 128 行）：
+  backup_path, select_backup_path, backup_restore, backup_restore_s, backuping,
+  backup_success, backup_fail, backup_summary, restore_summary, restore_ignore,
+  restore_ignore_summary, webdav_after_local_restore_confirm,
+  only_latest_backup_t/s, auto_check_new_backup_t/s
+  删除前逐个用 R.string.x / @string/x 检索确认零引用。
+
+--------------------------------------------------
+[2] 删除过程中暴露的连带引用（逐个修掉）
+--------------------------------------------------
+编译第一轮：
+  e: MainActivity.kt:160 Unresolved reference 'backupSync'
+  → 删掉启动流程里的 backupSync() 调用
+编译第二轮：
+  e: MainViewModel.kt:288 Unresolved reference 'restoreWebDav'
+  → 删掉 MainViewModel.restoreWebDav
+编译第三轮：BUILD SUCCESSFUL
+
+另清理：BaseBookshelfFragment 的 backupJob 字段、AppWebDav 的
+AlphanumComparator / ZipUtils 未用导入、WebDavConfigFragment 里指向已删类的注释。
+
+--------------------------------------------------
+[3] 验证
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest :app:assembleAppDebug
+结果：BUILD SUCCESSFUL
+      EXIT=0
+      tests=189  failures=0
+      APK 35.4 MB
+
+符号检索（app/src 全量）：
+  Backup. / Restore. / BackupAES / BackupConfigFragment / help.storage.Backup*
+  仅剩三处无关命中：BgTextConfigDialog 的 tvRestore、BookTrashAdapter 的 ivRestore、
+  以及 ReadRecordMergeTest 里描述历史缺陷的注释。
+  即备份/恢复相关符号已清零。
+
+--------------------------------------------------
+[4] 模拟器实测
+--------------------------------------------------
+安装后启动：topResumedActivity=MainActivity，无崩溃。
+
+书架工具栏：只剩「全部」+ 溢出菜单，右上角备份文件夹图标已消失
+  → 截图 webdav-sync-v3-remove-3-shelf.png
+
+「我的」页：Content / Settings / Other / WebDav settings 四项，
+「备份与恢复」入口已消失
+  → 截图 webdav-sync-v3-remove-1-my.png
+
+WebDav 设置页：共 9 项（原 10 项），「设备名称」已消失，
+  第 1 页为 服务器地址 / 账号 / 密码 / 子目录 / 同步阅读进度 /
+  同步增强 / 同步阅读时长 / 自动上传本地书
+  → 截图 webdav-sync-v3-remove-2-webdav.png
+
+--------------------------------------------------
+[5] 兼容性说明（用户已确认）
+--------------------------------------------------
+本次之后**不再支持恢复 v2 及更早版本的备份 zip**。
+用户明确选择「不要升级提示，直接删」，因此没有加任何引导弹窗。
+旧 zip 里的 bookshelf.json / config.xml 等文件已无读取代码。
+
+--------------------------------------------------
+[6] 五个阶段全部完成
+--------------------------------------------------
+阶段 1 同步载荷扩到 15 类      e4250ccd5
+阶段 2 回收站（表+传播+UI+清理）f5e37f5a5 / 2935bdcb0
+阶段 3 阅读记录 deviceId 修复   21d49978f
+阶段 4 三个开关                 2d1ca2354
+阶段 5 删除备份全套             本次提交

@@ -22,7 +22,6 @@ import io.legado.app.ui.widget.setupPreferencePaging
  * WebDav 连接与同步设置。
  *
  * 从原「备份与恢复」页拆出：这里只维护连接信息与同步开关，
- * 备份/恢复操作在 [BackupConfigFragment]。
  */
 class WebDavConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener {
@@ -44,17 +43,10 @@ class WebDavConfigFragment : PreferenceFragment(),
                 editText.setSelection(editText.text.length)
             }
         }
-        findPreference<EditTextPreference>(PreferKey.webDavDeviceName)?.let {
-            it.setOnBindEditTextListener { editText ->
-                editText.text = AppConfig.webDavDeviceName?.toEditable()
-                editText.setSelection(editText.text.length)
-            }
-        }
         upPreferenceSummary(PreferKey.webDavUrl, getPrefString(PreferKey.webDavUrl))
         upPreferenceSummary(PreferKey.webDavAccount, getPrefString(PreferKey.webDavAccount))
         upPreferenceSummary(PreferKey.webDavPassword, getPrefString(PreferKey.webDavPassword))
         upPreferenceSummary(PreferKey.webDavDir, AppConfig.webDavDir)
-        upPreferenceSummary(PreferKey.webDavDeviceName, AppConfig.webDavDeviceName)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -81,7 +73,6 @@ class WebDavConfigFragment : PreferenceFragment(),
                 viewModel.upWebDavConfig()
             }
 
-            PreferKey.webDavDeviceName -> upPreferenceSummary(key, getPrefString(key))
         }
     }
 

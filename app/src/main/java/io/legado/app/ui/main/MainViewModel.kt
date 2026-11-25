@@ -283,12 +283,6 @@ class MainViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    fun restoreWebDav(name: String) {
-        execute {
-            AppWebDav.restoreWebDav(name)
-        }
-    }
-
     private fun deleteNotShelfBook() {
         execute {
             appDb.bookDao.deleteNotShelfBook()
