@@ -39,9 +39,11 @@ import io.legado.app.help.DispatchersMonitor
 import io.legado.app.help.LifecycleHelp
 import io.legado.app.help.RuleBigDataHelp
 import io.legado.app.help.book.BookHelp
+import io.legado.app.constant.AppConst
 import io.legado.app.constant.AppLog
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.sync.BookTrashHelper
+import io.legado.app.help.sync.ReadRecordMerge
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ThemeConfig.applyDayNight
 import io.legado.app.help.config.ThemeConfig.applyDayNightInit
@@ -141,6 +143,17 @@ class App : Application() {
             launch {
                 DbMaintenance.configure()
                 DbMaintenance.checkpoint()
+            }
+            // 把历史上 deviceId 为空的阅读记录并回本机。
+            // 旧版本从未给 deviceId 赋值，所有设备的时间挤在同一行；
+            // 不迁移的话本机新记录会另起一行，按 deviceId 判本机的逻辑会失效。
+            launch {
+                val claimed = kotlin.runCatching {
+                    ReadRecordMerge.claimLegacyRows(appDb.readRecordDao.all, AppConst.androidId)
+                }.getOrDefault(0)
+                if (claimed > 0) {
+                    AppLog.put("阅读记录迁移：$claimed 条历史记录已归到本机")
+                }
             }
             // 清理回收站里超过保留期（30 天）的条目。
             // 只在启动时跑一次：删除本身不可逆，没必要每次切页都扫一遍。

@@ -1,0 +1,120 @@
+== webdav-sync-v3 阶段 3：阅读时长按设备合并 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+
+--------------------------------------------------
+[1] 既有缺陷（实施前核实）
+--------------------------------------------------
+ReadRecord 的主键是 (deviceId, bookName)，设计意图是「每台设备记自己那一行」，
+展示时用 sum(readTime) group by bookName 汇总。
+
+但 ReadBook.kt:101 与 ReadManga.kt:73 构造记录后**从未给 deviceId 赋值**，
+默认值是空串。于是：
+  - 所有设备的时间挤在同一行，同步时谁后写谁覆盖；
+  - Restore.kt:175 的 if (readRecord.deviceId != androidId) 因 "" != androidId
+    恒真，「本机记录才比较大小」的分支成为死代码，
+    恢复备份会无条件覆盖本机阅读时长。
+
+--------------------------------------------------
+[2] Red：先写测试
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest --tests "*ReadRecordMergeTest*"
+e: ReadRecordMergeTest.kt:108:20 Unresolved reference 'ReadRecordMerge'.
+e: ReadRecordMergeTest.kt:119:32 Cannot infer type for type parameter 'V'.
+BUILD FAILED
+EXIT=1
+
+第二次：10 tests completed, 4 failed
+  失败原因是我自己写错了断言类型：
+  expected: java.lang.Integer<1200000> but was: java.lang.Long<1200000>
+  DAO 返回 Long?，断言里写的是 Int 字面量。改成 Long 后通过。
+
+--------------------------------------------------
+[3] 实现清单
+--------------------------------------------------
+新增：
+  help/sync/ReadRecordMerge.kt
+    pick(local, remote)        取云端需要写入本地的记录（同一 (deviceId, bookName) 取较大 readTime）
+    claimLegacyRows(all, id)   把 deviceId 为空的历史行并入本机
+
+修改：
+  model/ReadBook.kt     resetData 里写 readRecord.deviceId = AppConst.androidId
+  model/ReadManga.kt    同上
+  help/sync/UserDataSync.kt   applyV3 的阅读记录合并改用 ReadRecordMerge.pick
+  App.kt                启动时调用 claimLegacyRows 迁移历史空 deviceId 行
+
+--------------------------------------------------
+[4] 为什么不把时长合并成一行
+--------------------------------------------------
+如果直接合并成「每本书一行总数」，同步时会重复计数：
+  手机读到 10 分钟 → 云端 10
+  平板读到 20 分钟 → 云端 20
+  手机再同步 → 云端还是 20，但手机本地以为自己也贡献了这 20
+保持「每设备一行」后：
+  手机 10 + 平板 10 = 20，两端一致，且各设备只写自己那一行，天然不双计。
+
+--------------------------------------------------
+[5] 测试结果
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest
+结果：BUILD SUCCESSFUL
+      EXIT=0
+      tests=187  failures=0
+
+  阶段 3 前为 177，本次新增 10 个（ReadRecordMergeTest），无既有用例减少。
+
+ReadRecordMergeTest 覆盖：
+  两台设备各记一行 → 汇总为两者之和
+  同一设备重复写入是覆盖不是累加
+  不同书互不影响
+  云端更长时覆盖本地 / 本地更长时不被覆盖
+  云端独有的设备记录被补上
+  lastRead 也取较大值
+  云端字段缺失时不动本地
+  旧版空 deviceId 行归到本机
+  已有本机行时合并取较大值、不留两条
+
+--------------------------------------------------
+[6] 模拟器实测：历史记录迁移
+--------------------------------------------------
+向 readRecord 插入两行 deviceId 为空的历史记录：
+  before: |绍宋|600000      |自由的你|300000
+force-stop 后重启 App：
+  after : 1d26259dcbeafc45|绍宋|600000|1000
+          1d26259dcbeafc45|自由的你|300000|2000
+即空 deviceId 被替换成本机的 ANDROID_ID，readTime 与 lastRead 原值保留。
+
+（注：adb shell settings get secure android_id 返回 6415b352cce329b2，
+ 与 App 内的不同——Android 8 起 ANDROID_ID 按「应用签名 + 用户」派生，
+ 每个应用拿到的值不同，这是预期行为，不影响「同一设备上稳定」这一前提。）
+
+--------------------------------------------------
+[7] 模拟器实测：跨设备求和
+--------------------------------------------------
+再插入一条模拟另一台设备的记录：
+  tablet-xyz|绍宋|300000
+按书汇总：
+  绍宋|900000      自由的你|300000
+打开「我的 → 其他 → 阅读记录」：
+  总阅读时长 20分钟
+  绍宋        15分钟
+  自由的你     5分钟
+截图 webdav-sync-v3-readrecord.png
+即 600000 + 300000 = 900000ms = 15 分钟，两台设备的时长正确相加。
+
+--------------------------------------------------
+[8] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：I1 归类完备 / I2 索引与实体双向一致 / I3 编号唯一
+退出码：0
+
+--------------------------------------------------
+[9] 本阶段未做
+--------------------------------------------------
+- Restore.kt 里那段死代码分支未单独修：整个 Restore 会在阶段 5 删除，
+  改它没有意义。deviceId 修正后，该分支的语义已经正确（本机记录才比较大小）。
+- 本地书上传 / 下载开关（阶段 4）
+- 删除备份全套（阶段 5）

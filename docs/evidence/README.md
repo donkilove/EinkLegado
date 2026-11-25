@@ -52,3 +52,5 @@
 | [webdav-sync-v3-trash-2-restored.png](webdav-sync-v3-trash-2-restored.png) | webdav-sync-v3（阶段 2） | 恢复一本后列表只剩另一本 |
 | [webdav-sync-v3-trash-3-empty.png](webdav-sync-v3-trash-3-empty.png) | webdav-sync-v3（阶段 2） | 清空后的空状态 |
 | [webdav-sync-v3-trash-4-entry.png](webdav-sync-v3-trash-4-entry.png) | webdav-sync-v3（阶段 2） | 内容管理页的回收站入口 |
+| [webdav-sync-v3-readrecord.txt](webdav-sync-v3-readrecord.txt) | webdav-sync-v3（阶段 3） | deviceId 缺陷、Red/Green、历史迁移与跨设备求和实测 |
+| [webdav-sync-v3-readrecord.png](webdav-sync-v3-readrecord.png) | webdav-sync-v3（阶段 3） | 阅读记录页：两台设备时长相加为 15 分钟 |

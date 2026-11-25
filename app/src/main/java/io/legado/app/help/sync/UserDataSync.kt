@@ -360,17 +360,9 @@ object UserDataSync {
         // 各设备只写自己那一行，因此「求和」天然不会重复计数。
         var readRecordCount = 0
         runCatching {
-            val remoteRecords = remote.readRecords ?: return@runCatching
-            val localByKey = local.readRecords.orEmpty()
-                .associateBy { it.deviceId + "\u0001" + it.bookName }
-            remoteRecords.forEach { remoteRecord ->
-                val key = remoteRecord.deviceId + "\u0001" + remoteRecord.bookName
-                val localRecord = localByKey[key]
-                if (localRecord == null || remoteRecord.readTime > localRecord.readTime) {
-                    appDb.readRecordDao.insert(remoteRecord)
-                    readRecordCount++
-                }
-            }
+            val toInsert = ReadRecordMerge.pick(local.readRecords, remote.readRecords)
+            toInsert.forEach { appDb.readRecordDao.insert(it) }
+            readRecordCount = toInsert.size
         }
 
         return Result(
