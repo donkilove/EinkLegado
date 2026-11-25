@@ -5,6 +5,12 @@
     tools:ignore="AlwaysShowAction">
 
     <item
+        android:id="@+id/menu_sync"
+        android:icon="@drawable/ic_outline_cloud_24"
+        android:title="@string/sync_now"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/menu_update_toc"
         android:icon="@drawable/ic_refresh_black_24dp"
         android:title="@string/update_toc"

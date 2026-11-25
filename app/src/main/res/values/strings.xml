@@ -1387,5 +1387,11 @@
     <string name="auto_download_webdav_book_t">Download WebDAV books on demand</string>
     <string name="auto_download_webdav_book_s">When a WebDAV book has no local file, download it before reading; turn off to save traffic</string>
     <string name="webdav_book_download_disabled">On-demand download is off, and this book has no local file</string>
+    <string name="sync_now">Sync now</string>
+    <string name="web_dav_not_configured">WebDAV is not configured</string>
+    <string name="sync_now_done">Synced</string>
+    <string name="sync_now_no_change">Already up to date</string>
+    <string name="web_dav_sync_setting">Sync settings</string>
+    <string name="web_dav_sync_setting_s">Progress, reading time, local book upload and on-demand download</string>
 
 </resources>

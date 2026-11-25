@@ -42,11 +42,14 @@ import io.legado.app.utils.readText
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.startActivity
+import io.legado.app.help.AppWebDav
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfViewModel>(layoutId),
     MainFragmentInterface {
@@ -86,6 +89,8 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
     abstract val books: List<Book>
     abstract var onlyUpdateRead: Boolean
     private var groupsLiveData: LiveData<List<BookGroup>>? = null
+    /** 防止连点同步按钮并发触发多次同步 */
+    private var syncing = false
     private val waitDialog by lazy {
         WaitDialog(requireContext()).apply {
             setOnCancelListener {
@@ -104,6 +109,7 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
         super.onCompatOptionsItemSelected(item)
         when (item.itemId) {
             R.id.menu_remote -> startActivity<RemoteBookActivity>()
+            R.id.menu_sync -> syncNow()
             R.id.menu_update_toc -> activityViewModel.upToc(books, onlyUpdateRead)
             R.id.menu_bookshelf_layout -> configBookshelf()
             R.id.menu_group_manage -> showDialogFragment<GroupManageDialog>()
@@ -114,6 +120,43 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
 
             R.id.menu_download -> startActivity<CacheActivity> {
                 putExtra("groupId", groupId)
+            }
+        }
+    }
+
+    /**
+     * 手动触发一次完整同步。
+     *
+     * 与书架下拉刷新走同一条链路：先补传离线积压的进度，再拉云端进度，
+     * 然后同步分组/书签/书源与排版配置。下拉刷新是隐式入口，
+     * 这里给一个显式按钮——用户不必猜到「下拉」才知道能同步。
+     */
+    private fun syncNow() {
+        if (syncing) return
+        // 未配置 WebDAV 时直接提示，而不是跑一遍空同步再报「已是最新」——
+        // 那会让用户以为同步成功，实际一次请求都没发出去。
+        if (AppWebDav.authorization == null) {
+            requireContext().toastOnUi(R.string.web_dav_not_configured)
+            return
+        }
+        syncing = true
+        waitDialog.apply {
+            setText(getString(R.string.sync_now))
+            setCancelable(false)
+            show()
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val updated = withContext(IO) {
+                val count = AppWebDav.downloadAllBookProgress(withUserData = true)
+                AppWebDav.syncReadConfig()
+                count
+            }
+            waitDialog.dismiss()
+            syncing = false
+            if (updated > 0) {
+                requireContext().toastOnUi(getString(R.string.sync_progress_done, updated))
+            } else {
+                requireContext().toastOnUi(R.string.sync_now_no_change)
             }
         }
     }

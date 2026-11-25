@@ -1,0 +1,69 @@
+== webdav-sync-v3 追加：书架同步按钮 + 同步开关独立页 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+
+--------------------------------------------------
+[1] 书架页右上角新增同步按钮
+--------------------------------------------------
+res/menu/main_bookshelf.xml 新增 menu_sync（showAsAction=always，
+  图标 ic_outline_cloud_24），排在菜单第一位，因此直接显示在工具栏。
+
+BaseBookshelfFragment 新增 syncNow()：
+  - 未配置 WebDAV 时直接提示「未配置 WebDAV」并返回
+  - 否则显示不可取消的等待框，走与下拉刷新同一条链路：
+    downloadAllBookProgress(withUserData = true) + syncReadConfig()
+  - 有更新 → 「已同步 N 本书的阅读进度」；无更新 → 「已是最新」
+  - syncing 标志防止连点并发
+
+为什么加这个按钮：同步此前只有两个隐式入口（启动、书架下拉刷新），
+用户不一定会想到「下拉」能同步。显式按钮让这个能力可被发现。
+
+实测：
+  书架工具栏出现云图标 → 截图 webdav-sync-v3-syncbtn-1-shelf.png
+  未配置 WebDAV 时点击：不再弹出等待框（走提前返回分支），
+  与改动前「弹框跑一遍空同步再报已是最新」不同。
+
+--------------------------------------------------
+[2] WebDav 设置拆成「连接」与「同步开关」两页
+--------------------------------------------------
+拆分前：一页 9 项，墨水屏下要翻 2 页，连接信息占掉首屏，
+        想改开关必须先翻页。
+
+拆分后：
+  pref_config_web_dav.xml       连接页 5 项
+    服务器地址 / 账号 / 密码 / 子目录 / 「同步设置」入口
+  pref_config_web_dav_sync.xml  开关页 5 项（新建）
+    同步阅读进度 / 同步增强 / 同步阅读时长 / 自动上传本地书 / 按需下载
+  新增 WebDavSyncConfigFragment、ConfigTag.WEB_DAV_SYNC_CONFIG、
+  ConfigActivity 路由；连接页点击入口用 startActivity<ConfigActivity> 打开，
+  返回键经 ConfigActivity 的返回栈退回连接页。
+
+实测：
+  连接页 5 项、无翻页条 → 截图 webdav-sync-v3-syncbtn-2-conn.png
+  点「Sync settings」进入开关页，5 个开关一屏放下、无翻页条
+  → 截图 webdav-sync-v3-syncbtn-3-switches.png
+
+--------------------------------------------------
+[3] 验证
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest :app:assembleAppDebug
+结果：BUILD SUCCESSFUL
+      EXIT=0
+      tests=189  failures=0
+
+--------------------------------------------------
+[4] 关于「为什么设置页不用 EinkPager 的左右滑动」
+--------------------------------------------------
+不是没用公共组件，而是设置页用的是另一个公共组件 PreferencePager：
+  EinkPager       接管 adapter 数据流，适合 RecyclerView 列表页
+  PreferencePager 保留全部 Preference、只切换 isVisible，
+                  因为 PreferenceFragmentCompat 的 adapter 由框架维护，
+                  外部无法替换数据源
+
+差别在于：EinkPager 接了 onSwipe（左右滑动），
+PreferencePager 目前只接了 pageBar.onPageChange（按钮翻页），
+**没有接左右滑动**。这是缺口，不是设计取舍。
+若需要，可以在 ConfigActivity 的 onHorizontalSwipe 里转发给当前
+PreferencePager 的 moveBy，与列表页行为对齐。

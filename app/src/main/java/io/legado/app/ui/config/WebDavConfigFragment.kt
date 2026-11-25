@@ -14,6 +14,7 @@ import io.legado.app.lib.prefs.fragment.PreferenceFragment
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.setEdgeEffectColor
+import io.legado.app.utils.startActivity
 import io.legado.app.utils.toEditable
 import splitties.init.appCtx
 import io.legado.app.ui.widget.setupPreferencePaging
@@ -47,6 +48,17 @@ class WebDavConfigFragment : PreferenceFragment(),
         upPreferenceSummary(PreferKey.webDavAccount, getPrefString(PreferKey.webDavAccount))
         upPreferenceSummary(PreferKey.webDavPassword, getPrefString(PreferKey.webDavPassword))
         upPreferenceSummary(PreferKey.webDavDir, AppConfig.webDavDir)
+    }
+
+    override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        if (preference.key == "web_dav_sync_setting") {
+            // 二级页：复用 ConfigActivity 的返回栈，返回键会退回本页
+            startActivity<ConfigActivity> {
+                putExtra("configTag", ConfigTag.WEB_DAV_SYNC_CONFIG)
+            }
+            return true
+        }
+        return super.onPreferenceTreeClick(preference)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

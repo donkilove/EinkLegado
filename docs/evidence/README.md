@@ -61,3 +61,7 @@
 | [webdav-sync-v3-remove-1-my.png](webdav-sync-v3-remove-1-my.png) | webdav-sync-v3（阶段 5） | 「我的」页已无备份与恢复入口 |
 | [webdav-sync-v3-remove-2-webdav.png](webdav-sync-v3-remove-2-webdav.png) | webdav-sync-v3（阶段 5） | WebDav 设置 9 项，设备名称已移除 |
 | [webdav-sync-v3-remove-3-shelf.png](webdav-sync-v3-remove-3-shelf.png) | webdav-sync-v3（阶段 5） | 书架工具栏备份图标已移除 |
+| [webdav-sync-v3-syncbtn.txt](webdav-sync-v3-syncbtn.txt) | webdav-sync-v3（追加） | 书架同步按钮、设置页拆分、PreferencePager 无滑动的原因 |
+| [webdav-sync-v3-syncbtn-1-shelf.png](webdav-sync-v3-syncbtn-1-shelf.png) | webdav-sync-v3（追加） | 书架工具栏的同步云图标 |
+| [webdav-sync-v3-syncbtn-2-conn.png](webdav-sync-v3-syncbtn-2-conn.png) | webdav-sync-v3（追加） | 连接页 5 项 + 同步设置入口 |
+| [webdav-sync-v3-syncbtn-3-switches.png](webdav-sync-v3-syncbtn-3-switches.png) | webdav-sync-v3（追加） | 同步开关页 5 项一屏可见 |

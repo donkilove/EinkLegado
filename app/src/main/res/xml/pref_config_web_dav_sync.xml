@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WebDav 同步开关（从连接设置页拆出） -->
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="true"
+        android:key="syncBookProgress"
+        android:summary="@string/sync_book_progress_s"
+        android:title="@string/sync_book_progress_t"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="false"
+        android:dependency="syncBookProgress"
+        android:key="syncBookProgressPlus"
+        android:summary="@string/sync_book_progress_plus_s"
+        android:title="@string/sync_book_progress_plus_t"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="true"
+        android:dependency="syncBookProgress"
+        android:key="syncReadRecord"
+        android:summary="@string/sync_read_record_s"
+        android:title="@string/sync_read_record_t"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="false"
+        android:key="autoUploadLocalBook"
+        android:summary="@string/auto_upload_local_book_s"
+        android:title="@string/auto_upload_local_book_t"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.SwitchPreference
+        android:defaultValue="true"
+        android:key="autoDownloadWebDavBook"
+        android:summary="@string/auto_download_webdav_book_s"
+        android:title="@string/auto_download_webdav_book_t"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false"
+        app:iconSpaceReserved="false" />
+
+</androidx.preference.PreferenceScreen>

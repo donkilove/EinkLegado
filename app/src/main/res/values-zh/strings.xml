@@ -1280,5 +1280,11 @@
     <string name="auto_download_webdav_book_t">按需下载 WebDAV 书</string>
     <string name="auto_download_webdav_book_s">阅读时若本地没有文件则自动下载；关闭可省流量</string>
     <string name="webdav_book_download_disabled">按需下载已关闭，且本书本地没有文件</string>
+    <string name="sync_now">立即同步</string>
+    <string name="web_dav_not_configured">未配置 WebDAV</string>
+    <string name="sync_now_done">同步完成</string>
+    <string name="sync_now_no_change">已是最新</string>
+    <string name="web_dav_sync_setting">同步设置</string>
+    <string name="web_dav_sync_setting_s">阅读进度、阅读时长、本地书上传与按需下载</string>
 
 </resources>
