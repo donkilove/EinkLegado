@@ -76,3 +76,7 @@
 | [webdav-sync-v3-nightmode-2-dark.png](webdav-sync-v3-nightmode-2-dark.png) | webdav-sync-v3（追加三） | 切深色后滑动翻到 2/3 |
 | [webdav-sync-v3-layout.png](webdav-sync-v3-layout.png) | webdav-sync-v3（追加三） | 书架布局只剩 4 个开关 + 排序 |
 | [webdav-sync-v3-groups.png](webdav-sync-v3-groups.png) | webdav-sync-v3（追加三） | 分组管理 7 项降为 2 项 |
+| [webdav-sync-v3-upload-download.txt](webdav-sync-v3-upload-download.txt) | webdav-sync-v3（追加四） | 自动上传、按需下载、关闭提示三项实测，遗留项清零 |
+| [webdav-sync-v3-autoupload.png](webdav-sync-v3-autoupload.png) | webdav-sync-v3（追加四） | 导入后 origin 变为 webDav:: |
+| [webdav-sync-v3-ondemand.png](webdav-sync-v3-ondemand.png) | webdav-sync-v3（追加四） | 本地文件删除后按需下载成功 |
+| [webdav-sync-v3-ondemand-off.png](webdav-sync-v3-ondemand-off.png) | webdav-sync-v3（追加四） | 关闭开关后的提示 |
