@@ -33,7 +33,7 @@ import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.io.FileOutputStream
-import io.legado.app.ui.widget.setupPreferencePaging
+import io.legado.app.ui.widget.setupPreferencePagingWithSwipe
 class WelcomeConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -74,7 +74,10 @@ class WelcomeConfigFragment : PreferenceFragment(),
         activity?.setTitle(R.string.welcome_style)
         listView.setEdgeEffectColor(primaryColor)
         // 墨水屏：设置项用翻页代替滚动
-        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
+        setupPreferencePagingWithSwipe(
+            (activity as? ConfigActivity)?.pageBar,
+            activity as? ConfigActivity
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

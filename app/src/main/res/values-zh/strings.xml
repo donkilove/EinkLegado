@@ -1113,8 +1113,6 @@
     <string name="privacy_policy">用户隐私与协议</string>
     <string name="agree">同意</string>
     <string name="refuse">拒绝</string>
-    <string name="file_manage">文件管理</string>
-    <string name="file_manage_summary">管理私有文件夹的文件</string>
     <string name="create_folder">创建文件夹</string>
     <string name="allow_drop_down_refresh">允许下拉刷新</string>
     <string name="text_underline">文字下划线</string>
@@ -1236,7 +1234,7 @@
     <string name="my_content">内容管理</string>
     <string name="my_content_s">书源、目录规则、替换净化等</string>
     <string name="setting_s">主题设置、其它设置</string>
-    <string name="other_s">书签、阅读记录、文件管理、关于</string>
+    <string name="other_s">书签、阅读记录、关于</string>
     <string name="other_language_ui">语言与界面</string>
     <string name="other_read_update">阅读与更新</string>
     <string name="other_network">网络</string>

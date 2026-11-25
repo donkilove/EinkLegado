@@ -1,0 +1,114 @@
+== webdav-sync-v3 追加二：云端文件删除、文件管理页删除、设置页滑动翻页 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-26
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+
+--------------------------------------------------
+[1] 云端文件删除（按用户要求：满 30 天或主动彻底删除就删云端）
+--------------------------------------------------
+BookTrashHelper.purge() 与 purgeExpired() 现在会删除 WebDAV 上的文件。
+
+判定依据：BookTrash.origin 形如 webDav::<url>，取前缀后的地址交给 WebDav.delete()。
+本地书（origin 以 local 开头）直接跳过。
+云端删除失败不影响本地删除（本地才是用户此刻的意图），只记 AppLog。
+
+此前 RemoteBookWebDav.delete() 全仓无调用方，删本地书不会动云端文件，
+云端会永久堆积用户看不见的孤儿文件。
+
+--------------------------------------------------
+[2] 删除文件管理页（按用户要求）
+--------------------------------------------------
+删除：FileManageActivity.kt / FileManageViewModel.kt /
+      activity_file_manage.xml / item_file.xml
+      manifest 条目、pref_main 入口、MyFragment 路由、
+      8 个语言文件的 file_manage / file_manage_summary
+保留：item_path_picker.xml —— FilePickerDialog 仍在用它，
+      误删会导致 FilePickerDialog 编译失败（本次已遇到并回滚）。
+
+顺带修正「我的 → 其他」的摘要文案：原本写着「书签、阅读记录、文件管理、关于」，
+文件管理删掉后改为「书签、阅读记录、关于」。
+
+--------------------------------------------------
+[3] 删除 CHANGELOG.md（按用户要求）
+--------------------------------------------------
+文件删除，README 的「文档纪律」清单里对应条目一并移除。
+文档门禁例外数由 6 降到 5。
+
+--------------------------------------------------
+[4] 设置页左右滑动翻页
+--------------------------------------------------
+现象：设置页此前只能用 PageBar 按钮翻页，列表页（EinkPager）支持左右滑动。
+原因：设置页用的是另一个公共组件 PreferencePager，它只接了 pageBar.onPageChange。
+
+实现：
+  ConfigActivity.onHorizontalSwipe 转发给当前 PreferencePager.moveBy
+  setupPreferencePagingWithSwipe(pageBar, host) 把分页器交给宿主
+  6 个设置 Fragment 全部改用该入口
+    OtherConfigFragment / ThemeConfigFragment / CoverConfigFragment /
+    WelcomeConfigFragment / WebDavConfigFragment / WebDavSyncConfigFragment
+
+排查过程中修掉 4 个真实缺陷，每个都是「滑动没反应」的独立成因：
+
+  (a) 分页器解绑竞态
+      二级设置页用 replace + addToBackStack 打开，新旧 Fragment 的
+      attach/detach 顺序不保证；无条件 bindPreferencePager(null) 会把
+      新页刚绑好的分页器抹掉。改为 unbindPreferencePager(pager) 只在
+      「当前绑定的就是它」时清空。
+
+  (b) PageBar 回调被覆盖
+      同类问题：onViewDetachedFromWindow 里无条件 pageBar.onPageChange = null，
+      会把新页刚注册的回调一起抹掉，表现为「翻页按钮点了也没反应」。
+      改为持有 pageChangeHandler 引用，只有还是自己时才置空。
+
+  (c) bind() 漏掉分类内的设置项
+      原来只取 screen.preferenceCount，但封面设置、欢迎页等把项放在
+      PreferenceCategory 里，直接子项只有几个分类，叶子项全被漏掉。
+      all.size 远小于真实行数，perPage 反而大于 size，pageCount 恒为 1。
+      改为递归收集叶子项（并记住分类容器，用于按页显隐分类标题）。
+
+  (d) 递归时误展开子页面
+      (c) 的第一版把 PreferenceScreen 也递归展开了，「我的」页把各子页的
+      设置项全算进来，变成「第 1/12 页」。改为跳过 PreferenceScreen，
+      只展开 PreferenceCategory。
+
+  (e) perPage 把分类标题也算成一页的名额
+      分类标题在列表里是独立一行，但不该占分页名额。改为：
+      高度按所有行累加（含标题，避免最后一项被切在屏幕外），
+      但只把叶子设置项计入 fit。
+
+  (f) 可用高度没扣内边距
+      列表设了 clipToPadding=false 并加了导航栏内边距，直接用 height
+      会高估一截。改为 height - paddingTop - paddingBottom。
+
+  (g) 首次测量时 PageBar 可能还没布局完
+      此时 recyclerView 比最终高度高，perPage 偏大。
+      加 addOnLayoutChangeListener，高度变化且与上次测量不同就重测。
+
+--------------------------------------------------
+[5] 验证
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest :app:assembleAppDebug
+结果：BUILD SUCCESSFUL
+      EXIT=0
+      tests=189  failures=0
+      APK 33.6 MB
+
+模拟器实测：
+  书架工具栏云图标存在；未配置 WebDAV 时点击提示「WebDAV is not configured」
+    → webdav-sync-v3-syncbtn-4-toast.png
+  WebDav 设置页 5 项（服务器地址/账号/密码/子目录/同步设置入口），无翻页条
+    → webdav-sync-v3-syncbtn-5-conn.png
+  点「Sync settings」进入开关页，5 个开关一屏放下，无翻页条
+    → webdav-sync-v3-syncbtn-6-sync.png
+  封面设置 9 项分 2 页，左右滑动与按钮均生效，第 1 页 6 项、第 2 页 3 项，
+  无内容被裁切
+    → webdav-sync-v3-paging-1.png / webdav-sync-v3-paging-2.png
+  「我的」页恢复为 4 项、无翻页条（验证 (d) 的回归已修复）
+
+--------------------------------------------------
+[6] 遗留
+--------------------------------------------------
+- 自动上传与按需下载关闭提示仍未在模拟器实测（缺可用 WebDAV 服务器）
+- 云端文件删除未实测：同样需要可用 WebDAV 服务器
+- 回收站「彻底删除」只删数据库行与云端文件，本地文件仍留在磁盘

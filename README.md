@@ -204,7 +204,6 @@ $env:GRADLE_USER_HOME = "D:\gradle-home"
 以下为上游既有文档与随产品发布、被工具消费的工件，不属于上述四类：
 
 - `README.md`
-- `CHANGELOG.md`
 - `api.md`
 - `app/src/main/assets/**/*.md`
 - `app/src/main/java/**/*.md`

@@ -1092,8 +1092,6 @@
     <string name="privacy_policy">Quyền riêng tư và Thỏa thuận người dùng</string>
     <string name="agree">Đồng ý</string>
     <string name="refuse">Từ chối</string>
-    <string name="file_manage">Quản lý tệp</string>
-    <string name="file_manage_summary">Quản lý các tệp trong thư mục riêng của ứng dụng</string>
     <string name="create_folder">Tạo thư mục</string>
     <string name="allow_drop_down_refresh">Cho phép làm mới bằng cách kéo xuống</string>
     <string name="text_underline">Gạch chân văn bản</string>

@@ -65,3 +65,9 @@
 | [webdav-sync-v3-syncbtn-1-shelf.png](webdav-sync-v3-syncbtn-1-shelf.png) | webdav-sync-v3（追加） | 书架工具栏的同步云图标 |
 | [webdav-sync-v3-syncbtn-2-conn.png](webdav-sync-v3-syncbtn-2-conn.png) | webdav-sync-v3（追加） | 连接页 5 项 + 同步设置入口 |
 | [webdav-sync-v3-syncbtn-3-switches.png](webdav-sync-v3-syncbtn-3-switches.png) | webdav-sync-v3（追加） | 同步开关页 5 项一屏可见 |
+| [webdav-sync-v3-paging.txt](webdav-sync-v3-paging.txt) | webdav-sync-v3（追加二） | 云端文件删除、文件管理页删除、滑动翻页的 7 个缺陷与修复 |
+| [webdav-sync-v3-syncbtn-4-toast.png](webdav-sync-v3-syncbtn-4-toast.png) | webdav-sync-v3（追加二） | 未配置 WebDAV 时点同步的提示 |
+| [webdav-sync-v3-syncbtn-5-conn.png](webdav-sync-v3-syncbtn-5-conn.png) | webdav-sync-v3（追加二） | 连接页 5 项，无翻页条 |
+| [webdav-sync-v3-syncbtn-6-sync.png](webdav-sync-v3-syncbtn-6-sync.png) | webdav-sync-v3（追加二） | 同步开关页 5 项，无翻页条 |
+| [webdav-sync-v3-paging-1.png](webdav-sync-v3-paging-1.png) | webdav-sync-v3（追加二） | 封面设置第 1/2 页（6 项，无裁切） |
+| [webdav-sync-v3-paging-2.png](webdav-sync-v3-paging-2.png) | webdav-sync-v3（追加二） | 封面设置第 2/2 页（3 项） |

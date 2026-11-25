@@ -46,7 +46,7 @@ import splitties.init.appCtx
 import java.io.FileOutputStream
 import io.legado.app.lib.prefs.SwitchPreference
 import io.legado.app.utils.getPrefBoolean
-import io.legado.app.ui.widget.setupPreferencePaging
+import io.legado.app.ui.widget.setupPreferencePagingWithSwipe
 
 
 @Suppress("SameParameterValue")
@@ -73,7 +73,10 @@ class ThemeConfigFragment : PreferenceFragment(),
         super.onViewCreated(view, savedInstanceState)
         listView.setEdgeEffectColor(primaryColor)
         // 墨水屏：设置项用翻页代替滚动
-        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
+        setupPreferencePagingWithSwipe(
+            (activity as? ConfigActivity)?.pageBar,
+            activity as? ConfigActivity
+        )
         activity?.addMenuProvider(this, viewLifecycleOwner)
         upTitleBar()
     }

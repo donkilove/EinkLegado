@@ -1,8 +1,13 @@
 package io.legado.app.help.sync
 
+import io.legado.app.constant.AppLog
+import io.legado.app.constant.BookType
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookTrash
+import io.legado.app.help.AppWebDav
+import io.legado.app.help.coroutine.Coroutine
+import io.legado.app.lib.webdav.WebDav
 
 /**
  * 书架删除 / 恢复 / 清理的落库动作。
@@ -41,19 +46,47 @@ object BookTrashHelper {
     /**
      * 彻底删除一条回收站记录。
      *
-     * 只删数据库行；本地文件的删除由调用方决定（UI 里会问用户是否连文件一起删）。
+     * 除了删数据库行，若这本书来自 WebDAV，还要删掉云端文件——
+     * 否则「彻底删除」只删了本地记录，云端会永久留下一个用户看不见的孤儿文件。
+     * 云端删除失败不影响本地删除（本地才是用户此刻的意图），只记日志。
      */
     fun purge(trash: BookTrash) {
         appDb.bookTrashDao.delete(trash)
+        deleteRemoteIfNeeded(trash)
     }
 
     /**
-     * 清理超过保留期的条目。
+     * 清理超过保留期的条目（30 天）。
+     *
+     * 与手动彻底删除同样处理云端文件：保留期满即视为用户放弃这本书。
      * @return 清理的条数
      */
     fun purgeExpired(now: Long = System.currentTimeMillis()): Int {
         val expired = BookTrashPolicy.expired(appDb.bookTrashDao.all, now)
-        expired.forEach { appDb.bookTrashDao.delete(it) }
+        expired.forEach {
+            appDb.bookTrashDao.delete(it)
+            deleteRemoteIfNeeded(it)
+        }
         return expired.size
+    }
+
+    /**
+     * 删除这本书在 WebDAV 上的文件。
+     *
+     * `origin` 形如 `webDav::<url>`，取前缀之后的地址交给 WebDav 删除。
+     * 本地书（`origin == "local"`）直接跳过。
+     */
+    private fun deleteRemoteIfNeeded(trash: BookTrash) {
+        if (!trash.origin.startsWith(BookType.webDavTag)) return
+        val url = trash.origin.substring(BookType.webDavTag.length)
+        if (url.isBlank()) return
+        val authorization = AppWebDav.authorization ?: return
+        Coroutine.async {
+            kotlin.runCatching {
+                WebDav(url, authorization).delete()
+            }.onFailure {
+                AppLog.put("删除云端书籍失败\n${it.localizedMessage}", it)
+            }
+        }
     }
 }

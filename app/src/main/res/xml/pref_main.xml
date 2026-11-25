@@ -101,13 +101,6 @@
             app:iconSpaceReserved="false" />
 
         <io.legado.app.lib.prefs.Preference
-            android:icon="@drawable/ic_folder_outline"
-            android:key="fileManage"
-            android:summary="@string/file_manage_summary"
-            android:title="@string/file_manage"
-            app:iconSpaceReserved="false" />
-
-        <io.legado.app.lib.prefs.Preference
             android:icon="@drawable/ic_cfg_about"
             android:key="about"
             android:title="@string/about"

@@ -44,7 +44,7 @@ import io.legado.app.utils.restart
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
 import splitties.init.appCtx
-import io.legado.app.ui.widget.setupPreferencePaging
+import io.legado.app.ui.widget.setupPreferencePagingWithSwipe
 
 /**
  * 其它设置
@@ -92,7 +92,10 @@ class OtherConfigFragment : PreferenceFragment(),
         preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
         listView.setEdgeEffectColor(primaryColor)
         // 墨水屏：设置项用翻页代替滚动
-        setupPreferencePaging((activity as? ConfigActivity)?.pageBar)
+        setupPreferencePagingWithSwipe(
+            (activity as? ConfigActivity)?.pageBar,
+            activity as? ConfigActivity
+        )
     }
 
     override fun onDestroy() {
