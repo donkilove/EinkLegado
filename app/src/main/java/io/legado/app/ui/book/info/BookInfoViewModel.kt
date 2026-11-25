@@ -21,6 +21,7 @@ import io.legado.app.exception.NoBooksDirException
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.AppWebDav
 import io.legado.app.help.book.BookHelp
+import io.legado.app.help.sync.BookTrashHelper
 import io.legado.app.help.book.getExportFileName
 import io.legado.app.help.book.getRemoteUrl
 import io.legado.app.help.book.isLocal
@@ -480,14 +481,27 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
         return book
     }
 
+    /**
+     * 删除书架上的书。
+     *
+     * 默认**移入回收站**（30 天内可恢复），而不是直接销毁：
+     * 删除会跨设备传播，若直接物理删除，误删不可逆。
+     *
+     * `deleteOriginal = true` 表示用户勾选了「同时删除文件」，
+     * 这是明确的「彻底删除」意图，因此绕过回收站直接销毁。
+     */
     fun delBook(deleteOriginal: Boolean = false, success: (() -> Unit)? = null) {
         execute {
             bookData.value?.let {
-                it.delete()
-                inBookshelf = false
-                if (it.isLocal) {
-                    LocalBook.deleteBook(it, deleteOriginal)
+                if (deleteOriginal) {
+                    it.delete()
+                    if (it.isLocal) {
+                        LocalBook.deleteBook(it, true)
+                    }
+                } else {
+                    BookTrashHelper.moveToTrash(it)
                 }
+                inBookshelf = false
             }
         }.onSuccess {
             success?.invoke()

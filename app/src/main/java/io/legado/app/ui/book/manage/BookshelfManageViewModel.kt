@@ -10,6 +10,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookSource
 import io.legado.app.help.book.BookHelp
+import io.legado.app.help.sync.BookTrashHelper
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.removeType
 import io.legado.app.help.config.AppConfig
@@ -52,13 +53,23 @@ class BookshelfManageViewModel(application: Application) : BaseViewModel(applica
         }
     }
 
+    /**
+     * 批量删除书架上的书。
+     *
+     * 默认移入回收站（30 天内可恢复）；勾选「同时删除文件」才彻底销毁。
+     */
     fun deleteBook(books: List<Book>, deleteOriginal: Boolean = false) {
         execute {
-            appDb.bookDao.delete(*books.toTypedArray())
             books.forEach {
-                if (it.isLocal) {
-                    LocalBook.deleteBook(it, deleteOriginal)
+                if (deleteOriginal) {
+                    appDb.bookDao.delete(it)
+                    if (it.isLocal) {
+                        LocalBook.deleteBook(it, true)
+                    }
                 } else {
+                    BookTrashHelper.moveToTrash(it)
+                }
+                if (!it.isLocal) {
                     val source = appDb.bookSourceDao.getBookSource(it.origin)
                     SourceCallBack.callBackBook(SourceCallBack.DEL_BOOK_SHELF, source, it)
                 }

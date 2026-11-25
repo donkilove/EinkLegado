@@ -41,6 +41,8 @@ data class SyncData(
     // null 表示「这份载荷不携带该类目」，同步时整体跳过；
     // 空列表才是「云端确实没有」，允许删除传播。
     val books: List<BookSync>? = null,
+    /** 回收站条目：删除靠它跨设备传播，而不是靠 books 差异 */
+    val bookTrash: List<BookTrashSync>? = null,
     val rssSources: List<RssSource>? = null,
     val replaceRules: List<ReplaceRule>? = null,
     val dictRules: List<DictRule>? = null,
@@ -53,7 +55,7 @@ data class SyncData(
     val readRecords: List<ReadRecord>? = null
 ) {
     fun isEmpty(): Boolean = groups.isEmpty() && bookmarks.isEmpty() && sources.isEmpty()
-            && books.isNullOrEmpty() && rssSources.isNullOrEmpty()
+            && books.isNullOrEmpty() && bookTrash.isNullOrEmpty() && rssSources.isNullOrEmpty()
             && replaceRules.isNullOrEmpty() && dictRules.isNullOrEmpty()
             && httpTTS.isNullOrEmpty() && txtTocRules.isNullOrEmpty()
             && servers.isNullOrEmpty() && rssStars.isNullOrEmpty()
@@ -71,6 +73,7 @@ data class SyncData(
         bookmarks = bookmarks.sortedBy { it.time },
         sources = sources.sortedBy { it.bookSourceUrl },
         books = books?.sortedWith(compareBy({ it.name }, { it.author })),
+        bookTrash = bookTrash?.sortedWith(compareBy({ it.name }, { it.author })),
         rssSources = rssSources?.sortedBy { it.sourceUrl },
         replaceRules = replaceRules?.sortedBy { SyncKeys.replaceRuleKey(it) },
         dictRules = dictRules?.sortedBy { it.name },
@@ -100,11 +103,12 @@ object UserDataSync {
         val rssStars: Int = 0,
         val searchKeywords: Int = 0,
         val keyboardAssists: Int = 0,
-        val readRecords: Int = 0
+        val readRecords: Int = 0,
+        val bookTrash: Int = 0
     ) {
         val total: Int get() = groups + bookmarks + sources + books + rssSources +
                 replaceRules + dictRules + httpTTS + txtTocRules + servers +
-                rssStars + searchKeywords + keyboardAssists + readRecords
+                rssStars + searchKeywords + keyboardAssists + readRecords + bookTrash
     }
 
     /**
@@ -118,6 +122,7 @@ object UserDataSync {
         // 每一项都用 runCatching 兜底：单个表读取失败不应让整次同步失败，
         // 失败时给 null（等价于「本次不携带该类目」），比给空列表安全得多。
         books = runCatching { appDb.bookDao.all.map { BookSync.from(it) } }.getOrNull(),
+        bookTrash = runCatching { appDb.bookTrashDao.all.map { BookTrashSync.from(it) } }.getOrNull(),
         rssSources = runCatching { appDb.rssSourceDao.all }.getOrNull(),
         replaceRules = runCatching { appDb.replaceRuleDao.all }.getOrNull(),
         dictRules = runCatching { appDb.dictRuleDao.all }.getOrNull(),
@@ -334,6 +339,23 @@ object UserDataSync {
             keyboardAssistCount = diff.toDelete.size + diff.toInsert.size
         }
 
+        // 回收站：删除的跨设备传播靠这里。
+        // 云端有、本地书架还有、且本地回收站没有 → 说明别的设备删了它，本机跟着移入。
+        // 反向（本地恢复了但云端还有）由 SyncDecision 的「本地已改动 → 上传本地」处理，
+        // 不能在这里自动恢复，否则用户的恢复操作会被下一次同步抹掉。
+        var trashCount = 0
+        runCatching {
+            val remoteTrash = remote.bookTrash ?: return@runCatching
+            val localTrashKeys = local.bookTrash.orEmpty().mapTo(HashSet()) { it.key() }
+            remoteTrash.forEach { remoteItem ->
+                if (remoteItem.key() in localTrashKeys) return@forEach
+                val book = appDb.bookDao.getBook(remoteItem.name, remoteItem.author) ?: return@forEach
+                // 沿用云端的删除时间，避免各设备各自起算导致保留期错开
+                BookTrashHelper.moveToTrash(book, remoteItem.deletedAt)
+                trashCount++
+            }
+        }
+
         // 阅读记录：按 (deviceId, bookName) 合并，取较大 readTime。
         // 各设备只写自己那一行，因此「求和」天然不会重复计数。
         var readRecordCount = 0
@@ -362,7 +384,8 @@ object UserDataSync {
             rssStars = rssStarCount,
             searchKeywords = searchKeywordCount,
             keyboardAssists = keyboardAssistCount,
-            readRecords = readRecordCount
+            readRecords = readRecordCount,
+            bookTrash = trashCount
         )
     }
 }

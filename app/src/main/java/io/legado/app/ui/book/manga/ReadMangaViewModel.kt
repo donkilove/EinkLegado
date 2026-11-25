@@ -14,6 +14,7 @@ import io.legado.app.data.entities.BookProgress
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.AppWebDav
 import io.legado.app.help.book.BookHelp
+import io.legado.app.help.sync.BookTrashHelper
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.isLocalModified
 import io.legado.app.help.book.removeType
@@ -272,10 +273,11 @@ class ReadMangaViewModel(application: Application) : BaseViewModel(application) 
         }
     }
 
+    /** 从书架移除：移入回收站，30 天内可恢复 */
     fun removeFromBookshelf(success: (() -> Unit)?) {
         val book = ReadManga.book
         Coroutine.async {
-            book?.delete()
+            book?.let { BookTrashHelper.moveToTrash(it) }
         }.onSuccess {
             success?.invoke()
         }

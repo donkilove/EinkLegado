@@ -47,3 +47,4 @@
 | [search-page-archive-check.txt](search-page-archive-check.txt) | search-page（补归档） | 2026-11-25 补登记核查：证据对齐依据、143 用例复跑、文档门禁输出 |
 | [webdav-sync-v3-red.txt](webdav-sync-v3-red.txt) | webdav-sync-v3（阶段 1） | v3 载荷测试三次 Red：符号缺失、签名不匹配、LocalDate 反射缺陷 |
 | [webdav-sync-v3-green.txt](webdav-sync-v3-green.txt) | webdav-sync-v3（阶段 1） | 实现清单、null/空列表语义分界、161 用例 0 失败、门禁输出 |
+| [webdav-sync-v3-trash.txt](webdav-sync-v3-trash.txt) | webdav-sync-v3（阶段 2） | 回收站 Red/Green、独立建表理由、保留期边界、删除传播、175 用例 |
