@@ -1,0 +1,65 @@
+== webdav-sync-v3 阶段 1 Red：v3 载荷测试先行失败 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+命令：./gradlew.bat :app:testAppDebugUnitTest --tests "*SyncPayloadV3Test*"
+
+说明：本阶段先写测试再写实现，Red 表现为**编译失败**——
+SyncData 没有 v3 字段、SyncMerge / SyncKeys 不存在。
+这比断言失败更早暴露问题，符合「先让测试红」的要求。
+
+--------------------------------------------------
+[1] 第一次 Red：符号全部不存在
+--------------------------------------------------
+e: SyncPayloadV3Test.kt:46:63 Unresolved reference 'rssSources'.
+e: SyncPayloadV3Test.kt:47:47 Unresolved reference 'replaceRules'.
+e: SyncPayloadV3Test.kt:48:44 Unresolved reference 'dictRules'.
+e: SyncPayloadV3Test.kt:49:46 Unresolved reference 'txtTocRules'.
+e: SyncPayloadV3Test.kt:50:49 Unresolved reference 'searchKeywords'.
+e: SyncPayloadV3Test.kt:66:13 No parameter with name 'rssSources' found.
+e: SyncPayloadV3Test.kt:70:20 Unresolved reference 'SyncMerge'.
+e: SyncPayloadV3Test.kt:70:74 Unresolved reference 'it'.
+
+共 60 条编译错误。
+> Task :app:compileAppDebugUnitTestKotlin FAILED
+BUILD FAILED in 1s
+EXIT=1
+
+--------------------------------------------------
+[2] 第二次 Red：签名不匹配（尾随 lambda 绑到了 Boolean 参数）
+--------------------------------------------------
+e: SyncPayloadV3Test.kt:90:67 Argument type mismatch:
+     actual type is 'Function0<String>', but 'Boolean' was expected.
+e: SyncPayloadV3Test.kt:102:50 No value passed for parameter 'key'.
+e: SyncPayloadV3Test.kt:102:78 Too many arguments for
+     'fun <T> diff(local: List<T>?, remote: List<T>?, key: (T) -> String,
+                   keepWhenRemoteEmpty: Boolean = ...): SyncDiff<T>'
+BUILD FAILED in 14s
+EXIT=1
+
+原因：diff 的 key 参数在最后一位之后，尾随 lambda 实际绑定到了 keepWhenRemoteEmpty。
+修正：把 key 移到最后一个参数，调用处可直接写 diff(a, b) { it.xxx }。
+
+--------------------------------------------------
+[3] 第三次 Red：14 通过 / 4 失败，暴露真实设计缺陷
+--------------------------------------------------
+SyncPayloadV3Test > 新增类目参与指纹 FAILED
+    com.google.gson.JsonIOException:
+      Failed making field 'java.time.LocalDate#year' accessible;
+      module java.base does not "opens java.time"
+SyncPayloadV3Test > 顺序不同但内容相同的载荷指纹一致 FAILED
+SyncPayloadV3Test > v2 载荷缺少的新字段解析为 null FAILED
+SyncPayloadV3Test > v2 载荷的既有字段仍正常解析 FAILED
+
+18 tests completed, 4 failed
+BUILD FAILED in 11s
+EXIT=1
+
+这是本次实施中**最有价值的一次失败**：
+SyncData.books 原本声明为 List<Book>?，而 Book 内嵌的
+Book.ReadConfig 含有 java.time.LocalDate。Gson 反射序列化它必然失败。
+
+若不在单测里暴露，这个问题会在真机上以「同步静默失败」的形式出现
+（AppWebDav.syncUserData 用 runCatching 吞掉异常，只写日志）。
+
+结论：不能直接序列化 Book 实体，必须用专门的传输对象。

@@ -1,0 +1,83 @@
+== webdav-sync-v3 阶段 1 Green：v3 载荷测试全部通过 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-25
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+
+--------------------------------------------------
+[1] 实现清单
+--------------------------------------------------
+新增：
+  app/src/main/java/io/legado/app/help/sync/SyncMerge.kt
+    差异计算纯函数；null（载荷不携带）与空列表（云端确实没有）严格区分
+  app/src/main/java/io/legado/app/help/sync/SyncKeys.kt
+    替换规则逻辑身份 = sha256(语义字段)，排除 id / order / isEnabled
+  app/src/main/java/io/legado/app/help/sync/BookSync.kt
+    书架传输对象；不含 bookUrl，规避 LocalDate 反射问题
+  app/src/test/java/io/legado/app/help/sync/SyncPayloadV3Test.kt
+    18 个用例
+
+修改：
+  app/src/main/java/io/legado/app/help/sync/UserDataSync.kt
+    SyncData.version 2 → 3；新增 11 个可空类目字段
+    normalized() 对新增类目排序，且保持 null 语义
+    export() 读取 11 个 DAO，每个 runCatching 兜底，失败给 null 而非空列表
+    Result 扩展为 14 个计数
+    replaceLocal() 新增 applyV3()：逐类目应用差异
+
+--------------------------------------------------
+[2] 关键设计：null 与空列表的语义分界
+--------------------------------------------------
+旧客户端上传的 v2 JSON 没有新键。若新字段默认 emptyList()，
+解析结果就是「云端该类目确实为空」，同步会用空列表覆盖本地，
+把用户的 RSS、替换规则、字典全部清空——升级当次的数据丢失事故。
+
+因此：
+  字段缺失（null）  → 该类目整体跳过，不动本地
+  字段为空（[]）    → 云端确实没有，允许删除传播
+
+书源与 RSS 源额外开启 keepWhenRemoteEmpty：
+这两类是重资产，云端为空更可能是「新装设备还没配」，宁可不动。
+
+--------------------------------------------------
+[3] 书架同步的特殊处理
+--------------------------------------------------
+- 只 update 已存在的书，绝不 insert：
+  新增会造出 bookUrl 为空、点不开的僵尸条目。
+- 进度只前进：durChapterIndex 更大才覆盖，避免同步让进度倒退。
+- 删除不通过 books 差异传播，改由回收站条目传播（阶段 2）。
+
+--------------------------------------------------
+[4] 测试结果
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest
+结果：BUILD SUCCESSFUL in 23s
+      EXIT=0
+
+用例统计（汇总 app/build/test-results/testAppDebugUnitTest/*.xml，11 个套件）：
+  tests=161  failures=0
+  阶段 1 前为 143，本次新增 18 个，无既有用例减少。
+
+  ExampleUnitTest, JsTest, BookProgressBundleTest,
+  SyncDecisionTest, SyncFingerprintTest, SyncPayloadV3Test,
+  SyncPlanTest, UserDataSyncDaoTest,
+  RuleAnalyzerSplitRuleTest, AlphanumComparatorTest, PaginatorTest
+
+--------------------------------------------------
+[5] 文档门禁
+--------------------------------------------------
+命令：pwsh -NoProfile -File tools/check-docs.ps1
+输出：声明解析：类 4 个，例外 6 条，编号来源 2 个
+      I1 归类完备
+      I2 索引与实体双向一致
+      I3 编号唯一
+      文档门禁通过：检查 .md 60 个，文件 1979 个
+退出码：0
+
+--------------------------------------------------
+[6] 本阶段未做（留给后续阶段）
+--------------------------------------------------
+- 回收站表 book_trash 与 Room 89→90 迁移（阶段 2）
+- 阅读记录 deviceId 写入修复（阶段 3）
+- 本地书上传 / 下载开关（阶段 4）
+- 删除备份全套（阶段 5）
+- 配置文件同步（shareReadConfig / themeConfig / coverRule）
