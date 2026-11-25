@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   书架布局设置（墨水屏版）
-  分组固定为标签分组、视图固定为列表，因此分组样式与网格选项已移除。
-  三行结构：视图样式 / 列表间距 / 书籍排序条件，避免控件相互重叠。
+  分组固定为标签分组、视图固定为列表、列表间距固定 12dp，
+  因此视图样式、列表间距、分组样式与网格选项全部移除，只保留排序条件。
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -48,65 +48,7 @@
             android:text="@string/show_bookshelf_fast_scroller"
             tools:ignore="TouchTargetSizeCheck" />
 
-        <!-- 行一：视图样式（固定为列表，仅展示） -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="6dp">
-
-            <io.legado.app.ui.widget.text.AccentTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/bookshelf_view_style"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/tv_view_style"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/layout_list"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <!-- 行二：列表间距 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="6dp">
-
-            <io.legado.app.ui.widget.text.AccentTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bookshelf_spacing"
-                android:textSize="16sp" />
-
-            <SeekBar
-                android:id="@+id/sb_margin"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_weight="1"
-                android:max="60"
-                tools:ignore="TouchTargetSizeCheck" />
-
-            <TextView
-                android:id="@+id/tv_margin_value"
-                android:layout_width="48dp"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:textSize="16sp"
-                tools:text="12" />
-
-        </LinearLayout>
-
-        <!-- 行三：书籍排序条件（下拉） -->
+        <!-- 书籍排序条件（下拉）。视图样式固定为列表、列表间距固定 12，故不再提供设置项。 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

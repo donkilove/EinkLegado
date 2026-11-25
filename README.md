@@ -1,15 +1,48 @@
 <div align="center">
-<img width="125" height="125" src="https://gitee.com/lyc486/legado/raw/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="legado"/>
+<img width="125" height="125" src="https://raw.githubusercontent.com/donkilove/EinkLegado/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="EinkLegado"/>
 <br>
-阅读Sigma
+墨水屏版（EinkLegado）
 <br>
-阅读Sigma继承自<a href="https://github.com/gedoor/legado" target="_blank">Legado</a>，延续开源阅读项目，在其基础上新增更多功能。
+源自 <a href="https://github.com/gedoor/legado" target="_blank">Legado（阅读 3.0）</a>，为电子纸设备重做交互。
 </div>
 
+## 这是什么
+
+一个只面向墨水屏的阅读器分支。电子纸的物理特性决定了「持续刷新」和「动画」只有负面效果：
+残影累积、闪烁、响应迟滞。所以这个分支做的事情基本是**减法**——把为手机屏幕设计、
+在电子纸上只会添乱的东西去掉，把必须保留的能力改成适合翻页的形态。
+
+- **长列表一律翻页**：书架、目录、书源、替换规则等，每页条数按实际项高自动测量，页内不滚动
+- **设置页二级分页**：首屏零滚动，左右滑动与按钮都能翻页
+- **主题固定纯黑白**：不提供浅色/深色切换，也不做水波纹、过渡动画、跟手滑动
+- **书架固定列表 + 标签分组**：移除网格视图与文件夹分组
+
+## 同步：以 WebDAV 取代备份
+
+这个分支**没有备份与恢复**，多端一致完全靠 WebDAV 同步实现。
+
+同步覆盖 15 类数据：阅读进度、书架、分组、书签、书源、RSS 源与收藏、替换规则、
+字典规则、在线朗读、TXT 目录规则、远程书源、键盘辅助、搜索历史、阅读时长、排版配置。
+
+几条关键设计：
+
+- **区分「字段缺失」与「空列表」**：旧版本上传的载荷缺少新字段时整体跳过，不会用空列表清空本地数据
+- **删除走回收站**：删书先进回收站，30 天内任何一端可恢复，超期自动清理；删除跨设备传播但静默处理
+- **阅读时长按设备分别记录**：各设备只写自己那一行，展示时求和，不会重复计数
+- **本地书可选自动上传**，别的设备按需下载
+
+书架右上角的云图标可手动触发同步；未配置 WebDAV 时会明确提示。
+
+> ⚠️ 由于备份功能整体移除，**旧版本的备份 zip 无法恢复**。
+
 ## 版本说明
-- 测试版(beta)：包名与Legado原版相同，可覆盖更新，版本更新频繁
-- 正式版(plus)：新的共存包名，安装后是一个新软件，不会覆盖Legado原版，每到一个稳定阶段进行一次更新
-#### 找不到下载地址可以去这里 [下载软件](https://gitee.com/lyc486/legado/releases)
+
+| 版本 | 包名 | 说明 |
+|---|---|---|
+| 正式版 | `io.legado.app` | 稳定阶段发布 |
+| 测试版（debug） | `io.legado.app.debug` | 可与正式版共存安装，更新频繁 |
+
+下载地址：[GitHub Releases](https://github.com/donkilove/EinkLegado/releases)
 
 [![](https://img.shields.io/badge/-Contents:-696969.svg)](#contents) [![](https://img.shields.io/badge/-Function-F5F5F5.svg)](#Function-主要功能-) [![](https://img.shields.io/badge/-Community-F5F5F5.svg)](#Community-交流社区-) [![](https://img.shields.io/badge/-API-F5F5F5.svg)](#API-) [![](https://img.shields.io/badge/-Other-F5F5F5.svg)](#Other-其他-) [![](https://img.shields.io/badge/-Grateful-F5F5F5.svg)](#Grateful-感谢-) [![](https://img.shields.io/badge/-Interface-F5F5F5.svg)](#Interface-界面-)
 
@@ -36,21 +69,15 @@
 面向电子纸设备，把「持续刷新」和「动画」这两类在电子纸上只有负面影响的东西逐步去掉：
 
 1.长列表改为翻页，每页条数按实际项高自动决定，页内无需滚动。<br>
-2.设置页改为二级分页，首屏零滚动。<br>
+2.设置页改为二级分页，首屏零滚动，支持左右滑动与按钮翻页。<br>
 3.关闭水波纹、过渡动画、跟手滑动、循环旋转图标等视觉特效。<br>
 4.主题固定为纯黑白 EInk，不提供浅色/深色切换。<br>
 5.书架固定为列表视图 + 标签分组，主界面与书架分类靠点按切换而非滑动。<br>
 6.移除视频、弹幕、本地音频播放与 Firebase 统计（书源 JS 中相关函数保留签名，调用后仅提示）。<br>
-7.保留 RSS 订阅、发现页、字典与段评、朗读、Web 端编辑——这些在电纸书看小说的场景下仍有实际用途。<br>
+7.移除备份与恢复，多端一致完全由 WebDAV 同步承担；删除改为 30 天回收站。<br>
+8.移除文件管理页（浏览 Android/data 私有目录）——备份移除后该目录已无大体积文件。<br>
+9.保留 RSS 订阅、发现页、字典与段评、朗读、Web 端编辑——这些在电纸书看小说的场景下仍有实际用途。<br>
 详见 [docs/specs/done/](docs/specs/done/README.md) 的规格与决策记录。
-</details>
-
-<details><summary>延续（上游 Legado 的扩展，本分支已部分移除）</summary>
-1.带歌词的音频播放功能 —— **本分支已移除**。<br>
-2.带弹幕的视频播放功能 —— **本分支已移除**。<br>
-3.更方便的书源编辑。<br>
-4.更丰富的书源功能实现。<br>
-5.更完善的订阅源功能。<br>
 </details>
 
 <a href="#readme">
@@ -59,25 +86,16 @@
 
 # Community-交流社区 [![](https://img.shields.io/badge/-Community-F5F5F5.svg)](#Community-交流社区-)
 
-#### Telegram
-[![Telegram-channel](https://img.shields.io/badge/Σ_Telegram-%E9%A2%91%E9%81%93-blue)](https://t.me/readsigma)
+本分支的讨论请走 [GitHub Issues](https://github.com/donkilove/EinkLegado/issues)。
 
-#### WeChat
-[![WeChat-channel](https://img.shields.io/badge/Σ_%e5%be%ae%e4%bf%a1-%e5%85%ac%e4%bc%97%e5%8f%b7-green)](https://mp.weixin.qq.com/mp/appmsgalbum?action=getalbum&album_id=4345046964963590147)  
-<img src="https://open.weixin.qq.com/qr/code?username=legado_plus" width="100">
-
-#### Discord
-[![Discord](https://img.shields.io/discord/560731361414086666?color=%235865f2&label=Discord)](https://discord.gg/VtUfRyzRXn)
-
-#### Other
-https://www.yuque.com/legado/wiki/community
+上游 Legado 的社区入口见 [Legado 仓库](https://github.com/gedoor/legado)。
 
 <a href="#readme">
     <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
 </a>
 
 # API [![](https://img.shields.io/badge/-API-F5F5F5.svg)](#API-)
-* 阅读3.0 提供了2种方式的API：`Web方式`和`Content Provider方式`。您可以在[这里](api.md)根据需要自行调用。 
+* 提供两种 API：`Web方式` 与 `Content Provider方式`，详见 [api.md](api.md)。
 * 可通过url唤起阅读进行一键导入,url格式: legado://import/{path}?src={url}
 * path类型: bookSource,rssSource,replaceRule,textTocRule,httpTTS,theme,readConfig,dictRule,[addToBookshelf](/app/src/main/java/io/legado/app/ui/association/AddToBookshelfDialog.kt)
 * path类型解释: 书源,订阅源,替换规则,本地txt小说目录规则,在线朗读引擎,主题,阅读排版,添加到书架
@@ -93,10 +111,10 @@ https://www.yuque.com/legado/wiki/community
 任何单位或个人认为第三方网页书源内容可能涉嫌侵犯其信息网络传播权，应该及时向阅读提出书权力通知，并提供身份证明、权属证明及详细侵权情况证明。阅读在收到上述法律文件后，将会依法尽快屏蔽相关内容。<br>
 </details>
 
-##### 阅读3.0
+##### 上游资料
 * [书源规则](https://mgz0227.github.io/The-tutorial-of-Legado/)
-* [更新日志](/app/src/main/assets/updateLog.md)
-* [帮助文档](/app/src/main/assets/web/help/md/appHelp.md)
+* [Legado 帮助文档](https://www.yuque.com/legado/wiki)
+* 本分支的更新说明见 [GitHub Releases](https://github.com/donkilove/EinkLegado/releases)
 
 <a href="#readme">
     <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">

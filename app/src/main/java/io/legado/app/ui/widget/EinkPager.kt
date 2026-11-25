@@ -86,7 +86,18 @@ class EinkPager<T>(
         // 已经有左右滑动翻页，底栏的上一页/下一页按钮是重复入口
         pageBar.showButtons = false
         pageBar.onPageChange = { delta -> moveBy(delta) }
+        // 视图尺寸变化后重新测量：切主题重建、旋转、分页条显隐都会改变可用高度，
+        // 沿用旧条数会让这一页放不下（墨水屏不能滚，放不下就点不到）。
+        recyclerView.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            val h = bottom - top
+            if (h > 0 && h != oldBottom - oldTop && h != lastMeasuredHeight) {
+                measureCurrentPage()
+            }
+        }
     }
+
+    /** 上次成功测量时的列表可用高度，用于判断是否需要重测 */
+    private var lastMeasuredHeight = 0
 
     /**
      * 真正禁止列表滚动。
@@ -129,6 +140,13 @@ class EinkPager<T>(
         disableScrolling()
         // 数据变了，统一条数模式需要重新测一次（列表可能整体换了，项高未必还一样）
         uniformMeasured = false
+        // 复位测量状态。测量是「postDelayed 多轮」的异步流程，若中途视图被销毁
+        // （切主题触发 recreate、切分组重建 Fragment），后续几轮就再也不会执行，
+        // measuring 会永远停在 true，之后每次 setAll 都被 measureCurrentPage 的
+        // 早退挡掉——表现为翻页条消失、列表既不分页也不能滚。
+        measuring = false
+        measureAttempts = 0
+        bestFit = 0
         val slice = paginator.setAll(items)
         onItemsChanged?.invoke(slice)
         updatePageBar()
@@ -225,6 +243,16 @@ class EinkPager<T>(
             return
         }
         if (bestFit <= 0) {
+            // 还没布局好（切主题重建、切分组重建后常见）：
+            // 此时 RecyclerView 高度或子项都还是 0，测不出条数。
+            // 不能就此放弃——放弃后分页条不会出现，列表既不分页也不能滚，
+            // 用户看到的就是「回到书架后没有分页」。
+            // 继续重试，直到布局就绪或达到上限。
+            if (measureAttempts < MAX_MEASURE_ATTEMPTS) {
+                bestFit = 0
+                scheduleMeasureRound(MEASURE_RETRY_DELAY_MS)
+                return
+            }
             measuring = false
             return
         }
@@ -233,6 +261,8 @@ class EinkPager<T>(
 
     private fun commitMeasured(fitCount: Int) {
         measureAttempts = 0
+        lastMeasuredHeight =
+            recyclerView.height - recyclerView.paddingTop - recyclerView.paddingBottom
         // 网格模式下每页必须是整行，按列数向下取整
         val perPage = if (columns > 1) {
             (fitCount / columns).coerceAtLeast(1) * columns

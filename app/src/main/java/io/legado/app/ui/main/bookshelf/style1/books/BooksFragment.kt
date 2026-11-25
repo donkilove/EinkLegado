@@ -84,16 +84,14 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     private val bookshelfMargin by lazy { AppConfig.bookshelfMargin }
     private var itemCount = 0
 
-    /** 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理。书架固定列表视图，单列。 */
-    private val pager by lazy {
-        EinkPager<io.legado.app.data.entities.Book>(
-            binding.rvBookshelf,
-            binding.pageBar,
-            "本"
-        ).apply {
-            onItemsChanged = { items -> booksAdapter.setItems(items) }
-        }
-    }
+    /**
+     * 墨水屏：分页、禁滚动、左右滑动翻页统一由 EinkPager 处理。书架固定列表视图，单列。
+     *
+     * 必须**跟着视图走**，不能用 by lazy：切主题会 recreate，视图重建后
+     * 旧的 EinkPager 仍持有已销毁的 RecyclerView 与 PageBar，
+     * 分页和翻页条就全部失效（表现为翻页条消失、列表既不分页也不能滚）。
+     */
+    private var pager: EinkPager<io.legado.app.data.entities.Book>? = null
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
         arguments?.let {
@@ -111,9 +109,17 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
     /**
      * 水平滑动翻页：-1 上一页，1 下一页。已在首/末页时返回 false，由调用方忽略本次手势。
      */
-    fun onSwipePage(direction: Int): Boolean = pager.onSwipe(direction)
+    fun onSwipePage(direction: Int): Boolean = pager?.onSwipe(direction) ?: false
 
     private fun initRecyclerView() {
+        // 每次视图重建都新建分页器，绑定到当前这棵视图树
+        pager = EinkPager<io.legado.app.data.entities.Book>(
+            binding.rvBookshelf,
+            binding.pageBar,
+            "本"
+        ).apply {
+            onItemsChanged = { items -> booksAdapter.setItems(items) }
+        }
         binding.rvBookshelf.setEdgeEffectColor(primaryColor)
         upFastScrollerBar()
         binding.refreshLayout.setColorSchemeColors(accentColor)
@@ -246,7 +252,7 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 itemCount = list.size
                 binding.tvEmptyMsg.isGone = itemCount > 0
                 binding.refreshLayout.isEnabled = enableRefresh && itemCount > 0
-                pager.setAll(list)
+                pager?.setAll(list)
                 delay(100)
             }
         }
@@ -285,6 +291,9 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // 分页器持有本视图树的 RecyclerView/PageBar，视图销毁后必须丢弃，
+        // 否则重建后仍在操作已销毁的控件
+        pager = null
         /**
          * 将 RecyclerView 中的视图全部回收到 RecycledViewPool 中
          */

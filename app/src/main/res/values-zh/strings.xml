@@ -97,10 +97,10 @@
     <string name="offline_cache_s">缓存选择的章节到本地</string>
     <string name="change_origin">换源</string>
     <string name="about_description">
-        \u3000\u3000这是一款使用 Kotlin 全新开发的开源的阅读软件，欢迎您的加入。
+        \u3000\u3000面向墨水屏设备的开源阅读器，源自 Legado（阅读 3.0）。\n\u3000\u3000把电子纸上只有负面影响的东西去掉：持续刷新、动画、水波纹、网格与文件夹分组；长列表一律改为按页翻页，每页条数按实际项高自动决定。\n\u3000\u3000不提供服务端，不收集任何用户信息，数据只存在本机与你自己的 WebDAV。
     </string>
     <string name="app_share_description">
-        阅读 3.0 下载地址：\nhttps://github.com/gedoor/legado/releases
+        墨水屏版下载地址：\nhttps://github.com/donkilove/EinkLegado/releases
     </string>
     <string name="version_name">版本 %s</string>
     <string name="pt_background_verification">后台校验书源</string>

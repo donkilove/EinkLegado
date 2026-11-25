@@ -179,11 +179,14 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
         set(value) {
             appCtx.putPrefInt(PreferKey.showBooknameLayout, value)
         }
-    var bookshelfMargin: Int
-        get() = appCtx.getPrefInt(PreferKey.bookshelfMargin, 12)
-        set(value) {
-            appCtx.putPrefInt(PreferKey.bookshelfMargin, value)
-        }
+    /**
+     * 书架列表项之间的间距（dp）。
+     *
+     * 固定 12：墨水屏上间距调小会让相邻书籍挤在一起、调大会一屏放不下几本，
+     * 实测 12 最平衡。既然不提供设置项，就不该留一个可被改写的偏好值——
+     * 否则旧版本改过的用户升级后会停在旧值上，与代码里的常量不一致。
+     */
+    val bookshelfMargin: Int = 12
 
     var showUnread: Boolean
         get() = appCtx.getPrefBoolean(PreferKey.showUnread, true)

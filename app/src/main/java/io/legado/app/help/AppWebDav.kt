@@ -299,13 +299,18 @@ object AppWebDav {
             // 先把离线期间积压的进度补传上去，再拉取云端
             flushPendingProgress()
             migrateOldProgressIfNeeded()
-            val bundle = fetchProgressBundle(force = true) ?: return 0
+            // 云端还没有进度文件时 bundle 为 null，这是「首次同步到空服务器」的正常情况。
+            // 此处不能直接 return：那会把下面的 syncUserData() 一起跳过，
+            // 导致分组/书签/书源/阅读时长在空服务器上永远同步不出去。
+            val bundle = fetchProgressBundle(force = true)
             var updated = 0
-            appDb.bookDao.all.forEach { book ->
-                if (bundle.applyTo(book)) {
-                    book.syncTime = System.currentTimeMillis()
-                    appDb.bookDao.update(book)
-                    updated++
+            if (bundle != null) {
+                appDb.bookDao.all.forEach { book ->
+                    if (bundle.applyTo(book)) {
+                        book.syncTime = System.currentTimeMillis()
+                        appDb.bookDao.update(book)
+                        updated++
+                    }
                 }
             }
             if (withUserData) syncUserData()

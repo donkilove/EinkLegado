@@ -1,0 +1,143 @@
+== webdav-sync-v3 追加三：夜间模式分页修复、同步空服务器修复、布局与分组精简、README 与关于重写 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-26
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+
+本次首次启用**本机 WebDAV 测试服务器**（build/webdav_test_server.py，仅测试用，
+不入库），补上了此前「缺可用服务器所以没实测」的几项。
+
+--------------------------------------------------
+[1] 夜间模式切换后书架不分页、也不能翻页（用户报告）
+--------------------------------------------------
+复现：书架有 13 本书 → 我的 → 设置 → 主题设置 → 开/关夜间模式
+→ 返回书架。此时列表显示 6.5 本、可上下滚、没有翻页条、左右滑动无效。
+
+根因（两个叠加）：
+  (a) BooksFragment 的 pager 用 by lazy 绑定，切主题触发 recreate 后
+      视图重建，但 pager 仍持有**已销毁**的 RecyclerView 与 PageBar，
+      分页与翻页条全部失效。
+  (b) EinkPager.measuring 标志卡死。测量是 postDelayed 多轮异步流程，
+      视图销毁后后续轮次不再执行，measuring 永远停在 true，
+      之后每次 setAll 都被 measureCurrentPage 的早退挡掉。
+
+修复：
+  - pager 改为普通字段，在 initRecyclerView 里按当前视图新建，
+    onDestroyView 里置 null；onSwipePage / setAll 全部空安全
+  - setAll 里复位 measuring / measureAttempts / bestFit
+  - doMeasureRound 在 bestFit<=0（布局未就绪）时继续重试到
+    MAX_MEASURE_ATTEMPTS，而不是直接放弃
+  - 增加 addOnLayoutChangeListener：可用高度变化且与上次测量不同就重测
+
+实测：13 本书，切到浅色再切回深色，两次返回书架都显示「第 1/3 页」，
+左右滑动正常翻到 2/3。
+  → webdav-sync-v3-nightmode-1-light.png / webdav-sync-v3-nightmode-2-dark.png
+
+--------------------------------------------------
+[2] 空 WebDAV 服务器上首次同步什么都不做
+--------------------------------------------------
+用本机服务器（全新空目录）点书架同步按钮，服务端日志只有 PROPFIND，
+没有 PUT。syncData.json 始终不存在。
+
+根因：downloadAllBookProgress 里
+    val bundle = fetchProgressBundle(force = true) ?: return 0
+云端还没有 bookProgress.json 时 bundle 为 null，直接 return 0
+把后面的 syncUserData() 一起跳过了——而「首次同步到空服务器」
+恰恰是最需要上传的场景。
+
+修复：bundle 为 null 时只跳过进度合并，继续执行 syncUserData()。
+
+实测（本机 WebDAV）：
+  首次同步后服务端出现 legado/syncData.json（37 KB），含 15 个类目：
+    bookTrash=1 books=1 dictRules=5 groups=7 httpTTS=3
+    keyboardAssists=32 readRecords=3 rssSources=4 txtTocRules=26
+    bookmarks=0 replaceRules=0 rssStars=0 searchKeywords=0 servers=0 sources=0
+
+--------------------------------------------------
+[3] 双向同步实测（此前未验证）
+--------------------------------------------------
+上传方向：见 [2]，本地 15 类数据写入云端。
+
+下载方向：直接在服务端 syncData.json 里加一条 bookmark
+（bookName=绍宋, chapterName=服务端加的），重启 App 点同步，
+本地数据库 bookmarks 表出现该记录。
+即「本地改动或远端改动都会同步到另一侧」成立。
+
+--------------------------------------------------
+[4] 云端文件删除实测（此前未验证）
+--------------------------------------------------
+在服务端 books/ 放 testbook.epub，本地 book_trash 插入一条
+origin=webDav::http://10.0.2.2:8080/legado/books/testbook.epub、
+deletedAt=1（已过期）的记录，重启 App 触发 purgeExpired。
+结果：服务端 books/ 目录清空，本地回收站该条消失。
+即满 30 天自动清理会删云端文件。
+
+--------------------------------------------------
+[5] 书架布局精简（用户要求）
+--------------------------------------------------
+删除「视图样式」（固定为列表，只展示不可改）与「列表间距」两行。
+间距固定 12：AppConfig.bookshelfMargin 由可读写偏好改为常量，
+PreferKey.bookshelfMargin 一并删除——否则旧版本调过间距的用户
+升级后会停在旧值上，与代码常量不一致。
+
+对话框现在只剩：显示未读/显示更新时间/显示待更新数量/快速滚动条 + 排序。
+  → webdav-sync-v3-layout.png
+
+--------------------------------------------------
+[6] 分组管理里的「删不掉的分组」（用户疑问）
+--------------------------------------------------
+设备上原有 7 个分组，其中 6 个是固定 ID 的系统伪分组：
+  全部(-1) 本地(-2) 音频(-3) 网络未分组(-4) 本地未分组(-5) 视频(-6) 更新失败(-11)
+删除按钮只对 groupId > 0 显示，所以这些删不掉——它们是书架标签栏的
+内置分类，本就不该删。
+
+但它们全列出来对用户是噪音：只有本地书的设备上，
+音频/视频/网络未分组/本地未分组 永远没有内容。
+
+处理：新增 BookGroupDao.flowManageable()，分组管理页只显示
+「用户自建分组」+「当前确实有书的系统分组」。
+实测该设备从 7 项降到 2 项（全部、更新失败——后者因为有一本书更新失败）。
+  → webdav-sync-v3-groups.png
+
+--------------------------------------------------
+[7] README 与关于页重写（用户要求）
+--------------------------------------------------
+README：
+  - 标题与简介改为「墨水屏版（EinkLegado）」，去掉阅读Sigma 的继承叙述
+  - 新增「这是什么」与「同步：以 WebDAV 取代备份」两节，
+    说明 15 类同步范围、null/空列表语义、回收站、阅读时长按设备记录
+  - 版本说明改为正式版/测试版两行，下载地址指向本仓库 Releases
+  - 功能列表补上「移除备份与恢复」「移除文件管理页」
+  - 社区入口改为 GitHub Issues（原 Telegram/微信/Discord 属上游）
+  - Logo 与 API 说明指向本仓库
+
+关于页（about_description_sigma / contributors_summary_sigma /
+app_share_description_sigma 及中文对应项）：
+  - 说明这是面向墨水屏的 Legado 分支，列出被移除的东西
+  - 明确「不提供服务端，不收集任何用户信息，数据只存在本机与你自己的 WebDAV」
+  - 贡献者改为 gedoor 与 Legado 全体贡献者 + 本分支维护者
+  - 分享文案的下载地址指向本仓库 Releases
+
+--------------------------------------------------
+[8] 验证
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest :app:assembleAppDebug
+结果：BUILD SUCCESSFUL
+      EXIT=0
+      tests=189  failures=0
+
+模拟器实测：
+  夜间模式来回切换后书架仍分页且可翻页
+  书架同步按钮 → 服务端出现 syncData.json（15 类）
+  服务端加书签 → 本地同步到
+  过期回收站条目 → 云端文件被删
+  布局对话框只剩 4 个开关 + 排序
+  分组管理 7 项 → 2 项
+
+--------------------------------------------------
+[9] 遗留
+--------------------------------------------------
+- 自动上传本地书的真实上传仍未实测（需要一本本地书 + 触发导入）
+- 按需下载关闭时的提示仍未实测
+- 回收站「彻底删除」只删数据库行与云端文件，本地文件仍留在磁盘
+- build/webdav_test_server.py 是测试脚手架，未入库

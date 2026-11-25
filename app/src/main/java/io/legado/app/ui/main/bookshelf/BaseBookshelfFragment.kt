@@ -218,32 +218,10 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
                         swShowWaitUpBooks.isChecked = AppConfig.showWaitUpCount
                         swShowBookshelfFastScroller.isChecked = AppConfig.showBookshelfFastScroller
                         spSort.setSelection(bookshelfSort)
-                        sbMargin.progress = AppConfig.bookshelfMargin
-                        tvMarginValue.text = AppConfig.bookshelfMargin.toString()
-                        sbMargin.setOnSeekBarChangeListener(
-                            object : SeekBar.OnSeekBarChangeListener {
-                                override fun onProgressChanged(
-                                    seekBar: SeekBar?,
-                                    progress: Int,
-                                    fromUser: Boolean
-                                ) {
-                                    tvMarginValue.text = progress.toString()
-                                }
-
-                                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-                                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-                            }
-                        )
                     }
             customView { alertBinding.root }
             okButton {
                 alertBinding.apply {
-                    var recreate = false
-                    if (AppConfig.bookshelfMargin != sbMargin.progress) {
-                        AppConfig.bookshelfMargin = sbMargin.progress
-                        recreate = true
-                    }
                     if (AppConfig.showUnread != swShowUnread.isChecked) {
                         AppConfig.showUnread = swShowUnread.isChecked
                         postEvent(EventBus.BOOKSHELF_REFRESH, "")
@@ -263,9 +241,6 @@ abstract class BaseBookshelfFragment(layoutId: Int) : VMBaseFragment<BookshelfVi
                     if (bookshelfSort != spSort.selectedItemPosition) {
                         AppConfig.bookshelfSort = spSort.selectedItemPosition
                         upSort()
-                    }
-                    if (recreate) {
-                        postEvent(EventBus.RECREATE, "")
                     }
                 }
             }

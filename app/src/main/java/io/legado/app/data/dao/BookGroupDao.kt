@@ -23,6 +23,47 @@ interface BookGroupDao {
     @Query("SELECT * FROM book_groups ORDER BY `order`")
     fun flowAll(): Flow<List<BookGroup>>
 
+    /**
+     * 分组管理页用的列表：只保留「用户自建分组」与「当前确实有书的系统分组」。
+     *
+     * 系统分组（全部/本地/音频/网络未分组/本地未分组/视频/更新失败）是固定 ID 的伪分组，
+     * 删不掉也不该删。但把它们全列出来，用户会看到一堆自己从没建过、也删不掉的分组——
+     * 在只有本地书的墨水屏设备上，音频/视频/网络未分组/本地未分组/更新失败 全是噪音。
+     * 因此只显示有书的系统分组：没有书时它们本来也不会出现在书架标签栏。
+     */
+    @Query(
+        """
+        with const as (SELECT sum(groupId) sumGroupId FROM book_groups where groupId > 0)
+        SELECT book_groups.* FROM book_groups join const
+        where groupId > 0
+            or groupId = -1
+            or (groupId = -2 and exists (select 1 from books where type & ${BookType.local} > 0))
+            or (groupId = -3 and exists (select 1 from books where type & ${BookType.audio} > 0))
+            or (groupId = -6 and exists (select 1 from books where type & ${BookType.video} > 0))
+            or (groupId = -11 and exists (select 1 from books where type & ${BookType.updateError} > 0))
+            or (groupId = -4
+                and exists (
+                    select 1 from books
+                    where type & ${BookType.audio} = 0
+                    and type & ${BookType.video} = 0
+                    and type & ${BookType.local} = 0
+                    and const.sumGroupId & `group` = 0
+                )
+            )
+            or (groupId = -5
+                and exists (
+                    select 1 from books
+                    where type & ${BookType.audio} = 0
+                    and type & ${BookType.video} = 0
+                    and type & ${BookType.local} > 0
+                    and const.sumGroupId & `group` = 0
+                )
+            )
+        ORDER BY `order`
+        """
+    )
+    fun flowManageable(): Flow<List<BookGroup>>
+
     @get:Query(
         """
         with const as (SELECT sum(groupId) sumGroupId FROM book_groups where groupId > 0)

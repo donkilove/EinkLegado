@@ -71,3 +71,8 @@
 | [webdav-sync-v3-syncbtn-6-sync.png](webdav-sync-v3-syncbtn-6-sync.png) | webdav-sync-v3（追加二） | 同步开关页 5 项，无翻页条 |
 | [webdav-sync-v3-paging-1.png](webdav-sync-v3-paging-1.png) | webdav-sync-v3（追加二） | 封面设置第 1/2 页（6 项，无裁切） |
 | [webdav-sync-v3-paging-2.png](webdav-sync-v3-paging-2.png) | webdav-sync-v3（追加二） | 封面设置第 2/2 页（3 项） |
+| [webdav-sync-v3-nightmode.txt](webdav-sync-v3-nightmode.txt) | webdav-sync-v3（追加三） | 夜间模式分页修复、空服务器同步修复、双向同步与云端删除实测、布局与分组精简、README/关于重写 |
+| [webdav-sync-v3-nightmode-1-light.png](webdav-sync-v3-nightmode-1-light.png) | webdav-sync-v3（追加三） | 切浅色后返回书架仍分页（1/3） |
+| [webdav-sync-v3-nightmode-2-dark.png](webdav-sync-v3-nightmode-2-dark.png) | webdav-sync-v3（追加三） | 切深色后滑动翻到 2/3 |
+| [webdav-sync-v3-layout.png](webdav-sync-v3-layout.png) | webdav-sync-v3（追加三） | 书架布局只剩 4 个开关 + 排序 |
+| [webdav-sync-v3-groups.png](webdav-sync-v3-groups.png) | webdav-sync-v3（追加三） | 分组管理 7 项降为 2 项 |
