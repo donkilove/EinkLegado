@@ -23,11 +23,17 @@ object BookTrashPolicy {
     fun expired(items: List<BookTrash>, now: Long): List<BookTrash> =
         items.filter { isExpired(it.deletedAt, now) }
 
-    /** 剩余天数，已过期返回 0 */
+    /**
+     * 剩余天数，已过期返回 0。
+     *
+     * 用**向上取整**而不是整除：删除 1 天零 1 秒后，剩余 28.99 天，
+     * 整除会显示「28 天」，而用户预期是「29 天」——刚删一天就少两天，看着像 bug。
+     * 向上取整后，只要还有不足一天的时间，就仍显示 1 天。
+     */
     fun remainingDays(deletedAt: Long, now: Long): Long {
         val elapsed = now - deletedAt
         val left = RETENTION_DAYS * DAY_MILLIS - elapsed
         if (left <= 0) return 0
-        return left / DAY_MILLIS
+        return (left + DAY_MILLIS - 1) / DAY_MILLIS
     }
 }

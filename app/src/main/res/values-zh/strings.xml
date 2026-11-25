@@ -1280,5 +1280,15 @@
     <string name="web_dav_set_s">WebDav 服务器与同步设置</string>
     <string name="backup_restore_s">备份与恢复应用数据</string>
     <string name="sync_progress_done">已同步 %d 本书的阅读进度</string>
+    <string name="book_trash">回收站</string>
+    <string name="book_trash_s">删除的书保留 30 天，期间可恢复</string>
+    <string name="book_trash_empty">回收站是空的</string>
+    <string name="clear_trash">清空回收站</string>
+    <string name="trash_item_info">%1$s · 剩余 %2$d 天</string>
+    <string name="trash_restore_success">已恢复到书架</string>
+    <string name="trash_purge_confirm">彻底删除这本书？此操作不可撤销。</string>
+    <string name="trash_clear_confirm">彻底删除回收站里的 %d 本书？</string>
+    <string name="trash_cleared">回收站已清空</string>
+    <string name="trash_count">本</string>
 
 </resources>

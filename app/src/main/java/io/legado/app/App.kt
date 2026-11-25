@@ -39,7 +39,9 @@ import io.legado.app.help.DispatchersMonitor
 import io.legado.app.help.LifecycleHelp
 import io.legado.app.help.RuleBigDataHelp
 import io.legado.app.help.book.BookHelp
+import io.legado.app.constant.AppLog
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.sync.BookTrashHelper
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ThemeConfig.applyDayNight
 import io.legado.app.help.config.ThemeConfig.applyDayNightInit
@@ -139,6 +141,14 @@ class App : Application() {
             launch {
                 DbMaintenance.configure()
                 DbMaintenance.checkpoint()
+            }
+            // 清理回收站里超过保留期（30 天）的条目。
+            // 只在启动时跑一次：删除本身不可逆，没必要每次切页都扫一遍。
+            launch {
+                val purged = kotlin.runCatching { BookTrashHelper.purgeExpired() }.getOrDefault(0)
+                if (purged > 0) {
+                    AppLog.put("回收站清理：移除 $purged 条超过 30 天的记录")
+                }
             }
             //同步阅读记录
             if (AppConfig.syncBookProgress) {

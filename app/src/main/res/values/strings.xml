@@ -1387,5 +1387,15 @@
     <string name="web_dav_set_s">WebDav server and sync options</string>
     <string name="backup_restore_s">Backup and restore app data</string>
     <string name="sync_progress_done">Synced progress of %d books</string>
+    <string name="book_trash">Recycle bin</string>
+    <string name="book_trash_s">Deleted books are kept for 30 days</string>
+    <string name="book_trash_empty">Recycle bin is empty</string>
+    <string name="clear_trash">Empty recycle bin</string>
+    <string name="trash_item_info">%1$s · %2$d days left</string>
+    <string name="trash_restore_success">Restored to bookshelf</string>
+    <string name="trash_purge_confirm">Permanently delete this book? This cannot be undone.</string>
+    <string name="trash_clear_confirm">Permanently delete %d book(s) in the recycle bin?</string>
+    <string name="trash_cleared">Recycle bin emptied</string>
+    <string name="trash_count">books</string>
 
 </resources>

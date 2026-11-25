@@ -116,6 +116,20 @@ class BookTrashTest {
         assertEquals(0L, BookTrashPolicy.remainingDays(now - 40 * day, now))
     }
 
+    @Test
+    fun `剩余天数向上取整 刚删一天仍显示 29 天`() {
+        val now = 1_000_000_000_000L
+        // 删除 1 天零 1 秒：剩余 28.99 天，整除会显示 28，用户会以为少了两天
+        assertEquals(29L, BookTrashPolicy.remainingDays(now - day - 1000, now))
+    }
+
+    @Test
+    fun `不足一天时显示 1 天而不是 0`() {
+        val now = 1_000_000_000_000L
+        // 第 29 天零 23 小时：仍可恢复，不能显示 0
+        assertEquals(1L, BookTrashPolicy.remainingDays(now - 29 * day - 23 * 3600_000, now))
+    }
+
     // ---------------------------------------------------------------- 落库
 
     @Test
