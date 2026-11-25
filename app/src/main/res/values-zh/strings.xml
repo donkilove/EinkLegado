@@ -1290,5 +1290,12 @@
     <string name="trash_clear_confirm">彻底删除回收站里的 %d 本书？</string>
     <string name="trash_cleared">回收站已清空</string>
     <string name="trash_count">本</string>
+    <string name="sync_read_record_t">同步阅读时长</string>
+    <string name="sync_read_record_s">各设备分别记录，展示时求和，不会重复计数</string>
+    <string name="auto_upload_local_book_t">自动上传本地书</string>
+    <string name="auto_upload_local_book_s">导入本地书后自动上传到 WebDAV，并转为 WebDAV 书</string>
+    <string name="auto_download_webdav_book_t">按需下载 WebDAV 书</string>
+    <string name="auto_download_webdav_book_s">阅读时若本地没有文件则自动下载；关闭可省流量</string>
+    <string name="webdav_book_download_disabled">按需下载已关闭，且本书本地没有文件</string>
 
 </resources>

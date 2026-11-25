@@ -140,6 +140,35 @@ class ReadRecordMergeTest {
 
     // ---------------------------------------------------------------- 迁移
 
+    // ---------------------------------------------------------------- 开关闸门
+
+    @Test
+    fun `关闭同步阅读时长时 载荷里该类目为 null 而不是空列表`() {
+        val records = listOf(record("phone", "书", 1_000))
+
+        val disabled = SyncPayloadGate.readRecords(enabled = false) { records }
+        val enabled = SyncPayloadGate.readRecords(enabled = true) { records }
+
+        assertEquals(
+            "null 表示载荷不携带该类目，同步会整体跳过；给空列表会被判成「云端确认没有」，反过来删掉对方的记录",
+            null,
+            disabled
+        )
+        assertEquals(records, enabled)
+    }
+
+    @Test
+    fun `关闭时不会去读数据库`() {
+        var called = false
+
+        SyncPayloadGate.readRecords(enabled = false) {
+            called = true
+            emptyList()
+        }
+
+        assertTrue("开关关闭时不应触发查询", !called)
+    }
+
     @Test
     fun `旧版空 deviceId 的行会被归到本机`() {
         db.readRecordDao.insert(record("", "书", 7_000))

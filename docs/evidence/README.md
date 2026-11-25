@@ -54,3 +54,6 @@
 | [webdav-sync-v3-trash-4-entry.png](webdav-sync-v3-trash-4-entry.png) | webdav-sync-v3（阶段 2） | 内容管理页的回收站入口 |
 | [webdav-sync-v3-readrecord.txt](webdav-sync-v3-readrecord.txt) | webdav-sync-v3（阶段 3） | deviceId 缺陷、Red/Green、历史迁移与跨设备求和实测 |
 | [webdav-sync-v3-readrecord.png](webdav-sync-v3-readrecord.png) | webdav-sync-v3（阶段 3） | 阅读记录页：两台设备时长相加为 15 分钟 |
+| [webdav-sync-v3-switches.txt](webdav-sync-v3-switches.txt) | webdav-sync-v3（阶段 4） | 三个开关的设计、null/空列表闸门、回归与模拟器实测 |
+| [webdav-sync-v3-switches-1.png](webdav-sync-v3-switches-1.png) | webdav-sync-v3（阶段 4） | WebDav 设置第 1 页：同步阅读时长（默认开） |
+| [webdav-sync-v3-switches-2.png](webdav-sync-v3-switches-2.png) | webdav-sync-v3（阶段 4） | WebDav 设置第 2 页：自动上传（默认关）/ 按需下载（默认开） |

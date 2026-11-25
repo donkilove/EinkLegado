@@ -1,6 +1,7 @@
 package io.legado.app.help.sync
 
 import io.legado.app.data.appDb
+import io.legado.app.help.config.AppConfig
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.Bookmark
@@ -132,7 +133,12 @@ object UserDataSync {
         rssStars = runCatching { appDb.rssStarDao.all }.getOrNull(),
         searchKeywords = runCatching { appDb.searchKeywordDao.all }.getOrNull(),
         keyboardAssists = runCatching { appDb.keyboardAssistsDao.all }.getOrNull(),
-        readRecords = runCatching { appDb.readRecordDao.all }.getOrNull()
+        // 关闭「同步阅读时长」时给 null 而不是空列表（见 SyncPayloadGate 的说明）。
+        // 整个表达式用 runCatching 兜底：读配置或读表失败时同样给 null（本次不携带），
+        // 绝不能让一次读取失败变成「云端确认没有记录」而删掉别的设备的数据。
+        readRecords = runCatching {
+            SyncPayloadGate.readRecords(AppConfig.syncReadRecord) { appDb.readRecordDao.all }
+        }.getOrNull()
     )
 
     /**

@@ -556,6 +556,21 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
 
     val syncBookProgressPlus get() = appCtx.getPrefBoolean(PreferKey.syncBookProgressPlus, false)
 
+    /**
+     * 阅读时长是否参与同步。
+     *
+     * 关闭时导出载荷里该字段为 **null**（不是空列表）：
+     * null 表示「本次不携带这个类目」，同步会整体跳过，不会拿空列表去删云端记录。
+     */
+    val syncReadRecord get() = appCtx.getPrefBoolean(PreferKey.syncReadRecord, true)
+
+    /** 导入本地书后自动上传到 WebDAV，并转为 WebDAV 书 */
+    val autoUploadLocalBook get() = appCtx.getPrefBoolean(PreferKey.autoUploadLocalBook, false)
+
+    /** 阅读 WebDAV 书时若本地没有文件，自动下载 */
+    val autoDownloadWebDavBook
+        get() = appCtx.getPrefBoolean(PreferKey.autoDownloadWebDavBook, true)
+
     val mediaButtonOnExit get() = appCtx.getPrefBoolean("mediaButtonOnExit", true)
 
     val readAloudByMediaButton

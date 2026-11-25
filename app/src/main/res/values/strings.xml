@@ -1397,5 +1397,12 @@
     <string name="trash_clear_confirm">Permanently delete %d book(s) in the recycle bin?</string>
     <string name="trash_cleared">Recycle bin emptied</string>
     <string name="trash_count">books</string>
+    <string name="sync_read_record_t">Sync reading time</string>
+    <string name="sync_read_record_s">Reading time is summed across devices; each device keeps its own row</string>
+    <string name="auto_upload_local_book_t">Auto upload local books</string>
+    <string name="auto_upload_local_book_s">Upload imported local books to WebDAV and turn them into WebDAV books</string>
+    <string name="auto_download_webdav_book_t">Download WebDAV books on demand</string>
+    <string name="auto_download_webdav_book_s">When a WebDAV book has no local file, download it before reading; turn off to save traffic</string>
+    <string name="webdav_book_download_disabled">On-demand download is off, and this book has no local file</string>
 
 </resources>

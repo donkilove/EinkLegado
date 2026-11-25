@@ -18,6 +18,7 @@ import io.legado.app.exception.NoBooksDirException
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.exception.TocEmptyException
 import io.legado.app.help.AppWebDav
+import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.ContentProcessor
 import io.legado.app.help.book.addType
@@ -90,10 +91,18 @@ object LocalBook {
                     }.firstOrNull()?.let {
                         getBookInputStream(it)
                     }
-                } else if (webDavUrl != null && downloadRemoteBook(book)) {
+                } else if (webDavUrl != null && AppConfig.autoDownloadWebDavBook &&
+                    downloadRemoteBook(book)
+                ) {
                     // 下载远程链接
                     getBookInputStream(book)
                 } else {
+                    if (webDavUrl != null && !AppConfig.autoDownloadWebDavBook) {
+                        // 关掉按需下载时给出明确原因，否则用户只会看到「文件不存在」
+                        throw NoStackTraceException(
+                            appCtx.getString(R.string.webdav_book_download_disabled)
+                        )
+                    }
                     null
                 }
             }
@@ -260,6 +269,7 @@ object LocalBook {
             )
             upBookInfo(book)
             appDb.bookDao.insert(book)
+            autoUploadIfNeeded(book)
         } else {
             deleteBook(book, false)
             upBookInfo(book)
@@ -269,6 +279,27 @@ object LocalBook {
             appDb.bookChapterDao.delByBook(bookUrl)
         }
         return book
+    }
+
+    /**
+     * 导入本地书后自动上传到 WebDAV。
+     *
+     * 只在「自动上传」开关打开且 WebDAV 已配置时执行；上传成功后
+     * [RemoteBookWebDav.upload] 会把 `origin` 改成 `webDav::<url>`，
+     * 这本书在别的设备上就能按需下载，书架记录也随之同步。
+     *
+     * 失败只记日志，不打断导入——用户的本意是把书导进来，上传是附加动作。
+     */
+    private fun autoUploadIfNeeded(book: Book) {
+        if (!AppConfig.autoUploadLocalBook) return
+        val webDav = AppWebDav.defaultBookWebDav ?: return
+        Coroutine.async {
+            kotlin.runCatching {
+                webDav.upload(book)
+            }.onFailure {
+                AppLog.put("自动上传本地书失败\n${it.localizedMessage}", it)
+            }
+        }
     }
 
     fun upBookInfo(book: Book) {
