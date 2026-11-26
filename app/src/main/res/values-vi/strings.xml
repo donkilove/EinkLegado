@@ -103,8 +103,8 @@
     <string name="ps_auto_refresh">Tự động cập nhật sách khi mở phần mềm</string>
     <string name="pt_auto_download">Tự động tải xuống</string>
     <string name="ps_auto_download">Tự động tải các chương mới nhất khi cập nhật sách</string>
-    <string name="web_dav_set">Cài đặt WebDav</string>
-    <string name="web_dav_set_import_old">Cài đặt WebDav/Nhập dữ liệu cũ</string>
+    <string name="web_dav_set">Cài đặt WebDAV</string>
+    <string name="web_dav_set_import_old">Cài đặt WebDAV/Nhập dữ liệu cũ</string>
     <string name="backup">Sao lưu</string>
     <string name="restore">Khôi phục</string>
     <string name="backup_permission">Sao lưu cần quyền truy cập bộ nhớ</string>
@@ -590,12 +590,12 @@
     <string name="load_toc">Tải chương</string>
     <string name="load_info">Tải chi tiết sách</string>
     <string name="tts">TTS</string>
-    <string name="web_dav_pw">Mật khẩu WebDav</string>
-    <string name="web_dav_pw_s">Nhập mật khẩu WebDav của bạn</string>
+    <string name="web_dav_pw">Mật khẩu WebDAV</string>
+    <string name="web_dav_pw_s">Nhập mật khẩu WebDAV của bạn</string>
     <string name="web_dav_url_s">Nhập địa chỉ máy chủ của bạn</string>
-    <string name="web_dav_url">Địa chỉ máy chủ WebDav</string>
-    <string name="web_dav_account">Tài khoản WebDav</string>
-    <string name="web_dav_account_s">Nhập tài khoản WebDav của bạn</string>
+    <string name="web_dav_url">Địa chỉ máy chủ WebDAV</string>
+    <string name="web_dav_account">Tài khoản WebDAV</string>
+    <string name="web_dav_account_s">Nhập tài khoản WebDAV của bạn</string>
     <string name="rss_source">Nguồn RSS</string>
     <string name="rss_source_edit">Sửa nguồn RSS</string>
     <string name="screen">Bộ lọc</string>
@@ -829,7 +829,7 @@
     <string name="copy_toc_url">Sao chép URL chương</string>
     <string name="export_folder">Thư mục xuất</string>
     <string name="export_charset">Mã hóa văn bản xuất</string>
-    <string name="export_to_web_dav">Xuất sang WebDav</string>
+    <string name="export_to_web_dav">Xuất sang WebDAV</string>
     <string name="reverse_content">Đảo ngược nội dung</string>
     <string name="debug">Gỡ lỗi</string>
     <string name="crash_log">Nhật ký sự cố</string>
@@ -1099,7 +1099,7 @@
     <string name="select_update_source">Chọn nguồn cập nhật</string>
     <string name="set_local_password">Đặt mật khẩu cục bộ</string>
     <string name="set_local_password_summary">Mật khẩu cục bộ được sử dụng để mã hóa và giải mã thông tin nhạy cảm của bản sao lưu, nếu cần đồng bộ hóa giữa các thiết bị khác nhau, mật khẩu cục bộ phải nhất quán.</string>
-    <string name="webdav_application_authorization_error">Không thể ủy quyền ứng dụng WebDav</string>
+    <string name="webdav_application_authorization_error">Không thể ủy quyền ứng dụng WebDAV</string>
     <string name="load_word_count">Tải số từ</string>
     <string name="replace_exclude_scope">Phạm vi loại trừ, tên sách tùy chọn hoặc URL nguồn sách</string>
     <string name="format_js_rule">Quy tắc định dạng (formatJs)</string>

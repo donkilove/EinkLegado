@@ -108,8 +108,8 @@
     <string name="ps_auto_refresh">Update books automatically when opening the software</string>
     <string name="pt_auto_download">Auto-download</string>
     <string name="ps_auto_download">Download the latest chapters automatically  when updating books</string>
-    <string name="web_dav_set">WebDav settings</string>
-    <string name="web_dav_set_import_old">WebDav settings/Import legacy data</string>
+    <string name="web_dav_set">WebDAV settings</string>
+    <string name="web_dav_set_import_old">WebDAV settings/Import legacy data</string>
     <string name="backup">Backup</string>
     <string name="restore">Restore</string>
     <string name="backup_permission">Backup needs storage permission</string>
@@ -596,12 +596,12 @@
     <string name="load_toc">Load chapters</string>
     <string name="load_info">Load book detail</string>
     <string name="tts">TTS</string>
-    <string name="web_dav_pw">WebDav password</string>
-    <string name="web_dav_pw_s">Input you WebDav authorized password</string>
+    <string name="web_dav_pw">WebDAV password</string>
+    <string name="web_dav_pw_s">Input you WebDAV authorized password</string>
     <string name="web_dav_url_s">Input you server address</string>
-    <string name="web_dav_url">WebDav server address</string>
-    <string name="web_dav_account">WebDav account</string>
-    <string name="web_dav_account_s">Input your WebDav account</string>
+    <string name="web_dav_url">WebDAV server address</string>
+    <string name="web_dav_account">WebDAV account</string>
+    <string name="web_dav_account_s">Input your WebDAV account</string>
     <string name="rss_source">Subscription source</string>
     <string name="rss_source_edit">Edit Subscription source</string>
     <string name="screen">Filter</string>
@@ -828,7 +828,7 @@
     <string name="copy_toc_url">Copy chapters URL</string>
     <string name="export_folder">Export to a folder</string>
     <string name="export_charset">Exported text coding</string>
-    <string name="export_to_web_dav">Export to WebDav</string>
+    <string name="export_to_web_dav">Export to WebDAV</string>
     <string name="reverse_content">Reverse content</string>
     <string name="debug">Debug</string>
     <string name="crash_log">Crash log</string>
@@ -1106,7 +1106,7 @@
     <string name="select_update_source">选中更新源</string>
     <string name="set_local_password">设置本地密码</string>
     <string name="set_local_password_summary">本地密码用来对备份的敏感信息加密和解密,如需在不同设备之间同步,本地密码需一致.</string>
-    <string name="webdav_application_authorization_error">Fail to authorize WebDav application</string>
+    <string name="webdav_application_authorization_error">Fail to authorize WebDAV application</string>
     <string name="load_word_count">Load word count</string>
     <string name="replace_exclude_scope">排除范围，选填书名或者书源 URL</string>
     <string name="format_js_rule">格式化规则(formatJs)</string>

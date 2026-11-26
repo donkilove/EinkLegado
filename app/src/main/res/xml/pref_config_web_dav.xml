@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- WebDav 连接设置；同步开关在独立的「同步设置」页 -->
+<!-- WebDAV 连接设置；同步开关在独立的「同步设置」页 -->
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 

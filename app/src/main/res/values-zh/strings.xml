@@ -109,8 +109,8 @@
     <string name="ps_auto_refresh">打开软件时自动更新书籍</string>
     <string name="pt_auto_download">自动下载最新章节</string>
     <string name="ps_auto_download">更新书籍时自动下载最新章节</string>
-    <string name="web_dav_set">WebDav 设置</string>
-    <string name="web_dav_set_import_old">WebDav 设置/导入旧版本数据</string>
+    <string name="web_dav_set">WebDAV 设置</string>
+    <string name="web_dav_set_import_old">WebDAV 设置/导入旧版本数据</string>
     <string name="backup">备份</string>
     <string name="restore">恢复</string>
     <string name="backup_permission">备份请给予存储权限</string>
@@ -598,12 +598,12 @@
     <string name="load_toc">加载目录</string>
     <string name="load_info">加载详情页</string>
     <string name="tts">TTS</string>
-    <string name="web_dav_pw">WebDav 密码</string>
-    <string name="web_dav_pw_s">输入你的 WebDav 授权密码</string>
+    <string name="web_dav_pw">WebDAV 密码</string>
+    <string name="web_dav_pw_s">输入你的 WebDAV 授权密码</string>
     <string name="web_dav_url_s">输入你的服务器地址</string>
-    <string name="web_dav_url">WebDav 服务器地址</string>
-    <string name="web_dav_account">WebDav 账号</string>
-    <string name="web_dav_account_s">输入你的 WebDav 账号</string>
+    <string name="web_dav_url">WebDAV 服务器地址</string>
+    <string name="web_dav_account">WebDAV 账号</string>
+    <string name="web_dav_account_s">输入你的 WebDAV 账号</string>
     <string name="rss_source">订阅源</string>
     <string name="rss_source_edit">编辑订阅源</string>
     <string name="screen">筛选</string>
@@ -845,7 +845,7 @@
     <string name="export_folder">导出文件夹</string>
     <string name="export_charset">导出编码</string>
     <string name="export_no_chapter_name">TXT 不导出章节名</string>
-    <string name="export_to_web_dav">导出到 WebDav</string>
+    <string name="export_to_web_dav">导出到 WebDAV</string>
     <string name="reverse_content">反转内容</string>
     <string name="debug">调试</string>
     <string name="crash_log">崩溃日志</string>
@@ -1014,7 +1014,7 @@
     <string name="upload_book_fail">上传失败</string>
     <string name="download_book_success">下载成功</string>
     <string name="download_book_fail">下载失败</string>
-    <string name="upload_to_remote">上传 WebDav</string>
+    <string name="upload_to_remote">上传 WebDAV</string>
     <string name="add_remote_book">远程书籍</string>
     <string name="bitmap_cache_size_summary">当前最大缓存 %1$s MB</string>
     <string name="bitmap_cache_size">图片绘制缓存</string>
@@ -1259,7 +1259,7 @@
         <item>@string/bookshelf_px_4</item>
         <item>@string/bookshelf_px_5</item>
     </string-array>
-    <string name="web_dav_set_s">WebDav 服务器与同步设置</string>
+    <string name="web_dav_set_s">WebDAV 服务器与同步设置</string>
     <string name="sync_progress_done">已同步 %d 本书的阅读进度</string>
     <string name="book_trash">回收站</string>
     <string name="book_trash_s">删除的书保留 30 天，期间可恢复</string>

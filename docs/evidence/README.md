@@ -83,3 +83,10 @@
 | [webdav-sync-v3-purge.txt](webdav-sync-v3-purge.txt) | webdav-sync-v3（追加五） | 彻底删除补全本地文件清理，修复清空回收站不删云端 |
 | [webdav-sync-v3-purge-confirm.png](webdav-sync-v3-purge-confirm.png) | webdav-sync-v3（追加五） | 彻底删除确认框新文案 |
 | [webdav-sync-v3-purge-done.png](webdav-sync-v3-purge-done.png) | webdav-sync-v3（追加五） | 删除后回收站为空 |
+| [my-page-audit.txt](my-page-audit.txt) | my-page-audit | 我的页及子页图标对齐/颜色/命名审计，修复项与实测数据 |
+| [my-page-1-home.png](my-page-1-home.png) | my-page-audit | 我的页：4 个入口图标同色同位置 |
+| [my-page-2-content.png](my-page-2-content.png) | my-page-audit | 内容管理页 |
+| [my-page-3-settings.png](my-page-3-settings.png) | my-page-audit | 设置页 |
+| [my-page-4-other.png](my-page-4-other.png) | my-page-audit | 其它页（修复后图标全黑同色） |
+| [my-page-5-about.png](my-page-5-about.png) | my-page-audit | 关于页（品牌名已改为墨水屏版） |
+| [my-page-6-webdav.png](my-page-6-webdav.png) | my-page-audit | WebDAV 设置页（拼写已统一） |

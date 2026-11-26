@@ -110,8 +110,8 @@
     <string name="ps_auto_refresh">Update books automatically when opening the software</string>
     <string name="pt_auto_download">Auto-download</string>
     <string name="ps_auto_download">Download the latest chapters automatically  when updating books</string>
-    <string name="web_dav_set">WebDav settings</string>
-    <string name="web_dav_set_import_old">WebDav settings/Import legacy data</string>
+    <string name="web_dav_set">WebDAV settings</string>
+    <string name="web_dav_set_import_old">WebDAV settings/Import legacy data</string>
     <string name="backup">Backup</string>
     <string name="restore">Restore</string>
     <string name="backup_permission">Backup needs storage permission</string>
@@ -352,7 +352,7 @@
     <string name="pt_show_all_find">Display all Discovery</string>
     <string name="ps_show_all_find">Display the selected origin\'s Discovery if closed</string>
     <string name="update_toc">Update chapters</string>
-    <string name="txt_toc_rule">Txt Catalog Rule</string>
+    <string name="txt_toc_rule">TXT catalog rule</string>
     <string name="select_section_export">Choose some chapters to be exported</string>
     <string name="set_charset">Text encoding</string>
     <string name="swap_sort">Ascending/Descending order</string>
@@ -600,12 +600,12 @@
     <string name="load_toc">Load chapters</string>
     <string name="load_info">Load book detail</string>
     <string name="tts">TTS</string>
-    <string name="web_dav_pw">WebDav password</string>
-    <string name="web_dav_pw_s">Input you WebDav authorized password</string>
+    <string name="web_dav_pw">WebDAV password</string>
+    <string name="web_dav_pw_s">Input you WebDAV authorized password</string>
     <string name="web_dav_url_s">Input you server address</string>
-    <string name="web_dav_url">WebDav server address</string>
-    <string name="web_dav_account">WebDav account</string>
-    <string name="web_dav_account_s">Input your WebDav account</string>
+    <string name="web_dav_url">WebDAV server address</string>
+    <string name="web_dav_account">WebDAV account</string>
+    <string name="web_dav_account_s">Input your WebDAV account</string>
     <string name="rss_source">RSS source</string>
     <string name="rss_source_edit">Edit RSS source</string>
     <string name="screen">Filter</string>
@@ -848,7 +848,7 @@
     <string name="copy_toc_url">Copy chapters URL</string>
     <string name="export_folder">Export folder</string>
     <string name="export_charset">Exported text coding</string>
-    <string name="export_to_web_dav">Export to WebDav</string>
+    <string name="export_to_web_dav">Export to WebDAV</string>
     <string name="reverse_content">Reverse content</string>
     <string name="debug">Debug</string>
     <string name="crash_log">Crash log</string>
@@ -1128,7 +1128,7 @@
     <string name="select_update_source">Select update source</string>
     <string name="set_local_password">Setting the local password</string>
     <string name="set_local_password_summary">The local password is used to encrypt and decrypt the sensitive information of the backup, if you need to synchronize between different devices, the local password should be the same.</string>
-    <string name="webdav_application_authorization_error">Fail to authorize WebDav application</string>
+    <string name="webdav_application_authorization_error">Fail to authorize WebDAV application</string>
     <string name="respondTime">respondTime: %1$d ms</string>
     <string name="load_word_count">Load word count</string>
     <string name="replace_exclude_scope">Exclude range, optional title or source URL</string>
@@ -1296,7 +1296,7 @@
     <string name="video_setting">视频设置</string>
     <string name="video_setting_summary">自动播放、全屏播放等配置</string>
     <string name="history">历史记录</string>
-    <string name="app_name_sigma">阅读Sigma</string>
+    <string name="app_name_sigma">墨水屏版</string>
     <string name="about_description_sigma">\u3000\u3000面向墨水屏设备的开源阅读器，源自 Legado（阅读 3.0）。\n\u3000\u3000把电子纸上只有负面影响的东西去掉：持续刷新、动画、水波纹、网格与文件夹分组；长列表一律改为按页翻页，每页条数按实际项高自动决定。\n\u3000\u3000不提供服务端，不收集任何用户信息，数据只存在本机与你自己的 WebDAV。</string>
     <string name="contributors_summary_sigma">gedoor 与 Legado 全体贡献者；本分支由 donkilove 维护。详情见 GitHub</string>
     <string name="app_share_description_sigma">
@@ -1366,7 +1366,7 @@
         <item>@string/bookshelf_px_4</item>
         <item>@string/bookshelf_px_5</item>
     </string-array>
-    <string name="web_dav_set_s">WebDav server and sync options</string>
+    <string name="web_dav_set_s">WebDAV server and sync options</string>
     <string name="sync_progress_done">Synced progress of %d books</string>
     <string name="book_trash">Recycle bin</string>
     <string name="book_trash_s">Deleted books are kept for 30 days</string>

@@ -101,8 +101,8 @@
     <string name="ps_auto_refresh">打開程式時自動更新書輯</string>
     <string name="pt_auto_download">自動下載最新章節</string>
     <string name="ps_auto_download">更新書輯時自動下載最新章節</string>
-    <string name="web_dav_set">WebDav 設定</string>
-    <string name="web_dav_set_import_old">WebDav 設定/還原舊版本數據</string>
+    <string name="web_dav_set">WebDAV 設定</string>
+    <string name="web_dav_set_import_old">WebDAV 設定/還原舊版本數據</string>
     <string name="backup">備份</string>
     <string name="restore">還原</string>
     <string name="backup_permission">備份請給予存儲權限</string>
@@ -583,12 +583,12 @@
     <string name="load_toc">加載目錄</string>
     <string name="load_info">加載詳情頁</string>
     <string name="tts">TTS</string>
-    <string name="web_dav_pw">WebDav 密碼</string>
-    <string name="web_dav_pw_s">輸入你的 WebDav 授權密碼</string>
+    <string name="web_dav_pw">WebDAV 密碼</string>
+    <string name="web_dav_pw_s">輸入你的 WebDAV 授權密碼</string>
     <string name="web_dav_url_s">輸入你的服務器地址</string>
-    <string name="web_dav_url">WebDav 服務器地址</string>
-    <string name="web_dav_account">WebDav 賬號</string>
-    <string name="web_dav_account_s">輸入你的 WebDav 賬號</string>
+    <string name="web_dav_url">WebDAV 服務器地址</string>
+    <string name="web_dav_account">WebDAV 賬號</string>
+    <string name="web_dav_account_s">輸入你的 WebDAV 賬號</string>
     <string name="rss_source">訂閲源</string>
     <string name="rss_source_edit">編輯訂閲源</string>
     <string name="screen">篩選</string>
@@ -822,7 +822,7 @@
     <string name="background_image_hint">0為停用，啓用範圍1~25\n半徑數值越大，虛化效果越高</string>
     <string name="export_folder">導出資料夾</string>
     <string name="export_charset">導出編碼</string>
-    <string name="export_to_web_dav">導出到WebDav</string>
+    <string name="export_to_web_dav">導出到WebDAV</string>
     <string name="reverse_content">反轉內容</string>
     <string name="debug">調試</string>
     <string name="crash_log">崩潰日誌</string>

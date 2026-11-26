@@ -114,7 +114,7 @@
 
     </androidx.preference.PreferenceScreen>
 
-    <!-- WebDav 设置 -->
+    <!-- WebDAV 设置 -->
     <io.legado.app.lib.prefs.Preference
         android:icon="@drawable/ic_cfg_web"
         android:key="web_dav_setting"
