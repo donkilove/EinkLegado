@@ -80,3 +80,6 @@
 | [webdav-sync-v3-autoupload.png](webdav-sync-v3-autoupload.png) | webdav-sync-v3（追加四） | 导入后 origin 变为 webDav:: |
 | [webdav-sync-v3-ondemand.png](webdav-sync-v3-ondemand.png) | webdav-sync-v3（追加四） | 本地文件删除后按需下载成功 |
 | [webdav-sync-v3-ondemand-off.png](webdav-sync-v3-ondemand-off.png) | webdav-sync-v3（追加四） | 关闭开关后的提示 |
+| [webdav-sync-v3-purge.txt](webdav-sync-v3-purge.txt) | webdav-sync-v3（追加五） | 彻底删除补全本地文件清理，修复清空回收站不删云端 |
+| [webdav-sync-v3-purge-confirm.png](webdav-sync-v3-purge-confirm.png) | webdav-sync-v3（追加五） | 彻底删除确认框新文案 |
+| [webdav-sync-v3-purge-done.png](webdav-sync-v3-purge-done.png) | webdav-sync-v3（追加五） | 删除后回收站为空 |

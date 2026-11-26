@@ -1374,8 +1374,8 @@
     <string name="clear_trash">Empty recycle bin</string>
     <string name="trash_item_info">%1$s · %2$d days left</string>
     <string name="trash_restore_success">Restored to bookshelf</string>
-    <string name="trash_purge_confirm">Permanently delete this book? This cannot be undone.</string>
-    <string name="trash_clear_confirm">Permanently delete %d book(s) in the recycle bin?</string>
+    <string name="trash_purge_confirm">Permanently delete this book? Its local and cloud files will be deleted too. This cannot be undone.</string>
+    <string name="trash_clear_confirm">Permanently delete %d book(s) in the recycle bin? Their local and cloud files will be deleted too. This cannot be undone.</string>
     <string name="trash_cleared">Recycle bin emptied</string>
     <string name="trash_count">books</string>
     <string name="sync_read_record_t">Sync reading time</string>

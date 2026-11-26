@@ -1,0 +1,92 @@
+== webdav-sync-v3 追加五：回收站「彻底删除」补全本地文件清理 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-26
+JDK：Microsoft OpenJDK 17.0.21.1，GRADLE_USER_HOME=D:\gradle-home
+设备：模拟器 eink_test（android-35）
+服务端：本机 build/webdav_test_server.py，端口 8080
+
+--------------------------------------------------
+[1] 修复的问题
+--------------------------------------------------
+「彻底删除」此前只删数据库行与云端文件，**本地文件留在磁盘**。
+用户以为删干净了，磁盘上却一直占着空间。
+
+同时发现一个更严重的漏洞：
+  BookTrashActivity.clearAll() 直接调用 appDb.bookTrashDao.clear()，
+  绕过了 BookTrashHelper.purge()，因此「清空回收站」时
+  **云端文件完全不会被删除**——只清了数据库。
+
+--------------------------------------------------
+[2] 实现
+--------------------------------------------------
+BookTrashHelper：
+  purge() 现在依次做三件事：
+    1. deleteLocalFile(trash)   删本地文件
+    2. deleteRemoteIfNeeded()   删云端文件（仅 WebDAV 书）
+    3. bookTrashDao.delete()    删回收站行
+  顺序是先删文件再删行：反过来的话，删行成功而删文件失败时，
+  这本书的记录已经没了，文件就成了永久孤儿。
+  现在的顺序下最坏情况是「行还在、文件已删」，用户再点一次即可。
+
+  purgeExpired() 改为逐条调用 purge()，不再自己拼三步——
+  避免两处逻辑将来走偏。
+
+  新增 purgeAll()：逐条 purge，供「清空回收站」使用。
+
+  deleteLocalFile() 的判定：
+    只处理 type 含 BookType.local、origin 为 loc_book、或 origin 以
+    webDav:: 开头的书。网络书（书源）的 bookUrl 是 http 网址，
+    绝不能当文件路径删。
+    content:// 用 DocumentsContract.deleteDocument，其余用 FileUtils.delete。
+    删除失败只记日志，不影响数据库删除——用户的意图是「这本书消失」，
+    不能因为一个删不掉的文件把记录永远留在回收站里。
+
+BookTrashActivity.clearAll() 改为调用 BookTrashHelper.purgeAll()。
+
+文案（中英）：
+  彻底删除确认框补上「本地文件与云端文件会一并删除」，
+  让用户在点 YES 之前就知道后果。
+
+--------------------------------------------------
+[3] 单测（新增 6 个）
+--------------------------------------------------
+BookTrashPurgeTest：
+  彻底删除会删掉本地文件
+  清空回收站会逐条删掉本地文件
+  网络书的网址不会被当成路径删除
+  过期清理同样删掉本地文件
+  未到期的条目不会被清理
+  删除失败也要清掉数据库行
+
+全套：tests=195 failures=0（此前 189，新增 6）
+
+--------------------------------------------------
+[4] 模拟器实测
+--------------------------------------------------
+准备：清空 App 数据 → 配置 WebDAV → 导入 build/testbook.txt
+  → 自动上传生效，服务端出现 legado/books/testbook.txt
+  → 本地 origin 变为 webDav::http://10.0.2.2:8080/legado/books/testbook.txt
+
+步骤一：书籍详情页 → Remove（不勾「Delete source file」）
+  回收站出现该条；本地文件与云端文件都还在（符合预期，只是移入回收站）
+    → webdav-sync-v3-purge-confirm.png 显示新文案
+
+步骤二：回收站 → 点删除图标 → YES
+  验证三样全部清掉：
+    回收站行数：0
+    本地文件：No such file or directory
+    服务端 books/ 目录：空
+    → webdav-sync-v3-purge-done.png（Recycle bin is empty）
+
+--------------------------------------------------
+[5] 顺带确认的行为
+--------------------------------------------------
+书籍详情页的删除对话框带「Delete source file」勾选框：
+  不勾 → 移入回收站，30 天内可恢复
+  勾选 → 走 BookInfoViewModel.delBook(deleteOriginal=true)，绕过回收站直接销毁
+这是刻意的两档设计，未改动。
+
+--------------------------------------------------
+[6] 遗留
+--------------------------------------------------
+无。此前记录的「回收站彻底删除只删数据库行」已闭环。

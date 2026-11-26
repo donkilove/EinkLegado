@@ -116,7 +116,9 @@ class BookTrashActivity : VMBaseActivity<ActivityBookTrashBinding, BookTrashView
             setMessage(getString(R.string.trash_clear_confirm, count))
             yesButton {
                 lifecycleScope.launch {
-                    withContext(IO) { appDb.bookTrashDao.clear() }
+                    // 必须逐条走 purge：直接 bookTrashDao.clear() 只清数据库，
+                    // 本地文件与云端文件会全部残留
+                    withContext(IO) { BookTrashHelper.purgeAll() }
                     toastOnUi(R.string.trash_cleared)
                 }
             }
