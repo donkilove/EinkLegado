@@ -109,7 +109,6 @@ class TextChapterLayout(
     private val isMiddleTitle = ReadBookConfig.isMiddleTitle
     private val textFullJustify = ReadBookConfig.textFullJustify
     private val adaptSpecialStyle = AppConfig.adaptSpecialStyle
-    private val pageAnim = book.getPageAnim()
 
     private var pendingTextPage = TextPage()
 
@@ -528,7 +527,7 @@ class TextChapterLayout(
                 Book.imgStyleFull -> {
                     width = visibleWidth
                     height = size.height * visibleWidth / size.width
-                    if (pageAnim != PageAnim.scrollPageAnim && height > visibleHeight - durY) {
+                    if (height > visibleHeight - durY) {
                         if (height > visibleHeight) {
                             width = width * visibleHeight / height
                             height = visibleHeight

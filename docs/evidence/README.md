@@ -90,3 +90,10 @@
 | [my-page-4-other.png](my-page-4-other.png) | my-page-audit | 其它页（修复后图标全黑同色） |
 | [my-page-5-about.png](my-page-5-about.png) | my-page-audit | 关于页（品牌名已改为墨水屏版） |
 | [my-page-6-webdav.png](my-page-6-webdav.png) | my-page-audit | WebDAV 设置页（拼写已统一） |
+| [remove-scroll-and-sync-label.txt](remove-scroll-and-sync-label.txt) | remove-scroll | 滚动翻页整体移除的清单与连带改动、同步入口改文字、实测 |
+| [remove-scroll-1-sync-text.png](remove-scroll-1-sync-text.png) | remove-scroll | 书架工具栏 Sync 文字按钮 |
+| [remove-scroll-2-sync-zh.png](remove-scroll-2-sync-zh.png) | remove-scroll | 中英文对照 |
+| [remove-scroll-3-reading.png](remove-scroll-3-reading.png) | remove-scroll | 真实 TXT 正常阅读 |
+| [remove-scroll-4-interface.png](remove-scroll-4-interface.png) | remove-scroll | 界面设置无「翻页动画」区块 |
+| [remove-scroll-5-page1.png](remove-scroll-5-page1.png) | remove-scroll | 14 页长文本第 1 页 |
+| [remove-scroll-6-page3.png](remove-scroll-6-page3.png) | remove-scroll | 连续点击后第 3 页（翻页链路可用） |

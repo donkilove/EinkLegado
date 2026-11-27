@@ -204,7 +204,6 @@
     <string name="mouse_wheel_page">Mouse wheel to turn page</string>
     <string name="click_turn_page">Tap screen to turn page</string>
     <string name="page_anim">Flip animation</string>
-    <string name="book_page_anim">Flip animation (book)</string>
     <string name="disable_manga_page_anim">Disable flip animation</string>
     <string name="keep_light">Keep screen awake</string>
     <string name="back">Back</string>
@@ -378,11 +377,6 @@
     <string name="add_to_bookshelf">Add to Bookshelf</string>
     <string name="continue_read">Continue reading</string>
     <string name="cover_path">Cover path</string>
-    <string name="page_anim_cover">Cover</string>
-    <string name="page_anim_slide">Slide</string>
-    <string name="page_anim_simulation">Simulation</string>
-    <string name="page_anim_scroll">Scroll</string>
-    <string name="page_anim_none">None</string>
     <string name="up_change_source_last_chapter_t">Update the latest chapter after changed origin in the background</string>
     <string name="up_change_source_last_chapter_s">if enabled,the update will start 1 minute later when the software is run</string>
     <string name="behavior_main_t">Auto hide ToolBar</string>
@@ -1076,7 +1070,6 @@
     <string name="search_scope">Search scope</string>
     <string name="toggle_search_scope">Handover</string>
     <string name="sure_clear_search_history">Are you sure to clear all search history</string>
-    <string name="no_anim_scroll_page">Disable scroll click animation</string>
     <string name="web_service_wake_lock">WebService Wake up Lock</string>
     <string name="web_service_wake_lock_summary">The wake-up lock is enabled when the web service is enabled, and some phones will be killed when the wake-up lock is enabled.</string>
     <string name="read_aloud_wake_lock">Read aloud service wake-up lock</string>
@@ -1385,6 +1378,7 @@
     <string name="auto_download_webdav_book_t">Download WebDAV books on demand</string>
     <string name="auto_download_webdav_book_s">When a WebDAV book has no local file, download it before reading; turn off to save traffic</string>
     <string name="webdav_book_download_disabled">On-demand download is off, and this book has no local file</string>
+    <string name="sync_menu">Sync</string>
     <string name="sync_now">Sync now</string>
     <string name="web_dav_not_configured">WebDAV is not configured</string>
     <string name="sync_now_done">Synced</string>

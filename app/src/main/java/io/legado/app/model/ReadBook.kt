@@ -3,7 +3,6 @@ package io.legado.app.model
 import io.legado.app.constant.AppConst
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.EventBus
-import io.legado.app.constant.PageAnim.scrollPageAnim
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
@@ -176,9 +175,6 @@ object ReadBook : CoroutineScope by MainScope() {
                         imageStyle = Book.imgStyleFull
                     }
                     book.setImageStyle(imageStyle)
-                    if (imageStyle.equals(Book.imgStyleSingle, true)) {
-                        book.setPageAnim(0)
-                    }
                 }
             } ?: let {
                 bookSource = null
@@ -488,12 +484,7 @@ object ReadBook : CoroutineScope by MainScope() {
         callBack?.pageChanged()
         curTextChapter?.let {
             if (BaseReadAloudService.isRun && it.isCompleted) {
-                val scrollPageAnim = pageAnim() == 3
-                if (scrollPageAnim && pageChanged) {
-                    ReadAloud.pause(appCtx)
-                } else {
-                    readAloud(!BaseReadAloudService.pause)
-                }
+                readAloud(!BaseReadAloudService.pause)
             }
         }
         upReadTime()
@@ -523,8 +514,6 @@ object ReadBook : CoroutineScope by MainScope() {
      * 是否排版到了当前阅读位置
      */
     val isLayoutAvailable inline get() = durPageIndex >= 0
-
-    val isScroll inline get() = pageAnim() == scrollPageAnim
 
     val contentLoadFinish get() = curTextChapter != null || msg != null
 
@@ -747,11 +736,6 @@ object ReadBook : CoroutineScope by MainScope() {
                             }
                             available = true
                         }
-                        if (upContent && isScroll) {
-                            if (max(index - 3, 0) < durPageIndex) {
-                                callBack?.upContent(offset, false)
-                            }
-                        }
                         callBack?.onLayoutPageCompleted(index, page)
                     }
                     if (upContent) callBack?.upContent(offset, !available && resetPageOffset)
@@ -835,11 +819,6 @@ object ReadBook : CoroutineScope by MainScope() {
                             }
                             available = true
                         }
-                        if (upContent && isScroll) {
-                            if (max(index - 3, 0) < durPageIndex) {
-                                callBack?.upContent(offset, false)
-                            }
-                        }
                         callBack?.onLayoutPageCompleted(index, page)
                     }
                     if (upContent) callBack?.upContent(offset, !available && resetPageOffset)
@@ -905,10 +884,6 @@ object ReadBook : CoroutineScope by MainScope() {
                 nextTextChapter ?: loadContent(durChapterIndex + 1)
             }
         }
-    }
-
-    fun pageAnim(): Int {
-        return book?.getPageAnim() ?: ReadBookConfig.pageAnim
     }
 
     fun setCharset(charset: String) {

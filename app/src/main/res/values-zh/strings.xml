@@ -203,7 +203,6 @@
     <string name="mouse_wheel_page">鼠标滚轮翻页</string>
     <string name="click_turn_page">点击翻页</string>
     <string name="page_anim">翻页动画</string>
-    <string name="book_page_anim">翻页动画（本书）</string>
     <string name="keep_light">屏幕超时</string>
     <string name="back">返回</string>
     <string name="menu">菜单</string>
@@ -376,11 +375,6 @@
     <string name="add_to_bookshelf">放入书架</string>
     <string name="continue_read">继续阅读</string>
     <string name="cover_path">封面地址</string>
-    <string name="page_anim_cover">覆盖</string>
-    <string name="page_anim_slide">滑动</string>
-    <string name="page_anim_simulation">仿真</string>
-    <string name="page_anim_scroll">滚动</string>
-    <string name="page_anim_none">无动画</string>
     <string name="disable_manga_page_anim">禁用翻页动画</string>
     <string name="up_change_source_last_chapter_t">后台更新换源最新章节</string>
     <string name="up_change_source_last_chapter_s">开启则会在软件打开 1 分钟后开始更新</string>
@@ -1070,7 +1064,6 @@
     <string name="search_scope">搜索范围</string>
     <string name="toggle_search_scope">切换</string>
     <string name="sure_clear_search_history">是否确认清除所有搜索历史记录</string>
-    <string name="no_anim_scroll_page">禁用滚动点击动画</string>
     <string name="web_service_wake_lock">WebService唤醒锁</string>
     <string name="web_service_wake_lock_summary">开启web服务的时候启用唤醒锁,有些手机开启唤醒锁会被杀后台</string>
     <string name="read_aloud_wake_lock">朗读服务唤醒锁</string>
@@ -1278,6 +1271,7 @@
     <string name="auto_download_webdav_book_t">按需下载 WebDAV 书</string>
     <string name="auto_download_webdav_book_s">阅读时若本地没有文件则自动下载；关闭可省流量</string>
     <string name="webdav_book_download_disabled">按需下载已关闭，且本书本地没有文件</string>
+    <string name="sync_menu">同步</string>
     <string name="sync_now">立即同步</string>
     <string name="web_dav_not_configured">未配置 WebDAV</string>
     <string name="sync_now_done">同步完成</string>

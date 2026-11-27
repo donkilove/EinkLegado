@@ -262,12 +262,6 @@ object ReadBookConfig {
             config.bgAlpha = value
         }
 
-    var pageAnim: Int
-        get() = config.curPageAnim()
-        set(@PageAnim.Anim value) {
-            config.setCurPageAnim(value)
-        }
-
     var textFont: String
         get() = config.textFont
         set(value) {
@@ -525,8 +519,6 @@ object ReadBookConfig {
         private var textAccentColor: String = "#E53935",//白天强调文字颜色
         private var textAccentColorNight: String = "#FE4D55",//夜间强调文字颜色
         private var textAccentColorEInk: String = "#000000",
-        private var pageAnim: Int = 0,//翻页动画
-        private var pageAnimEInk: Int = 4,
         var textFont: String = "",//字体
         var textBold: Int = 0,//是否粗体字 0:正常, 1:粗体, 2:细体
         var textSize: Int = 20,//文字大小
@@ -603,25 +595,6 @@ object ReadBookConfig {
             }
         }
 
-        fun setCurPageAnim(@PageAnim.Anim anim: Int) {
-            // 墨水屏专属：只保留「滚动」与「无动画」两种翻页方式
-            val animValue = if (anim == PageAnim.scrollPageAnim) {
-                PageAnim.scrollPageAnim
-            } else {
-                PageAnim.noAnim
-            }
-            when {
-                AppConfig.isEInkMode -> pageAnimEInk = animValue
-                else -> pageAnim = animValue
-            }
-        }
-
-        fun curPageAnim(): Int {
-            return when {
-                AppConfig.isEInkMode -> pageAnimEInk
-                else -> pageAnim
-            }
-        }
 
         fun setCurBg(bgType: Int, bg: String) {
             when {
@@ -715,8 +688,6 @@ object ReadBookConfig {
             "textAccentColor" to textAccentColor,
             "textAccentColorNight" to textAccentColorNight,
             "textAccentColorEInk" to textAccentColorEInk,
-            "pageAnim" to pageAnim,
-            "pageAnimEInk" to pageAnimEInk,
             "textFont" to textFont,
             "textBold" to textBold,
             "textSize" to textSize,

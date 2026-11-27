@@ -223,19 +223,6 @@ data class Book(
         return config.reSegment
     }
 
-    fun setPageAnim(pageAnim: Int?) {
-        config.pageAnim = pageAnim
-    }
-
-    fun getPageAnim(): Int {
-        var pageAnim = config.pageAnim
-            ?: if (isImage) PageAnim.scrollPageAnim else ReadBookConfig.pageAnim
-        if (pageAnim < 0) {
-            pageAnim = ReadBookConfig.pageAnim
-        }
-        return pageAnim
-    }
-
     fun setImageStyle(imageStyle: String?) {
         config.imageStyle = imageStyle
     }
@@ -452,7 +439,6 @@ data class Book(
     @Parcelize
     data class ReadConfig(
         var reverseToc: Boolean = false,
-        var pageAnim: Int? = null,
         var reSegment: Boolean = false,
         var imageStyle: String? = null,
         var useReplaceRule: Boolean? = null,// 正文使用净化替换规则

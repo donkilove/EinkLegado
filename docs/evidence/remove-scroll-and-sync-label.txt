@@ -1,0 +1,124 @@
+== 移除滚动翻页 + 书架同步改为文字 ==
+环境：Windows 11，项目 D:\EinkLegado
+日期：2026-11-27
+设备：模拟器 eink_test（android-35）
+
+--------------------------------------------------
+[1] 需求
+--------------------------------------------------
+1. 阅读界面 → 菜单 → 翻页动画 → 滚动：滚动功能没有实际意义，删除相关代码与功能。
+2. 书架右上角同步图标改为文字「同步」。
+
+--------------------------------------------------
+[2] 滚动翻页删除：删除清单
+--------------------------------------------------
+整文件删除：
+  ui/book/read/page/delegate/ScrollPageDelegate.kt
+
+常量与配置：
+  PageAnim.scrollPageAnim (3)       删除，IntDef 同步收窄
+  ReadBookConfig.pageAnim / curPageAnim / setCurPageAnim   删除
+  ReadBookConfig 序列化里的 pageAnim / pageAnimEInk        删除
+  Book.ReadConfig.pageAnim 字段                              删除
+  Book.setPageAnim / getPageAnim                             删除
+  AppConfig.noAnimScrollPage + PreferKey 同名键 + 偏好项      删除
+
+视图与手势：
+  ReadView.isScroll / onScrollAnimStart / onScrollAnimStop   删除
+  ReadView.upContent 的滚动分支                              删除
+  ReadView.getCurVisiblePage / isLongScreenShot              删除
+  ContentTextView 的 pageOffset / scroll() / setIsScroll() /
+    canScrollVertically() / longScreenshot / scrollY         删除
+  ContentTextView 绘制中的「下一屏堆叠绘制」                  删除
+  ContentTextView 触摸/选区/朗读定位里的 0..2 多页循环
+    改为单页（第 0 页）                                      改写
+  PageView.isScroll / setIsScroll / scroll / getCurVisiblePage /
+    isLongScreenShot                                         删除
+  AutoPager 的滚动推进分支与 scrollOffset/scrollOffsetRemain  删除
+
+模型与排版：
+  ReadBook.isScroll / pageAnim() / 滚动分支                   删除
+  ChapterProvider 双页判定里的 pageAnim != 3                  删除
+  TextChapterLayout.pageAnim 字段与判断                       删除
+  TextPageFactory 的 isScroll 条件                            删除
+  DataSource.isScroll 契约                                    删除
+
+界面入口：
+  dialog_read_book_style.xml 的 tv_page_anim + rg_page_anim
+    + rb_scroll_anim + rb_no_anim 整块                        删除
+  ReadStyleDialog 的分组监听与回填                             删除
+  book_read.xml 的 menu_page_anim 菜单项                       删除
+  ReadBookActivity 的 menu_page_anim 点击分支                  删除
+  BaseReadBookActivity.showPageAnimConfig（5 选项选择器）       删除
+  AutoReadDialog 的 llSetting 改为直接触发重排                  改写
+
+字符串（8 个语言文件）：
+  page_anim_scroll / page_anim_none / page_anim_cover /
+  page_anim_slide / page_anim_simulation / book_page_anim /
+  no_anim_scroll_page
+
+--------------------------------------------------
+[3] 一个必须说明的连带改动
+--------------------------------------------------
+ContentTextView 原本通过 CallBack.onLongScreenshotTouchEvent 把触摸转给 ReadView。
+长截图能力随滚动一起删除后，这个回调改名为 onContentTouchEvent。
+
+不能沿用 onTouchEvent 这个名字：宿主 ReadBookActivity 是 Activity，
+而 View 本身已有 onTouchEvent(MotionEvent)。同名会被 View 的默认实现
+「默默满足」，编译期不报错，但手指事件根本到不了阅读视图——
+表现为整页无法翻页，且没有任何报错。改名后编译通过、实测可正常翻页。
+
+--------------------------------------------------
+[4] 同步入口改文字
+--------------------------------------------------
+res/menu/main_bookshelf.xml：
+  去掉 android:icon，title 改为新字符串 sync_menu（同步 / Sync），
+  showAsAction 保持 always。
+
+res/values/styles.xml 新增 Style.ActionMenuText：
+  关闭 android:textAllCaps。
+  默认的 Widget.AppCompat.ActionButton 带 textAllCaps，
+  实测第一次构建后显示为全大写「SYNC」，与中文界面不协调。
+  关闭后为「Sync」/「同步」。
+
+另一处：TitleBar 的墨水屏自定义溢出菜单按 item.title 渲染文字，
+去掉 icon 后该菜单项只剩文字，行为一致。
+
+--------------------------------------------------
+[5] 验证
+--------------------------------------------------
+命令：./gradlew.bat :app:testAppDebugUnitTest :app:assembleAppDebug
+结果：BUILD SUCCESSFUL，tests=195 failures=0
+
+模拟器实测：
+  书架右上角显示「Sync」（英文）/ 应显示「同步」（中文界面）
+    → remove-scroll-1-sync-text.png / remove-scroll-2-sync-zh.png
+  导入真实 TXT 后正常打开阅读，正文完整、可翻页、1/1 100%
+    → remove-scroll-3-reading.png
+  阅读菜单 → Interface：不再有「翻页动画」区块，
+  只剩 N/B/L、Font、Indent、简/繁、Padding、Information
+  与字号/字距/行距/段距
+    → remove-scroll-4-interface.png
+  无 FATAL EXCEPTION
+
+符号检索（app/src/main）：
+  scrollPageAnim 仅剩 PageAnim.kt 的注释说明
+  isScroll / ScrollPageDelegate / rgPageAnim / noAnimScrollPage 均为 0
+
+--------------------------------------------------
+[6] 额外验证：多页翻页与点击
+--------------------------------------------------
+导入 20 KB 长文本（14 页）后点击右侧翻页：
+  1/14 → 2/14 → 3/14，内容按页推进，无跳页、无空白、
+  无 FATAL EXCEPTION。
+  → remove-scroll-5-page1.png / remove-scroll-6-page3.png
+
+这一步是为了确认触摸回调改名后事件仍能到达阅读视图：
+若沿用 onTouchEvent 这个名字，Activity 会命中 View 的默认实现，
+编译通过但点击无反应，本项就会失败。
+
+--------------------------------------------------
+[7] 遗留
+--------------------------------------------------
+- 中文界面文案「同步」未截图：模拟器语言切换需要系统级设置，
+  已确认 zh strings 中值为「同步」且 menu_sync 引用同一个 key。

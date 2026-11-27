@@ -202,7 +202,6 @@
     <string name="mouse_wheel_page">Mouse wheel to turn page</string>
     <string name="click_turn_page">Tap screen to turn page</string>
     <string name="page_anim">Flip animation</string>
-    <string name="book_page_anim">Flip animation (book)</string>
     <string name="keep_light">Keep screen awake</string>
     <string name="back">Back</string>
     <string name="menu">Menu</string>
@@ -374,11 +373,6 @@
     <string name="add_to_bookshelf">Add to Bookshelf</string>
     <string name="continue_read">Continue reading</string>
     <string name="cover_path">Cover path</string>
-    <string name="page_anim_cover">Cover</string>
-    <string name="page_anim_slide">Slide</string>
-    <string name="page_anim_simulation">Simulation</string>
-    <string name="page_anim_scroll">Scroll</string>
-    <string name="page_anim_none">None</string>
     <string name="disable_manga_page_anim">ページめくりアニメーションを無効にする</string>
     <string name="up_change_source_last_chapter_t">Update the latest chapter after changed origin in the background</string>
     <string name="up_change_source_last_chapter_s">if enabled,the update will start 1 minute later when the software is run</string>
@@ -1056,7 +1050,6 @@
     <string name="search_scope">搜索范围</string>
     <string name="toggle_search_scope">切换</string>
     <string name="sure_clear_search_history">是否确认清除所有搜索历史记录</string>
-    <string name="no_anim_scroll_page">禁用滚动点击动画</string>
     <string name="web_service_wake_lock">WebService唤醒锁</string>
     <string name="web_service_wake_lock_summary">开启web服务的时候启用唤醒锁,有些手机开启唤醒锁会被杀后台</string>
     <string name="read_aloud_wake_lock">朗读服务唤醒锁</string>

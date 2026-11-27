@@ -66,7 +66,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         val isLight = ColorUtils.isColorLight(bg)
         val textColor = requireContext().getPrimaryTextColor(isLight)
         rootView.setBackgroundColor(bg)
-        tvPageAnim.setTextColor(textColor)
         dsbTextSize.valueFormat = {
             (it + 5).toString()
         }
@@ -108,17 +107,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         tvTip.setOnClickListener {
             TipConfigDialog().show(childFragmentManager, "tipConfigDialog")
         }
-        rgPageAnim.setOnCheckedChangeListener { _, checkedId ->
-            ReadBook.book?.setPageAnim(-1)
-            // 墨水屏专属：选项只有「滚动」与「无动画」两项
-            ReadBookConfig.pageAnim = if (rgPageAnim.getIndexById(checkedId) == 0) {
-                PageAnim.scrollPageAnim
-            } else {
-                PageAnim.noAnim
-            }
-            callBack?.upPageAnim()
-            ReadBook.loadContent(false)
-        }
         dsbTextSize.onChanged = {
             ReadBookConfig.textSize = it + 5
             postEvent(EventBus.UP_CONFIG, arrayListOf(8, 5))
@@ -140,13 +128,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
 
     private fun upView() = binding.run {
         textFontWeightConverter.upUi(ReadBookConfig.textBold)
-        ReadBook.pageAnim().let {
-            // 墨水屏专属：0=滚动 1=无动画
-            val index = if (it == PageAnim.scrollPageAnim) 0 else 1
-            if (index < rgPageAnim.childCount) {
-                rgPageAnim.check(rgPageAnim[index].id)
-            }
-        }
         ReadBookConfig.let {
             dsbTextSize.progress = it.textSize - 5
             dsbTextLetterSpacing.progress = (it.letterSpacing * 100).toInt() + 50

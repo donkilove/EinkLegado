@@ -361,20 +361,6 @@ abstract class BaseReadBookActivity :
         }
     }
 
-    fun showPageAnimConfig(success: () -> Unit) {
-        val items = arrayListOf<String>()
-        items.add(getString(R.string.btn_default_s))
-        items.add(getString(R.string.page_anim_cover))
-        items.add(getString(R.string.page_anim_slide))
-        items.add(getString(R.string.page_anim_simulation))
-        items.add(getString(R.string.page_anim_scroll))
-        items.add(getString(R.string.page_anim_none))
-        selector(R.string.page_anim, items) { _, i ->
-            ReadBook.book?.setPageAnim(i - 1)
-            success()
-        }
-    }
-
     fun isPrevKey(keyCode: Int): Boolean {
         if (keyCode == KeyEvent.KEYCODE_UNKNOWN) {
             return false

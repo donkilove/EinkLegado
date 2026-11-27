@@ -198,7 +198,6 @@
     <string name="mouse_wheel_page">Rueda del ratón para pasar página</string>
     <string name="click_turn_page">Toque la pantalla para pasar página</string>
     <string name="page_anim">Animación de hojeada</string>
-    <string name="book_page_anim">Animación de hojeada (libro)</string>
     <string name="keep_light">Mantener pantalla encendida</string>
     <string name="back">Regresar</string>
     <string name="menu">Menú</string>
@@ -370,11 +369,6 @@
     <string name="add_to_bookshelf">Agregar a la estantería</string>
     <string name="continue_read">Seguir leyendo</string>
     <string name="cover_path">Carpeta de portada</string>
-    <string name="page_anim_cover">Portada</string>
-    <string name="page_anim_slide">Diapositiva</string>
-    <string name="page_anim_simulation">Simulación</string>
-    <string name="page_anim_scroll">Desplazado</string>
-    <string name="page_anim_none">Ninguno</string>
     <string name="disable_manga_page_anim">Desactivar animación de volteo</string>
     <string name="up_change_source_last_chapter_t">Actualiza el último capítulo después del cambio de fuente en segundo plano</string>
     <string name="up_change_source_last_chapter_s">si está habilitado, la actualización comenzará 1 minuto después de que se abra la aplicación</string>
@@ -1053,7 +1047,6 @@
     <string name="search_scope">搜索范围</string>
     <string name="toggle_search_scope">切换</string>
     <string name="sure_clear_search_history">是否确认清除所有搜索历史记录</string>
-    <string name="no_anim_scroll_page">禁用滚动点击动画</string>
     <string name="web_service_wake_lock">WebService唤醒锁</string>
     <string name="web_service_wake_lock_summary">开启web服务的时候启用唤醒锁,有些手机开启唤醒锁会被杀后台</string>
     <string name="read_aloud_wake_lock">朗读服务唤醒锁</string>

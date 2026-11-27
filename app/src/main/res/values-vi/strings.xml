@@ -197,7 +197,6 @@
     <string name="mouse_wheel_page">Con lăn chuột lật trang</string>
     <string name="click_turn_page">Chạm màn hình lật trang</string>
     <string name="page_anim">Hiệu ứng lật trang</string>
-    <string name="book_page_anim">Hiệu ứng lật trang (sách này)</string>
     <string name="keep_light">Giữ màn hình sáng</string>
     <string name="back">Quay lại</string>
     <string name="menu">Menu</string>
@@ -369,11 +368,6 @@
     <string name="add_to_bookshelf">Thêm vào tủ sách</string>
     <string name="continue_read">Tiếp tục đọc</string>
     <string name="cover_path">Đường dẫn bìa</string>
-    <string name="page_anim_cover">Che phủ</string>
-    <string name="page_anim_slide">Trượt</string>
-    <string name="page_anim_simulation">Mô phỏng</string>
-    <string name="page_anim_scroll">Cuộn</string>
-    <string name="page_anim_none">Không có</string>
     <string name="disable_manga_page_anim">Tắt hiệu ứng lật trang</string>
     <string name="up_change_source_last_chapter_t">Cập nhật chương mới nhất sau khi đổi nguồn trong nền</string>
     <string name="up_change_source_last_chapter_s">Nếu được kích hoạt, cập nhật sẽ bắt đầu sau 1 phút khi phần mềm chạy</string>
@@ -1049,7 +1043,6 @@
     <string name="search_scope">Phạm vi tìm kiếm</string>
     <string name="toggle_search_scope">Chuyển đổi</string>
     <string name="sure_clear_search_history">Bạn có chắc chắn muốn xóa tất cả lịch sử tìm kiếm không</string>
-    <string name="no_anim_scroll_page">Vô hiệu hóa hoạt ảnh nhấp chuột cuộn</string>
     <string name="web_service_wake_lock">Khóa đánh thức dịch vụ web</string>
     <string name="web_service_wake_lock_summary">Khóa đánh thức được bật khi dịch vụ web được bật và một số điện thoại sẽ bị tắt khi khóa đánh thức được bật.</string>
     <string name="read_aloud_wake_lock">Khóa đánh thức dịch vụ đọc thành tiếng</string>

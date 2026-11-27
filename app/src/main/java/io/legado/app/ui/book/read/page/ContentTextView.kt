@@ -54,16 +54,12 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     var textPage: TextPage = TextPage()
         private set
     var isMainView = false
-    var longScreenshot = false
     var reverseStartCursor = false
     var reverseEndCursor = false
 
-    //滚动参数
     private val pageFactory get() = callBack.pageFactory
     private val pageDelegate get() = callBack.pageDelegate
-    private var pageOffset = 0
     private var autoPager: AutoPager? = null
-    private var isScroll = false
     private val renderRunnable by lazy { Runnable { preRenderPage() } }
     private var lastClickTime = 0L
     private var doubleClick = false
@@ -84,12 +80,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
      */
     fun setContent(textPage: TextPage) {
         this.textPage = textPage
-        // 非滑动翻页动画需要同步重绘，不然翻页可能会出现闪烁
-        if (isScroll) {
-            postInvalidate()
-        } else {
-            invalidate()
-        }
+        // 无动画翻页需要同步重绘，否则翻页会闪一下
+        invalidate()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -102,9 +94,6 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         autoPager?.onDraw(canvas)
-        if (longScreenshot) {
-            canvas.translate(0f, scrollY.toFloat())
-        }
         check(!visibleRect.isEmpty) { "visibleRect 为空" }
         canvas.clipRect(visibleRect)
         drawPage(canvas)
@@ -114,66 +103,13 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
      * 绘制页面
      */
     private fun drawPage(canvas: Canvas) {
-        var relativeOffset = relativeOffset(0)
+        val relativeOffset = relativeOffset(0)
         textPage.draw(this, canvas, relativeOffset)
-        if (!callBack.isScroll) return
-        //滚动翻页
-        if (!pageFactory.hasNext()) return
-        val textPage1 = relativePage(1)
-        relativeOffset += textPage.height
-        textPage1.draw(this, canvas, relativeOffset)
-        if (!pageFactory.hasNextPlus()) return
-        relativeOffset += textPage1.height
-        if (relativeOffset < ChapterProvider.visibleHeight) {
-            val textPage2 = relativePage(2)
-            textPage2.draw(this, canvas, relativeOffset)
-        }
     }
 
     override fun computeScroll() {
         pageDelegate?.computeScroll()
         autoPager?.computeOffset()
-    }
-
-    /**
-     * 滚动事件
-     * pageOffset 向上滚动 减小 向下滚动 增大
-     * pageOffset 范围 0 ~ -textPage.height 大于0为上一页，小于-textPage.height为下一页
-     * 以内容显示区域顶端为界，pageOffset的绝对值为textPage上方的高度
-     * pageOffset + textPage.height 为 textPage 下方的高度
-     */
-    fun scroll(mOffset: Int) {
-        pageOffset += mOffset
-        if (longScreenshot) {
-            scrollY += -mOffset
-        }
-        if (!pageFactory.hasPrev() && pageOffset > 0) {
-            pageOffset = 0
-            pageDelegate?.abortAnim()
-        } else if (!pageFactory.hasNext()
-            && pageOffset < 0
-            && pageOffset + textPage.height < ChapterProvider.visibleHeight
-        ) {
-            val offset = (ChapterProvider.visibleHeight - textPage.height).toInt()
-            pageOffset = min(0, offset)
-            pageDelegate?.abortAnim()
-        } else if (pageOffset > 0) {
-            if (pageFactory.moveToPrev(true)) {
-                pageOffset -= textPage.height.toInt()
-            } else {
-                pageOffset = 0
-                pageDelegate?.abortAnim()
-            }
-        } else if (pageOffset < -textPage.height) {
-            val height = textPage.height
-            if (pageFactory.moveToNext(upContent = true)) {
-                pageOffset += height.toInt()
-            } else {
-                pageOffset = -height.toInt()
-                pageDelegate?.abortAnim()
-            }
-        }
-        postInvalidate()
     }
 
     fun submitRenderTask() {
@@ -190,14 +126,7 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
             if (curPage.render(view)) {
                 invalidate = true
             }
-            if (hasNext() && nextPage.render(view) && callBack.isScroll) {
-                invalidate = true
-            }
-            if (hasNextPlus() && nextPlusPage.render(view) && callBack.isScroll
-                && relativeOffset(2) < ChapterProvider.visibleHeight
-            ) {
-                invalidate = true
-            }
+
             if (invalidate) {
                 postInvalidate()
                 pageDelegate?.postInvalidate()
@@ -206,11 +135,12 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     }
 
     /**
-     * 重置滚动位置
+     * 重置翻页偏移。
+     *
+     * 无动画翻页下不再有滚动偏移，保留空实现是为了不改动调用点
+     * （PageView.setContent 在每次换页时都会调用它）。
      */
-    fun resetPageOffset() {
-        pageOffset = 0
-    }
+    fun resetPageOffset() = Unit
 
     /**
      * 长按
@@ -400,29 +330,21 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         ) -> Unit
     ) {
         if (!visibleRect.contains(x, y)) return
-        var relativeOffset: Float
-        for (relativePos in 0..2) {
-            relativeOffset = relativeOffset(relativePos)
-            if (relativePos > 0) {
-                //滚动翻页
-                if (!callBack.isScroll) return
-                if (relativeOffset >= ChapterProvider.visibleHeight) return
-            }
-            val textPage = relativePage(relativePos)
-            for ((lineIndex, textLine) in textPage.lines.withIndex()) {
-                if (textLine.isTouch(x, y, relativeOffset)) {
-                    for ((charIndex, textColumn) in textLine.columns.withIndex()) {
-                        if (textColumn.isTouch(x)) {
-                            touched.invoke(
-                                relativeOffset,
-                                TextPos(relativePos, lineIndex, charIndex),
-                                textPage, textLine, textColumn
-                            )
-                            return
-                        }
+        val relativeOffset = relativeOffset(0)
+        val textPage = relativePage(0)
+        for ((lineIndex, textLine) in textPage.lines.withIndex()) {
+            if (textLine.isTouch(x, y, relativeOffset)) {
+                for ((charIndex, textColumn) in textLine.columns.withIndex()) {
+                    if (textColumn.isTouch(x)) {
+                        touched.invoke(
+                            relativeOffset,
+                            TextPos(0, lineIndex, charIndex),
+                            textPage, textLine, textColumn
+                        )
+                        return
                     }
-                    return
                 }
+                return
             }
         }
     }
@@ -443,15 +365,9 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
             column: BaseColumn
         ) -> Unit
     ) {
-        var relativeOffset: Float
-        for (relativePos in 0..2) {
-            relativeOffset = relativeOffset(relativePos)
-            if (relativePos > 0) {
-                //滚动翻页
-                if (!callBack.isScroll) return
-                if (relativeOffset >= ChapterProvider.visibleHeight) return
-            }
-            val textPage = relativePage(relativePos)
+        val relativeOffset = relativeOffset(0)
+        val textPage = relativePage(0)
+        run {
             for (lineIndex in textPage.lines.indices) {
                 val textLine = textPage.getLine(lineIndex)
                 if (textLine.isTouchY(y, relativeOffset)) {
@@ -470,7 +386,7 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
                         if (textColumn.isTouch(x)) {
                             touched.invoke(
                                 relativeOffset,
-                                TextPos(relativePos, lineIndex, charIndex),
+                                TextPos(0, lineIndex, charIndex),
                                 textPage, textLine, textColumn
                             )
                             return
@@ -481,7 +397,7 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
                     val textColumn = if (isLast) columns.last() else columns.first()
                     touched.invoke(
                         relativeOffset,
-                        TextPos(relativePos, lineIndex, charIndex),
+                        TextPos(0, lineIndex, charIndex),
                         textPage, textLine, textColumn
                     )
                     return
@@ -490,52 +406,16 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         }
     }
 
-    fun getCurVisiblePage(): TextPage {
-        val visiblePage = TextPage()
-        var relativeOffset: Float
-        for (relativePos in 0..2) {
-            relativeOffset = relativeOffset(relativePos)
-            if (relativePos > 0) {
-                //滚动翻页
-                if (!callBack.isScroll) break
-                if (relativeOffset >= ChapterProvider.visibleHeight) break
-            }
-            val textPage = relativePage(relativePos)
-            val lines = textPage.lines
-            for (i in lines.indices) {
-                val textLine = lines[i]
-                if (textLine.isVisible(relativeOffset)) {
-                    val visibleLine = textLine.copy().apply {
-                        lineTop += relativeOffset
-                        lineBottom += relativeOffset
-                    }
-                    visiblePage.addLine(visibleLine)
-                }
-            }
-        }
-        return visiblePage
-    }
-
     fun getReadAloudPos(): Pair<Int, TextLine>? {
-        var relativeOffset: Float
-        for (relativePos in 0..2) {
-            relativeOffset = relativeOffset(relativePos)
-            if (relativePos > 0) {
-                //滚动翻页
-                if (!callBack.isScroll) break
-                if (relativeOffset >= ChapterProvider.visibleHeight) break
-            }
-            val textPage = relativePage(relativePos)
-            val lines = textPage.lines
-            for (i in lines.indices) {
-                val textLine = lines[i]
-                if (textLine.isVisible(relativeOffset)) {
-                    val visibleLine = textLine.copy().apply {
-                        lineTop += relativeOffset
-                        lineBottom += relativeOffset
-                    }
-                    return textPage.chapterIndex to visibleLine
+        val relativeOffset = relativeOffset(0)
+        val textPage = relativePage(0)
+        for (textLine in textPage.lines) {
+            if (textLine.isVisible(relativeOffset)) {
+                val visibleLine = textLine.copy().apply {
+                    lineTop += relativeOffset
+                    lineBottom += relativeOffset
                 }
+                return textPage.chapterIndex to visibleLine
             }
         }
         return null
@@ -594,11 +474,9 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         if (!selectStart.isSelected() && !selectEnd.isSelected()) {
             return
         }
-        val last = if (callBack.isScroll) 2 else 0
         val textPos = TextPos(0, 0, 0)
-        for (relativePos in 0..last) {
-            textPos.relativePagePos = relativePos
-            val textPage = relativePage(relativePos)
+        run {
+            val textPage = relativePage(0)
             for ((lineIndex, textLine) in textPage.lines.withIndex()) {
                 textPos.lineIndex = lineIndex
                 for ((charIndex, column) in textLine.columns.withIndex()) {
@@ -637,9 +515,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
     }
 
     fun cancelSelect(clearSearchResult: Boolean = false) {
-        val last = if (callBack.isScroll) 2 else 0
-        for (relativePos in 0..last) {
-            val textPage = relativePage(relativePos)
+        run {
+            val textPage = relativePage(0)
             textPage.lines.forEach { textLine ->
                 textLine.columns.forEach {
                     if (it is TextBaseColumn) {
@@ -719,9 +596,9 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
 
     private fun relativeOffset(relativePos: Int): Float {
         return when (relativePos) {
-            0 -> pageOffset.toFloat()
-            1 -> pageOffset + textPage.height
-            else -> pageOffset + textPage.height + pageFactory.nextPage.height
+            0 -> 0f
+            1 -> textPage.height
+            else -> textPage.height + pageFactory.nextPage.height
         }
     }
 
@@ -737,27 +614,8 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         this.autoPager = autoPager
     }
 
-    fun setIsScroll(value: Boolean) {
-        isScroll = value
-    }
-
-    override fun canScrollVertically(direction: Int): Boolean {
-        return callBack.isScroll && pageFactory.hasNext()
-    }
-
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                longScreenshot = true
-                scrollY = 0
-            }
-
-            MotionEvent.ACTION_UP -> {
-                longScreenshot = false
-                scrollY = 0
-            }
-        }
-        return callBack.onLongScreenshotTouchEvent(event)
+        return callBack.onContentTouchEvent(event)
     }
 
     companion object {
@@ -774,13 +632,20 @@ class ContentTextView(context: Context, attrs: AttributeSet?) : View(context, at
         val imgBgPaddingStart: Int
         val pageFactory: TextPageFactory
         val pageDelegate: PageDelegate?
-        val isScroll: Boolean
         var isSelectingSearchResult: Boolean
         fun upSelectedStart(x: Float, y: Float, top: Float)
         fun upSelectedEnd(x: Float, y: Float)
         fun onImageLongPress(x: Float, y: Float, src: String)
         fun onCancelSelect()
-        fun onLongScreenshotTouchEvent(event: MotionEvent): Boolean
+
+        /**
+         * 把触摸事件交给 [ReadView] 处理。
+         *
+         * 不能命名为 onTouchEvent：宿主是 Activity，而 View 本身就有
+         * onTouchEvent(MotionEvent)，同名会被默认实现「默默满足」，
+         * 编译期不报错但事件根本不会到达阅读视图。
+         */
+        fun onContentTouchEvent(event: MotionEvent): Boolean
         fun oldClickImg(src: String): Boolean
         fun clickImg(click: String, src: String)
     }

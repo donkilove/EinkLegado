@@ -23,7 +23,6 @@ import io.legado.app.ui.book.read.page.api.DataSource
 import io.legado.app.ui.book.read.page.delegate.HorizontalPageDelegate
 import io.legado.app.ui.book.read.page.delegate.NoAnimPageDelegate
 import io.legado.app.ui.book.read.page.delegate.PageDelegate
-import io.legado.app.ui.book.read.page.delegate.ScrollPageDelegate
 import io.legado.app.ui.book.read.page.entities.PageDirection
 import io.legado.app.ui.book.read.page.entities.TextChapter
 import io.legado.app.ui.book.read.page.entities.TextLine
@@ -58,7 +57,6 @@ class ReadView(context: Context, attrs: AttributeSet) :
             field = value
             upContent()
         }
-    override var isScroll = false
     val prevPage by lazy { PageView(context) }
     val curPage by lazy { PageView(context) }
     val nextPage by lazy { PageView(context) }
@@ -519,30 +517,16 @@ class ReadView(context: Context, attrs: AttributeSet) :
      * 更新翻页动画
      */
     fun upPageAnim(upRecorder: Boolean = false) {
-        isScroll = ReadBook.pageAnim() == 3
         ChapterProvider.upLayout()
-        when (ReadBook.pageAnim()) {
-            PageAnim.scrollPageAnim -> if (pageDelegate !is ScrollPageDelegate) {
-                pageDelegate = ScrollPageDelegate(this)
-            }
-
-            // 墨水屏专属：覆盖/滑动/仿真三种翻页动画已移除，统一走无动画
-            else -> if (pageDelegate !is NoAnimPageDelegate) {
-                pageDelegate = NoAnimPageDelegate(this)
-            }
+        // 墨水屏专属：翻页动画只剩「无动画」，滚动阅读已整体移除
+        if (pageDelegate !is NoAnimPageDelegate) {
+            pageDelegate = NoAnimPageDelegate(this)
         }
-        (pageDelegate as? ScrollPageDelegate)?.noAnim = AppConfig.noAnimScrollPage
         if (upRecorder) {
             (pageDelegate as? HorizontalPageDelegate)?.upRecorder()
             autoPager.upRecorder()
         }
         pageDelegate?.setViewSize(width, height)
-        if (isScroll) {
-            curPage.setAutoPager(autoPager)
-        } else {
-            curPage.setAutoPager(null)
-        }
-        curPage.setIsScroll(isScroll)
     }
 
     /**
@@ -554,21 +538,13 @@ class ReadView(context: Context, attrs: AttributeSet) :
         post {
             curPage.setContentDescription(pageFactory.curPage.text)
         }
-        if (isScroll && !isAutoPage) {
-            if (relativePosition == 0) {
+        when (relativePosition) {
+            -1 -> prevPage.setContent(pageFactory.prevPage)
+            1 -> nextPage.setContent(pageFactory.nextPage)
+            else -> {
                 curPage.setContent(pageFactory.curPage, resetPageOffset)
-            } else {
-                curPage.invalidateContentView()
-            }
-        } else {
-            when (relativePosition) {
-                -1 -> prevPage.setContent(pageFactory.prevPage)
-                1 -> nextPage.setContent(pageFactory.nextPage)
-                else -> {
-                    curPage.setContent(pageFactory.curPage, resetPageOffset)
-                    nextPage.setContent(pageFactory.nextPage)
-                    prevPage.setContent(pageFactory.prevPage)
-                }
+                nextPage.setContent(pageFactory.nextPage)
+                prevPage.setContent(pageFactory.prevPage)
             }
         }
         callBack.screenOffTimerStart()
@@ -670,10 +646,6 @@ class ReadView(context: Context, attrs: AttributeSet) :
         return curPage.selectedText
     }
 
-    fun getCurVisiblePage(): TextPage {
-        return curPage.getCurVisiblePage()
-    }
-
     fun getReadAloudPos(): Pair<Int, TextLine>? {
         return curPage.getReadAloudPos()
     }
@@ -690,14 +662,6 @@ class ReadView(context: Context, attrs: AttributeSet) :
         }
     }
 
-    fun onScrollAnimStart() {
-        autoPager.pause()
-    }
-
-    fun onScrollAnimStop() {
-        autoPager.resume()
-    }
-
     fun onPageChange() {
         autoPager.reset()
         submitRenderTask()
@@ -708,10 +672,6 @@ class ReadView(context: Context, attrs: AttributeSet) :
             return
         }
         curPage.submitRenderTask()
-    }
-
-    fun isLongScreenShot(): Boolean {
-        return curPage.isLongScreenShot()
     }
 
     override fun onLayoutPageCompleted(index: Int, page: TextPage) {

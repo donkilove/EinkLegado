@@ -254,10 +254,6 @@ class MoreConfigDialog : BasePrefDialogFragment() {
                     postEvent(EventBus.UP_SEEK_BAR, true)
                 }
 
-                PreferKey.noAnimScrollPage -> {
-                    ReadBook.callBack?.upPageAnim()
-                }
-
                 PreferKey.optimizeRender -> {
                     ChapterProvider.upStyle()
                     ReadBook.callBack?.upPageAnim(true)

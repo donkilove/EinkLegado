@@ -124,13 +124,6 @@
             app:isBottomBackground="true" />
 
         <io.legado.app.lib.prefs.SwitchPreference
-            android:defaultValue="false"
-            android:key="noAnimScrollPage"
-            android:title="@string/no_anim_scroll_page"
-            app:iconSpaceReserved="false"
-            app:isBottomBackground="true" />
-
-        <io.legado.app.lib.prefs.SwitchPreference
             android:defaultValue="true"
             android:key="mouseWheelPage"
             android:title="@string/mouse_wheel_page"

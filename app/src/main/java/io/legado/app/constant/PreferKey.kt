@@ -151,7 +151,6 @@ object PreferKey {
     const val progressBarBehavior = "progressBarBehavior"
     const val sourceEditMaxLine = "sourceEditMaxLine"
     const val ttsTimer = "ttsTimer"
-    const val noAnimScrollPage = "noAnimScrollPage"
     const val webServiceWakeLock = "webServiceWakeLock"
     const val audioPlayWakeLock = "audioPlayWakeLock"
     const val readAloudWakeLock = "readAloudWakeLock"

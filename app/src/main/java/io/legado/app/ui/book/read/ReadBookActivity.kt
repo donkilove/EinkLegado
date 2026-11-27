@@ -81,7 +81,6 @@ import io.legado.app.ui.book.read.config.TipConfigDialog.Companion.TIP_COLOR
 import io.legado.app.ui.book.read.config.TipConfigDialog.Companion.TIP_DIVIDER_COLOR
 import io.legado.app.ui.book.read.page.ContentTextView
 import io.legado.app.ui.book.read.page.ReadView
-import io.legado.app.ui.book.read.page.delegate.ScrollPageDelegate
 import io.legado.app.ui.book.read.page.entities.PageDirection
 import io.legado.app.ui.book.read.page.entities.TextPage
 import io.legado.app.ui.book.read.page.provider.ChapterProvider
@@ -226,7 +225,6 @@ class ReadBookActivity : BaseReadBookActivity(),
         PopupAction(this)
     }
     override val isInitFinish: Boolean get() = viewModel.isInitFinish
-    override val isScroll: Boolean get() = binding.readView.isScroll
     private val isAutoPage get() = binding.readView.isAutoPage
     override var isShowingSearchResult = false
     override var isSelectingSearchResult = false
@@ -565,11 +563,6 @@ class ReadBookActivity : BaseReadBookActivity(),
                 refreshContentAll(it)
             }
 
-            R.id.menu_page_anim -> showPageAnimConfig {
-                binding.readView.upPageAnim()
-                ReadBook.loadContent(false)
-            }
-
             R.id.menu_log -> showDialogFragment<AppLogDialog>()
             R.id.menu_toc_regex -> showDialogFragment(
                 TxtTocRuleDialog(ReadBook.book?.tocUrl)
@@ -593,7 +586,7 @@ class ReadBookActivity : BaseReadBookActivity(),
                     val imageStyle = imgStyles[index]
                     ReadBook.book?.setImageStyle(imageStyle)
                     if (imageStyle == Book.imgStyleSingle) {
-                        ReadBook.book?.setPageAnim(0)  // 切换图片样式single后，自动切换为覆盖
+                        // 切换图片样式 single 后重排，单页图片需要按整页高度重新计算
                         binding.readView.upPageAnim()
                     }
                     ReadBook.loadContent(false)
@@ -820,10 +813,6 @@ class ReadBookActivity : BaseReadBookActivity(),
         textActionMenu.dismiss()
     }
 
-    override fun onLongScreenshotTouchEvent(event: MotionEvent): Boolean {
-        return binding.readView.onTouchEvent(event)
-    }
-
     /**
      * 显示文本操作菜单
      */
@@ -917,12 +906,7 @@ class ReadBookActivity : BaseReadBookActivity(),
         if (menuLayoutIsVisible || !AppConfig.mouseWheelPage) {
             return
         }
-        if (binding.readView.isScroll) {
-            // 滚动视图时滚动,否则翻页
-            (binding.readView.pageDelegate as? ScrollPageDelegate)?.curPage?.scroll((distance * 50).toInt())
-        } else {
-            keyPageDebounce(direction, mouseWheel = true, longPress = false)
-        }
+        keyPageDebounce(direction, mouseWheel = true, longPress = false)
     }
 
     /**
@@ -1412,54 +1396,19 @@ class ReadBookActivity : BaseReadBookActivity(),
     /**
      * 朗读按钮
      */
+    override fun onContentTouchEvent(event: MotionEvent): Boolean {
+        return binding.readView.onTouchEvent(event)
+    }
+
     override fun onClickReadAloud() {
         autoPageStop()
         when {
             !BaseReadAloudService.isRun -> {
                 ReadAloud.upReadAloudClass()
-                val scrollPageAnim = ReadBook.pageAnim() == 3
-                if (scrollPageAnim) {
-                    val pos = binding.readView.getReadAloudPos()
-                    if (pos != null) {
-                        val (index, line) = pos
-                        if (ReadBook.durChapterIndex != index) {
-                            ReadBook.openChapter(index, line.chapterPosition, false) {
-                                ReadBook.readAloud(startPos = line.pagePosition)
-                            }
-                        } else {
-                            ReadBook.durChapterPos = line.chapterPosition
-                            ReadBook.readAloud(startPos = line.pagePosition)
-                        }
-                    } else {
-                        ReadBook.readAloud()
-                    }
-                } else {
-                    ReadBook.readAloud()
-                }
+                ReadBook.readAloud()
             }
 
-            BaseReadAloudService.pause -> {
-                val scrollPageAnim = ReadBook.pageAnim() == 3
-                if (scrollPageAnim && pageChanged) {
-                    pageChanged = false
-                    val pos = binding.readView.getReadAloudPos()
-                    if (pos != null) {
-                        val (index, line) = pos
-                        if (ReadBook.durChapterIndex != index) {
-                            ReadBook.openChapter(index, line.chapterPosition, false) {
-                                ReadBook.readAloud(startPos = line.pagePosition)
-                            }
-                        } else {
-                            ReadBook.durChapterPos = line.chapterPosition
-                            ReadBook.readAloud(startPos = line.pagePosition)
-                        }
-                    } else {
-                        ReadBook.readAloud()
-                    }
-                } else {
-                    ReadAloud.resume(this)
-                }
-            }
+            BaseReadAloudService.pause -> ReadAloud.resume(this)
 
             else -> ReadAloud.pause(this)
         }

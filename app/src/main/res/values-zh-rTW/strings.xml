@@ -196,7 +196,6 @@
     <string name="mouse_wheel_page">鼠标滚动翻页</string>
     <string name="click_turn_page">點擊翻頁</string>
     <string name="page_anim">翻頁動畫</string>
-    <string name="book_page_anim">翻頁動畫(本書)</string>
     <string name="keep_light">螢幕超時</string>
     <string name="back">返回</string>
     <string name="menu">選單</string>
@@ -368,11 +367,6 @@
     <string name="add_to_bookshelf">放入書架</string>
     <string name="continue_read">繼續閱讀</string>
     <string name="cover_path">封面地址</string>
-    <string name="page_anim_cover">覆蓋</string>
-    <string name="page_anim_slide">滑動</string>
-    <string name="page_anim_simulation">模擬</string>
-    <string name="page_anim_scroll">滾動</string>
-    <string name="page_anim_none">無動畫</string>
     <string name="disable_manga_page_anim">禁用翻頁動畫</string>
     <string name="up_change_source_last_chapter_t">後台更新換源最新章節</string>
     <string name="up_change_source_last_chapter_s">開啟則會在軟體打開1分鐘後開始更新</string>
@@ -1050,7 +1044,6 @@
     <string name="search_scope">搜尋範圍</string>
     <string name="toggle_search_scope">切換</string>
     <string name="sure_clear_search_history">是否確認清除所有搜尋歷史記錄</string>
-    <string name="no_anim_scroll_page">禁用滾動點擊動畫</string>
     <string name="web_service_wake_lock">WebService喚醒鎖</string>
     <string name="web_service_wake_lock_summary">開啟web服務的時候啟用喚醒鎖，有些手機開啟喚醒鎖會被殺後台</string>
     <string name="read_aloud_wake_lock">朗讀服務喚醒鎖</string>

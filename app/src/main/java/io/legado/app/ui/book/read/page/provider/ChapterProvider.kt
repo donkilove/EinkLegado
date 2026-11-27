@@ -314,15 +314,10 @@ object ChapterProvider {
         when (AppConfig.doublePageHorizontal) {
             "0" -> doublePage = false
             "1" -> doublePage = true
-            "2" -> {
-                doublePage = (viewWidth > viewHeight)
-                        && ReadBook.pageAnim() != 3
-            }
+            // 滚动阅读已移除，双页只取决于屏幕方向与设备类型
+            "2" -> doublePage = viewWidth > viewHeight
 
-            "3" -> {
-                doublePage = (viewWidth > viewHeight || appCtx.isPad)
-                        && ReadBook.pageAnim() != 3
-            }
+            "3" -> doublePage = viewWidth > viewHeight || appCtx.isPad
         }
 
         if (viewWidth <= 0 || viewHeight <= 0) {

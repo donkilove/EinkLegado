@@ -4,10 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AlwaysShowAction">
 
+    <!--
+        同步入口用文字而不是图标。
+        墨水屏上图标需要用户先辨认图形含义，文字「同步」一眼就懂；
+        去掉 icon 后 Toolbar 的 ActionMenuItemView 会直接渲染 title，
+        仍是 always 常驻，不折叠进溢出菜单。
+    -->
     <item
         android:id="@+id/menu_sync"
-        android:icon="@drawable/ic_outline_cloud_24"
-        android:title="@string/sync_now"
+        android:title="@string/sync_menu"
         app:showAsAction="always" />
 
     <item

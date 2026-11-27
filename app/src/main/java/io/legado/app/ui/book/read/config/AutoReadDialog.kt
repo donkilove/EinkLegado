@@ -101,10 +101,8 @@ class AutoReadDialog : BaseDialogFragment(R.layout.dialog_auto_read) {
             dismissAllowingStateLoss()
         }
         binding.llSetting.setOnClickListener {
-            (activity as BaseReadBookActivity).showPageAnimConfig {
-                (activity as ReadBookActivity).upPageAnim()
-                ReadBook.loadContent(false)
-            }
+            (activity as ReadBookActivity).upPageAnim()
+            ReadBook.loadContent(false)
         }
         binding.llCatalog.setOnClickListener { callBack?.openChapterList() }
         binding.llAutoPageStop.setOnClickListener {

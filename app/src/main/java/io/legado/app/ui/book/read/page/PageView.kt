@@ -55,7 +55,6 @@ class PageView(context: Context) : FrameLayout(context) {
     private var tvTimeBattery: BatteryView? = null
     private var tvTimeBatteryP: BatteryView? = null
     private var isMainView = false
-    var isScroll = false
 
     val headerHeight: Int
         get() {
@@ -323,7 +322,7 @@ class PageView(context: Context) : FrameLayout(context) {
      * 设置内容
      */
     fun setContent(textPage: TextPage, resetPageOffset: Boolean = true) {
-        if (isMainView && !isScroll) {
+        if (isMainView) {
             setProgress(textPage)
         } else {
             post {
@@ -383,18 +382,6 @@ class PageView(context: Context) : FrameLayout(context) {
         binding.contentTextView.submitRenderTask()
     }
 
-    fun setIsScroll(value: Boolean) {
-        isScroll = value
-        binding.contentTextView.setIsScroll(value)
-    }
-
-    /**
-     * 滚动事件
-     */
-    fun scroll(offset: Int) {
-        binding.contentTextView.scroll(offset)
-    }
-
     /**
      * 更新是否开启选择功能
      */
@@ -428,10 +415,6 @@ class PageView(context: Context) : FrameLayout(context) {
         select: (textPos: TextPos) -> Unit,
     ) {
         return binding.contentTextView.selectText(x - imgBgPaddingStart, y - headerHeight, select)
-    }
-
-    fun getCurVisiblePage(): TextPage {
-        return binding.contentTextView.getCurVisiblePage()
     }
 
     fun getReadAloudPos(): Pair<Int, TextLine>? {
@@ -481,10 +464,6 @@ class PageView(context: Context) : FrameLayout(context) {
 
     fun getReverseEndCursor(): Boolean {
         return binding.contentTextView.reverseEndCursor
-    }
-
-    fun isLongScreenShot(): Boolean {
-        return binding.contentTextView.longScreenshot
     }
 
     fun resetReverseCursor() {

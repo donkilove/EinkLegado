@@ -20,9 +20,8 @@ class AutoPager(private val readView: ReadView) : Runnable {
         private set
     private var isPausing = false
     private var isEInkMode = false
-    private var scrollOffsetRemain = 0.0
-    private var scrollOffset = 0
     private var lastTimeMillis = 0L
+    private var scrollOffsetAccum = 0.0
     private var canvasRecorder = CanvasRecorderFactory.create()
     private val paint by lazy { Paint() }
 
@@ -81,8 +80,6 @@ class AutoPager(private val readView: ReadView) : Runnable {
             readView.postDelayed(this, ReadBookConfig.autoReadSpeed * 1000L)
         } else {
             progress = 0
-            scrollOffsetRemain = 0.0
-            scrollOffset = 0
             canvasRecorder.invalidate()
         }
     }
@@ -97,29 +94,22 @@ class AutoPager(private val readView: ReadView) : Runnable {
             return
         }
 
-        if (readView.isScroll) {
-            if (!isPausing) {
-                readView.curPage.scroll(-scrollOffset)
-                scrollOffset = 0
-            }
-        } else {
-            val bottom = progress
-            val width = readView.width
+        val bottom = progress
+        val width = readView.width
 
-            canvasRecorder.recordIfNeeded(readView.nextPage)
-            canvas.withClip(0, 0, width, bottom) {
-                canvasRecorder.draw(this)
-            }
-
-            canvas.drawRect(
-                0f,
-                bottom.toFloat() - 1,
-                width.toFloat(),
-                bottom.toFloat(),
-                paint
-            )
-            if (!isPausing) readView.postInvalidate()
+        canvasRecorder.recordIfNeeded(readView.nextPage)
+        canvas.withClip(0, 0, width, bottom) {
+            canvasRecorder.draw(this)
         }
+
+        canvas.drawRect(
+            0f,
+            bottom.toFloat() - 1,
+            width.toFloat(),
+            bottom.toFloat(),
+            paint
+        )
+        if (!isPausing) readView.postInvalidate()
 
     }
 
@@ -134,20 +124,18 @@ class AutoPager(private val readView: ReadView) : Runnable {
 
         val readTime = ReadBookConfig.autoReadSpeed * 1000.0
         val height = readView.height
-        scrollOffsetRemain += height / readTime * elapsedTime
-        if (scrollOffsetRemain < 1) {
+        scrollOffsetAccum += height / readTime * elapsedTime
+        if (scrollOffsetAccum < 1) {
             return
         }
-        scrollOffset = scrollOffsetRemain.toInt()
-        this.scrollOffsetRemain -= scrollOffset
-        if (!readView.isScroll) {
-            progress += scrollOffset
-            if (progress >= height) {
-                if (!readView.fillPage(PageDirection.NEXT)) {
-                    stop()
-                } else {
-                    reset()
-                }
+        val step = scrollOffsetAccum.toInt()
+        scrollOffsetAccum -= step
+        progress += step
+        if (progress >= height) {
+            if (!readView.fillPage(PageDirection.NEXT)) {
+                stop()
+            } else {
+                reset()
             }
         }
     }
